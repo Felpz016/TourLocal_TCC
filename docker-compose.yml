@@ -26,9 +26,13 @@ services:
       SMTP_SENHA: ${SMTP_SENHA:-}
     ports:
       - "8000:8000"
+    volumes:
+      # Fotos enviadas pelos comerciantes (RF17) sobrevivem a recriações do contêiner.
+      - uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   db_data:
+  uploads:

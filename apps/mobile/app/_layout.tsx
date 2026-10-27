@@ -28,6 +28,8 @@ function Navegacao() {
           <Stack.Screen name="preferencias" options={{ title: 'Minhas preferências' }} />
           <Stack.Screen name="localizacao" options={{ title: 'Localização' }} />
           <Stack.Screen name="lugar/[id]" options={{ title: 'Local' }} />
+          <Stack.Screen name="gestao/novo" options={{ title: 'Novo local' }} />
+          <Stack.Screen name="gestao/[id]" options={{ title: 'Editar local' }} />
         </Stack.Protected>
         <Stack.Protected guard={!usuario} redirectTo="/">
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />

@@ -1,5 +1,6 @@
-import { Link, Redirect } from 'expo-router';
+import { Link, Redirect, router } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '../../src/auth/AuthContext';
@@ -29,6 +30,16 @@ function AcoesCabecalho() {
 export default function TabsLayout() {
   const { usuario, primeiroAcesso } = useAuth();
 
+  const tipo = usuario?.tipo;
+  const levouAoPainel = useRef(false);
+
+  // Comerciante e administrador abrem direto no próprio painel; o turista, no eixo Comer.
+  useEffect(() => {
+    if (levouAoPainel.current || !tipo || tipo === 'turista') return;
+    levouAoPainel.current = true;
+    router.navigate(tipo === 'comerciante' ? '/meus-locais' : '/moderacao');
+  }, [tipo]);
+
   // Logo após o cadastro, o turista define as preferências antes de ver as recomendações.
   if (primeiroAcesso) return <Redirect href="/preferencias" />;
 
@@ -57,7 +68,24 @@ export default function TabsLayout() {
         options={{
           title: 'Salvos',
           tabBarIcon: () => <Icone emoji="♥" />,
-          href: usuario?.tipo === 'turista' ? undefined : null,
+          href: tipo === 'turista' ? undefined : null,
+        }}
+      />
+      {/* Painel do comerciante (RF15 a RF17) e moderação (RF18), escondidos dos outros perfis. */}
+      <Tabs.Screen
+        name="meus-locais"
+        options={{
+          title: 'Meus locais',
+          tabBarIcon: () => <Icone emoji="🏪" />,
+          href: tipo === 'comerciante' ? undefined : null,
+        }}
+      />
+      <Tabs.Screen
+        name="moderacao"
+        options={{
+          title: 'Moderação',
+          tabBarIcon: () => <Icone emoji="🛡️" />,
+          href: tipo === 'administrador' ? undefined : null,
         }}
       />
     </Tabs>

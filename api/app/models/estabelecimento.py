@@ -14,6 +14,7 @@ from sqlalchemy import (
     Text,
     Time,
     UniqueConstraint,
+    false,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -68,6 +69,11 @@ class Estabelecimento(Base):
     opcoes_alimentares: Mapped[str | None] = mapped_column(String(120))
     # RN01: só estabelecimentos verificados aparecem nas recomendações.
     verificado: Mapped[bool] = mapped_column(Boolean, default=False)
+    # RF16: o comerciante pode fechar o local por um tempo (reforma, férias); enquanto isso
+    # ele sai das recomendações. O campo não constava no DER original.
+    fechado_temporariamente: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false()
+    )
     # Identificador na fonte de dados pública (ex.: "osm:node/123"), para a importação (RF19)
     # poder ser repetida sem duplicar registros. Fica vazio nos cadastros feitos por comerciantes.
     origem_externa: Mapped[str | None] = mapped_column(String(60))

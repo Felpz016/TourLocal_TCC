@@ -70,6 +70,8 @@ def filtrar_por_raio(
         .where(
             Categoria.eixo == eixo,
             Estabelecimento.verificado.is_(True),
+            # RF16: fechado temporariamente não aparece, nem com "incluir fechados".
+            Estabelecimento.fechado_temporariamente.is_(False),
             Estabelecimento.latitude.between(Decimal(str(lat_min)), Decimal(str(lat_max))),
             Estabelecimento.longitude.between(Decimal(str(lon_min)), Decimal(str(lon_max))),
         )

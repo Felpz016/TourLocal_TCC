@@ -30,6 +30,12 @@ Para povoar a base com lugares reais da cidade-piloto (dados do OpenStreetMap):
 docker compose exec api python -m app.importacao.osm --cidade Araraquara
 ```
 
+Administradores não se cadastram pelo app. Para criar o primeiro (a senha é pedida no terminal):
+
+```bash
+docker compose exec api python -m app.criar_admin --nome "Seu nome" --email admin@exemplo.com
+```
+
 ### API sem Docker (desenvolvimento)
 
 ```bash

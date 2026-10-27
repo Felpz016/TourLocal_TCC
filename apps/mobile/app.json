@@ -29,6 +29,13 @@
         {
           "locationWhenInUsePermission": "O TourLocal usa sua localização para recomendar lugares perto de você. Ela não fica salva."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O TourLocal usa suas fotos para você mostrar o seu estabelecimento aos turistas.",
+          "cameraPermission": false
+        }
       ]
     ]
   }

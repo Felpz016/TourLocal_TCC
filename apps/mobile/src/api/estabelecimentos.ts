@@ -29,7 +29,11 @@ export type Detalhe = {
   opcoes_alimentares: string[];
   horarios: Horario[];
   aberto_agora: boolean | null;
-  fotos: { url: string; legenda: string | null }[];
+  fechado_temporariamente: boolean;
+  verificado: boolean;
+  /** Dono do cadastro ou administrador (RN07). */
+  pode_editar: boolean;
+  fotos: { id_foto: number; url: string; legenda: string | null }[];
   nota_media: number | null;
   total_avaliacoes: number;
   distancia_km: number | null;

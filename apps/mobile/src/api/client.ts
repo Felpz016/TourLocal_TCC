@@ -34,9 +34,9 @@ function mensagemDeErro(status: number, corpo: unknown): string {
   return 'Não foi possível concluir a operação.';
 }
 
-export async function api<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
+export async function api<T>(caminho: string, opcoes: RequestInit = {}, json = true): Promise<T> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(json ? { 'Content-Type': 'application/json' } : {}),
     ...(opcoes.headers as Record<string, string>),
   };
   if (tokenAtual) headers.Authorization = `Bearer ${tokenAtual}`;

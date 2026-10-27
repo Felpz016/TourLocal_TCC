@@ -6,6 +6,7 @@ import { listarFavoritos } from '../../src/api/estabelecimentos';
 import type { Favorito } from '../../src/api/estabelecimentos';
 import { Aviso } from '../../src/components/ui/Aviso';
 import { cores } from '../../src/theme/cores';
+import { estilosLargura } from '../../src/theme/layout';
 import { formatarNota } from '../../src/util/formato';
 
 // Locais salvos pelo turista (UC09, RF14). Recarrega sempre que a aba ganha foco,
@@ -35,7 +36,7 @@ export default function SalvosTela() {
 
   return (
     <ScrollView
-      contentContainerStyle={styles.conteudo}
+      contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}
       refreshControl={<RefreshControl refreshing={carregando} onRefresh={carregar} />}
     >
       <Aviso texto={erro} />

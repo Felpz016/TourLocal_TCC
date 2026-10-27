@@ -29,6 +29,11 @@ class AcaoNaoPermitida(Exception):
     pass
 
 
+def pode_editar(estab: Estabelecimento, usuario: Usuario) -> bool:
+    """RN07: só o responsável pelo cadastro ou um administrador altera o estabelecimento."""
+    return usuario.tipo == TipoUsuario.ADMINISTRADOR or estab.id_responsavel == usuario.id_usuario
+
+
 def buscar_visivel(db: Session, id_estab: int, usuario: Usuario) -> Estabelecimento:
     """Estabelecimento verificado (RN01); o responsável e o administrador veem os pendentes."""
     estab = db.scalar(
@@ -42,10 +47,7 @@ def buscar_visivel(db: Session, id_estab: int, usuario: Usuario) -> Estabelecime
     )
     if estab is None:
         raise NaoEncontrado()
-    pode_ver_pendente = (
-        usuario.tipo == TipoUsuario.ADMINISTRADOR or estab.id_responsavel == usuario.id_usuario
-    )
-    if not estab.verificado and not pode_ver_pendente:
+    if not estab.verificado and not pode_editar(estab, usuario):
         raise NaoEncontrado()
     return estab
 
@@ -96,8 +98,11 @@ def detalhar(
             )
             for h in sorted(estab.horarios, key=lambda h: (h.dia_semana, h.hora_abertura))
         ],
-        aberto_agora=esta_aberto(estab.horarios, agora),
-        fotos=[FotoOut(url=f.url, legenda=f.legenda) for f in estab.fotos],
+        aberto_agora=False if estab.fechado_temporariamente else esta_aberto(estab.horarios, agora),
+        fechado_temporariamente=estab.fechado_temporariamente,
+        verificado=estab.verificado,
+        pode_editar=pode_editar(estab, usuario),
+        fotos=[FotoOut(id_foto=f.id_foto, url=f.url, legenda=f.legenda) for f in estab.fotos],
         nota_media=round(media, 1) if media is not None else None,
         total_avaliacoes=total,
         distancia_km=round(distancia, 2) if distancia is not None else None,
