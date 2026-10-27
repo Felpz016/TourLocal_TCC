@@ -8,4 +8,8 @@ export const cores = {
   erro: '#B3261E',
   fundo: '#FFFFFF',
   fundoCampo: '#F6F6F6',
+  // Âmbar escuro: as estrelas também precisam de contraste sobre o fundo branco.
+  estrela: '#B26A00',
+  favorito: '#C2185B',
+  fundoDestaque: '#E6F4EA',
 };

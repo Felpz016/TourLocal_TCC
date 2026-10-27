@@ -76,6 +76,8 @@ class LugarOsm:
     descricao: str | None
     acessibilidade: bool
     opcoes_alimentares: str | None = None
+    telefone: str | None = None
+    site: str | None = None
     horarios: list[tuple[int, time, time]] | None = field(default=None)
 
 
@@ -128,6 +130,8 @@ def converter(elemento: dict, cidade: str) -> LugarOsm | None:
         descricao=descricao,
         acessibilidade=tags.get("wheelchair") == "yes",
         opcoes_alimentares=_opcoes_alimentares(tags),
+        telefone=(tags.get("phone") or tags.get("contact:phone") or "")[:40] or None,
+        site=(tags.get("website") or tags.get("contact:website") or "")[:255] or None,
         horarios=interpretar(tags.get("opening_hours")),
     )
 
@@ -170,6 +174,8 @@ def salvar(db: Session, lugares: list[LugarOsm], verificar: bool = True) -> tupl
         estab.descricao = lugar.descricao
         estab.acessibilidade = lugar.acessibilidade
         estab.opcoes_alimentares = lugar.opcoes_alimentares
+        estab.telefone = lugar.telefone
+        estab.site = lugar.site
         estab.categorias = [categorias[lugar.categoria]]
         if lugar.horarios is not None:
             estab.horarios = [

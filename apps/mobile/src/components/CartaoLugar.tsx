@@ -1,13 +1,9 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Recomendacao } from '../api/recomendacoes';
 import { cores } from '../theme/cores';
-
-const PRECO = { economico: '$', moderado: '$$', alto: '$$$' } as const;
-
-function formatarDistancia(km: number) {
-  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1).replace('.', ',')} km`;
-}
+import { PRECO, formatarDistancia, formatarNota } from '../util/formato';
 
 function Selo({ texto, cor }: { texto: string; cor: string }) {
   return <Text style={[styles.selo, { color: cor, borderColor: cor }]}>{texto}</Text>;
@@ -17,14 +13,17 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
   const detalhes = [
     lugar.categorias.join(', '),
     lugar.faixa_preco ? PRECO[lugar.faixa_preco] : null,
-    lugar.nota_media !== null ? `★ ${lugar.nota_media.toFixed(1).replace('.', ',')}` : null,
+    lugar.nota_media !== null ? `★ ${formatarNota(lugar.nota_media)}` : null,
   ].filter(Boolean);
 
   return (
-    <View
-      style={styles.cartao}
-      accessible
+    // Um toque no cartão abre os detalhes, de onde sai a rota (RNF03: até 3 toques).
+    <Pressable
+      style={({ pressed }) => [styles.cartao, pressed && { opacity: 0.7 }]}
+      accessibilityRole="button"
       accessibilityLabel={`${lugar.nome}, ${detalhes.join(', ')}`}
+      accessibilityHint="Abre os detalhes do local"
+      onPress={() => router.push(`/lugar/${lugar.id_estab}`)}
     >
       <View style={styles.topo}>
         <Text style={styles.nome} numberOfLines={2}>
@@ -51,7 +50,7 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
         {lugar.endereco}
         {lugar.acessibilidade ? '  ♿' : ''}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
