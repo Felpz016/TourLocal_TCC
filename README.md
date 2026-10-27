@@ -24,6 +24,12 @@ docker compose up --build
 
 Isso sobe o MySQL 8.4, aplica as migrações e inicia a API em http://localhost:8000. A documentação interativa fica em http://localhost:8000/docs.
 
+Para povoar a base com lugares reais da cidade-piloto (dados do OpenStreetMap):
+
+```bash
+docker compose exec api python -m app.importacao.osm --cidade Araraquara
+```
+
 ### API sem Docker (desenvolvimento)
 
 ```bash
@@ -50,6 +56,7 @@ Abra no celular com o Expo Go. Para o app enxergar a API no celular físico, cop
 ## Documentação da API
 
 - [Sprint 1: autenticação e perfil (API e telas)](docs/sprint-1-api.md)
+- [Sprint 2: localização, mapa e importação de lugares](docs/sprint-2-localizacao.md)
 
 ## Backlog
 

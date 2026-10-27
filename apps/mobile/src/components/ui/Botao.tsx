@@ -17,10 +17,7 @@ export function Botao({ titulo, onPress, carregando = false, variante = 'primari
       accessibilityState={{ disabled: carregando, busy: carregando }}
       disabled={carregando}
       onPress={onPress}
-      style={({ pressed }) => [
-        link ? styles.link : styles.primario,
-        pressed && { opacity: 0.7 },
-      ]}
+      style={({ pressed }) => [link ? styles.link : styles.primario, pressed && { opacity: 0.7 }]}
     >
       {carregando ? (
         <ActivityIndicator color={cores.primariaTexto} />

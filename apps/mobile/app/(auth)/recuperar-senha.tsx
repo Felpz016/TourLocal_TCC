@@ -31,10 +31,7 @@ export default function RecuperarSenhaScreen() {
   }
 
   return (
-    <Tela
-      titulo="Esqueci a senha"
-      subtitulo="Enviaremos um link para você criar uma nova senha."
-    >
+    <Tela titulo="Esqueci a senha" subtitulo="Enviaremos um link para você criar uma nova senha.">
       <Campo
         rotulo="E-mail"
         value={email}
