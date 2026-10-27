@@ -45,3 +45,21 @@ def exigir_turista(usuario: UsuarioAtual) -> Usuario:
 
 
 Turista = Annotated[Usuario, Depends(exigir_turista)]
+
+
+def exigir_comerciante(usuario: UsuarioAtual) -> Usuario:
+    if usuario.tipo != TipoUsuario.COMERCIANTE:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Disponível apenas para comerciantes")
+    return usuario
+
+
+Comerciante = Annotated[Usuario, Depends(exigir_comerciante)]
+
+
+def exigir_administrador(usuario: UsuarioAtual) -> Usuario:
+    if usuario.tipo != TipoUsuario.ADMINISTRADOR:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Disponível apenas para administradores")
+    return usuario
+
+
+Administrador = Annotated[Usuario, Depends(exigir_administrador)]

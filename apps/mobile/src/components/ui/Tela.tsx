@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { cores } from '../../theme/cores';
+import { estilosLargura } from '../../theme/layout';
 
 type Props = { titulo?: string; subtitulo?: string; children: ReactNode };
 
@@ -14,7 +15,10 @@ export function Tela({ titulo, subtitulo, children }: Props) {
         style={styles.area}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}
+          keyboardShouldPersistTaps="handled"
+        >
           {titulo ? (
             <Text style={styles.titulo} accessibilityRole="header">
               {titulo}

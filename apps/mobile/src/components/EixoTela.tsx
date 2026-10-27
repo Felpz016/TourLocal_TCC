@@ -13,6 +13,7 @@ import { buscarRecomendacoes } from '../api/recomendacoes';
 import type { Eixo, Filtros, Recomendacoes } from '../api/recomendacoes';
 import { useLocalizacao } from '../localizacao/LocalizacaoContext';
 import { cores } from '../theme/cores';
+import { estilosLargura } from '../theme/layout';
 import { BarraLocalizacao } from './BarraLocalizacao';
 import { CartaoLugar } from './CartaoLugar';
 import { Mapa } from './Mapa';
@@ -63,7 +64,7 @@ export function EixoTela({ eixo, vazio }: Props) {
 
   return (
     <ScrollView
-      contentContainerStyle={styles.conteudo}
+      contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}
       refreshControl={<RefreshControl refreshing={carregando} onRefresh={carregar} />}
     >
       <BarraLocalizacao />

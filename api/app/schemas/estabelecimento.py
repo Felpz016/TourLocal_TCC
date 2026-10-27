@@ -12,7 +12,8 @@ class HorarioOut(BaseModel):
 
 
 class FotoOut(BaseModel):
-    url: str
+    id_foto: int
+    url: str  # relativa ("/uploads/...") quando a foto foi enviada pelo comerciante
     legenda: str | None
 
 
@@ -43,6 +44,9 @@ class EstabelecimentoDetalheOut(BaseModel):
     opcoes_alimentares: list[str]
     horarios: list[HorarioOut]
     aberto_agora: bool | None
+    fechado_temporariamente: bool
+    verificado: bool
+    pode_editar: bool
     fotos: list[FotoOut]
     nota_media: float | None
     total_avaliacoes: int

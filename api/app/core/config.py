@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     smtp_senha: str = ""
     email_remetente: str = "nao-responda@tourlocal.app"
 
+    # Fotos enviadas pelos comerciantes (RF17): pasta local servida em /uploads.
+    pasta_uploads: str = "uploads"
+    foto_tamanho_maximo_mb: int = 5
+    fotos_por_estabelecimento: int = 10
+
     # Serviços públicos do OpenStreetMap (geocodificação e importação de lugares).
     # A política de uso do Nominatim exige um User-Agent que identifique a aplicação.
     osm_user_agent: str = "TourLocal-TCC/0.1 (Fatec Araraquara)"

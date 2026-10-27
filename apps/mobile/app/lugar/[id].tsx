@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -14,12 +14,14 @@ import {
 import { ApiError } from '../../src/api/client';
 import { buscarDetalhe, definirFavorito } from '../../src/api/estabelecimentos';
 import type { Detalhe, Horario } from '../../src/api/estabelecimentos';
+import { urlFoto } from '../../src/api/gestao';
 import { useAuth } from '../../src/auth/AuthContext';
 import { SecaoAvaliacoes } from '../../src/components/detalhe/SecaoAvaliacoes';
 import { Aviso } from '../../src/components/ui/Aviso';
 import { Botao } from '../../src/components/ui/Botao';
 import { useLocalizacao } from '../../src/localizacao/LocalizacaoContext';
 import { cores } from '../../src/theme/cores';
+import { estilosLargura } from '../../src/theme/layout';
 import { PRECO, formatarDistancia, formatarNota } from '../../src/util/formato';
 import { abrirRota } from '../../src/util/rota';
 
@@ -115,13 +117,24 @@ export default function LugarTela() {
   ].filter(Boolean);
 
   return (
-    <ScrollView contentContainerStyle={styles.conteudo}>
+    <ScrollView contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}>
       <Stack.Screen
         options={{
           title: lugar.nome,
           headerRight: turista
             ? () => <BotaoFavorito ativo={lugar.favorito} onPress={alternarFavorito} />
-            : undefined,
+            : lugar.pode_editar
+              ? () => (
+                  <Pressable
+                    onPress={() => router.push(`/gestao/${lugar.id_estab}`)}
+                    accessibilityRole="button"
+                    hitSlop={12}
+                    style={styles.favorito}
+                  >
+                    <Text style={styles.editar}>Editar</Text>
+                  </Pressable>
+                )
+              : undefined,
         }}
       />
       {lugar.fotos.length > 0 ? (
@@ -133,7 +146,7 @@ export default function LugarTela() {
           {lugar.fotos.map((foto) => (
             <Image
               key={foto.url}
-              source={{ uri: foto.url }}
+              source={{ uri: urlFoto(foto.url) }}
               style={styles.foto}
               accessibilityLabel={foto.legenda ?? `Foto de ${lugar.nome}`}
             />
@@ -148,7 +161,13 @@ export default function LugarTela() {
         <Text style={styles.secundario}>{resumo.join(' · ')}</Text>
         <View style={styles.selos}>
           {lugar.aberto_agora === true ? <Text style={styles.selo}>Aberto agora</Text> : null}
-          {lugar.aberto_agora === false ? (
+          {!lugar.verificado ? (
+            <Text style={[styles.selo, styles.seloPendente]}>Aguardando verificação</Text>
+          ) : null}
+          {lugar.fechado_temporariamente ? (
+            <Text style={[styles.selo, styles.seloFechado]}>Fechado temporariamente</Text>
+          ) : null}
+          {lugar.aberto_agora === false && !lugar.fechado_temporariamente ? (
             <Text style={[styles.selo, styles.seloFechado]}>Fechado agora</Text>
           ) : null}
           {lugar.acessibilidade ? <Text style={styles.selo}>♿ Acessível</Text> : null}
@@ -245,6 +264,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   seloFechado: { color: cores.erro, backgroundColor: '#FDECEA' },
+  seloPendente: { color: '#7A4A00', backgroundColor: '#FFF4E0' },
+  editar: { color: cores.primaria, fontSize: 16, fontWeight: '600' },
   contato: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   horario: { flexDirection: 'row', gap: 12 },
   dia: { width: 40, fontWeight: '600' },
