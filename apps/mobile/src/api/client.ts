@@ -34,18 +34,41 @@ function mensagemDeErro(status: number, corpo: unknown): string {
   return 'Não foi possível concluir a operação.';
 }
 
-export async function api<T>(caminho: string, opcoes: RequestInit = {}, json = true): Promise<T> {
+// Sem resposta nesse tempo, a requisição é cancelada e o app mostra o erro em vez de ficar
+// carregando para sempre (por exemplo, quando o firewall descarta a conexão sem recusar).
+const TEMPO_LIMITE_MS = 15_000;
+
+function semConexao(): ApiError {
+  // Em desenvolvimento, mostra o endereço usado: ajuda a achar IP errado no .env.
+  const dica = __DEV__ ? ` (${API_URL})` : '';
+  return new ApiError(0, `Sem conexão com o servidor${dica}. Verifique sua internet.`);
+}
+
+export async function api<T>(
+  caminho: string,
+  opcoes: RequestInit = {},
+  json = true,
+  tempoLimiteMs = TEMPO_LIMITE_MS,
+): Promise<T> {
   const headers: Record<string, string> = {
     ...(json ? { 'Content-Type': 'application/json' } : {}),
     ...(opcoes.headers as Record<string, string>),
   };
   if (tokenAtual) headers.Authorization = `Bearer ${tokenAtual}`;
 
+  const controle = new AbortController();
+  const cronometro = setTimeout(() => controle.abort(), tempoLimiteMs);
   let resposta: Response;
   try {
-    resposta = await fetch(`${API_URL}${caminho}`, { ...opcoes, headers });
+    resposta = await fetch(`${API_URL}${caminho}`, {
+      ...opcoes,
+      headers,
+      signal: controle.signal,
+    });
   } catch {
-    throw new ApiError(0, 'Sem conexão com o servidor. Verifique sua internet.');
+    throw semConexao();
+  } finally {
+    clearTimeout(cronometro);
   }
 
   if (resposta.status === 204) return undefined as T;
@@ -59,10 +82,14 @@ export async function api<T>(caminho: string, opcoes: RequestInit = {}, json = t
 }
 
 export async function verificarApi(): Promise<boolean> {
+  const controle = new AbortController();
+  const cronometro = setTimeout(() => controle.abort(), 5_000);
   try {
-    const resposta = await fetch(`${API_URL}/health`);
+    const resposta = await fetch(`${API_URL}/health`, { signal: controle.signal });
     return resposta.ok;
   } catch {
     return false;
+  } finally {
+    clearTimeout(cronometro);
   }
 }
