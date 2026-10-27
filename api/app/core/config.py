@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     raio_busca_padrao_km: float = 3.0
     # RN03: raio máximo permitido no perfil.
     raio_busca_maximo_km: float = 20.0
+    # Fuso usado para saber se um estabelecimento está aberto agora (RN02).
+    fuso_horario: str = "America/Sao_Paulo"
+    # Velocidades médias para estimar o tempo de deslocamento (RF08).
+    velocidade_a_pe_kmh: float = 4.5
+    velocidade_carro_kmh: float = 25.0
 
     # Autenticação (RF02). Em produção, defina SECRET_KEY com um valor longo e aleatório.
     secret_key: str = "chave-de-desenvolvimento-troque-em-producao"
@@ -26,6 +31,12 @@ class Settings(BaseSettings):
     smtp_usuario: str = ""
     smtp_senha: str = ""
     email_remetente: str = "nao-responda@tourlocal.app"
+
+    # Serviços públicos do OpenStreetMap (geocodificação e importação de lugares).
+    # A política de uso do Nominatim exige um User-Agent que identifique a aplicação.
+    osm_user_agent: str = "TourLocal-TCC/0.1 (Fatec Araraquara)"
+    nominatim_url: str = "https://nominatim.openstreetmap.org"
+    overpass_url: str = "https://overpass-api.de/api/interpreter"
 
 
 settings = Settings()

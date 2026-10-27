@@ -1,10 +1,5 @@
-import { EixoPlaceholder } from '../../src/components/EixoPlaceholder';
+import { EixoTela } from '../../src/components/EixoTela';
 
 export default function FazerScreen() {
-  return (
-    <EixoPlaceholder
-      titulo="O que Fazer"
-      descricao="Pontos turísticos, parques, museus e eventos perto de você."
-    />
-  );
+  return <EixoTela eixo="fazer" vazio="Nenhum passeio aberto agora" />;
 }

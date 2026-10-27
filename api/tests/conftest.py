@@ -11,20 +11,30 @@ from app.main import app
 
 
 @pytest.fixture
-def client():
+def sessao_factory():
     # Banco SQLite em memória, recriado a cada teste.
     engine = create_engine(
         "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
     Base.metadata.create_all(engine)
-    TestingSession = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+    return sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
+
+@pytest.fixture
+def db(sessao_factory):
+    """Sessão para os testes prepararem dados direto no banco."""
+    with sessao_factory() as sessao:
+        yield sessao
+
+
+@pytest.fixture
+def client(sessao_factory):
     def get_test_db():
-        db = TestingSession()
+        sessao = sessao_factory()
         try:
-            yield db
+            yield sessao
         finally:
-            db.close()
+            sessao.close()
 
     app.dependency_overrides[get_db] = get_test_db
     yield TestClient(app)

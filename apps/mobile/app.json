@@ -23,7 +23,13 @@
     },
     "scheme": "tourlocal",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O TourLocal usa sua localização para recomendar lugares perto de você. Ela não fica salva."
+        }
+      ]
     ]
   }
 }
