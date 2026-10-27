@@ -85,6 +85,7 @@ export async function enviarFoto(id: number, foto: { uri: string; mimeType?: str
     `/estabelecimentos/${id}/fotos`,
     { method: 'POST', body: form, headers: {} },
     false,
+    60_000, // fotos grandes em rede móvel demoram mais
   );
 }
 
