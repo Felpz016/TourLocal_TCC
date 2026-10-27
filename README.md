@@ -57,6 +57,7 @@ Abra no celular com o Expo Go. Para o app enxergar a API no celular físico, cop
 
 - [Sprint 1: autenticação e perfil (API e telas)](docs/sprint-1-api.md)
 - [Sprint 2: localização, mapa e importação de lugares](docs/sprint-2-localizacao.md)
+- [Sprint 3: listagem dos três eixos](docs/sprint-3-listagem.md)
 
 ## Backlog
 
