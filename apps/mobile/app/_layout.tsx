@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 
 import { AuthProvider, useAuth } from '../src/auth/AuthContext';
+import { LocalizacaoProvider } from '../src/localizacao/LocalizacaoContext';
 import { cores } from '../src/theme/cores';
 
 function Navegacao() {
@@ -18,17 +19,21 @@ function Navegacao() {
 
   // Stack.Protected mostra cada grupo de telas só quando a condição é verdadeira:
   // sem login, apenas as telas de autenticação; com login, as abas e o perfil.
+  // A chave troca a cada login, então a posição é descartada quando o usuário sai (RN10).
   return (
-    <Stack screenOptions={{ headerTintColor: cores.primaria }}>
-      <Stack.Protected guard={!!usuario} redirectTo="/login">
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="preferencias" options={{ title: 'Minhas preferências' }} />
-      </Stack.Protected>
-      <Stack.Protected guard={!usuario} redirectTo="/">
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      </Stack.Protected>
-      <Stack.Screen name="redefinir-senha" options={{ title: 'Nova senha' }} />
-    </Stack>
+    <LocalizacaoProvider key={usuario?.id_usuario ?? 'anonimo'}>
+      <Stack screenOptions={{ headerTintColor: cores.primaria }}>
+        <Stack.Protected guard={!!usuario} redirectTo="/login">
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="preferencias" options={{ title: 'Minhas preferências' }} />
+          <Stack.Screen name="localizacao" options={{ title: 'Localização' }} />
+        </Stack.Protected>
+        <Stack.Protected guard={!usuario} redirectTo="/">
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        </Stack.Protected>
+        <Stack.Screen name="redefinir-senha" options={{ title: 'Nova senha' }} />
+      </Stack>
+    </LocalizacaoProvider>
   );
 }
 

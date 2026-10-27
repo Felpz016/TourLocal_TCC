@@ -13,6 +13,7 @@ from sqlalchemy import (
     Table,
     Text,
     Time,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -43,7 +44,10 @@ class Categoria(Base):
 class Estabelecimento(Base):
     __tablename__ = "estabelecimento"
     # RNF02: índice composto para a filtragem por área retangular antes do Haversine.
-    __table_args__ = (Index("ix_estabelecimento_lat_lng", "latitude", "longitude"),)
+    __table_args__ = (
+        Index("ix_estabelecimento_lat_lng", "latitude", "longitude"),
+        UniqueConstraint("origem_externa", name="uq_estabelecimento_origem_externa"),
+    )
 
     id_estab: Mapped[int] = mapped_column(primary_key=True)
     id_responsavel: Mapped[int | None] = mapped_column(
@@ -58,6 +62,9 @@ class Estabelecimento(Base):
     acessibilidade: Mapped[bool] = mapped_column(Boolean, default=False)
     # RN01: só estabelecimentos verificados aparecem nas recomendações.
     verificado: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Identificador na fonte de dados pública (ex.: "osm:node/123"), para a importação (RF19)
+    # poder ser repetida sem duplicar registros. Fica vazio nos cadastros feitos por comerciantes.
+    origem_externa: Mapped[str | None] = mapped_column(String(60))
 
     categorias: Mapped[list[Categoria]] = relationship(secondary=estab_categoria)
     horarios: Mapped[list["HorarioFuncionamento"]] = relationship(

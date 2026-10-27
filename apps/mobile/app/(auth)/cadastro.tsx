@@ -60,7 +60,11 @@ export default function CadastroScreen() {
       <View style={styles.tipos}>
         <Text style={styles.rotulo}>Eu sou</Text>
         <View style={styles.linha}>
-          <Opcao rotulo="Turista" selecionada={tipo === 'turista'} onPress={() => setTipo('turista')} />
+          <Opcao
+            rotulo="Turista"
+            selecionada={tipo === 'turista'}
+            onPress={() => setTipo('turista')}
+          />
           <Opcao
             rotulo="Dono de estabelecimento"
             selecionada={tipo === 'comerciante'}
@@ -69,7 +73,13 @@ export default function CadastroScreen() {
         </View>
       </View>
 
-      <Campo rotulo="Nome" value={nome} onChangeText={setNome} erro={erros.nome} autoComplete="name" />
+      <Campo
+        rotulo="Nome"
+        value={nome}
+        onChangeText={setNome}
+        erro={erros.nome}
+        autoComplete="name"
+      />
       <Campo
         rotulo="E-mail"
         value={email}

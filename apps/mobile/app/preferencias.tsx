@@ -61,9 +61,7 @@ export default function PreferenciasScreen() {
 
   if (!perfil) {
     return (
-      <Tela>
-        {erro ? <Aviso texto={erro} /> : <ActivityIndicator color={cores.primaria} />}
-      </Tela>
+      <Tela>{erro ? <Aviso texto={erro} /> : <ActivityIndicator color={cores.primaria} />}</Tela>
     );
   }
 

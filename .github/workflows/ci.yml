@@ -38,7 +38,7 @@ jobs:
       - run: ruff format --check .
       - run: pytest -q
       - name: Migrações sobem e descem no MySQL
-        run: alembic upgrade head && alembic downgrade base && alembic upgrade head
+        run: alembic upgrade head && alembic downgrade base && alembic upgrade head && alembic check
       - name: Imagem Docker da API
         run: docker build -t tourlocal-api .
 
@@ -56,3 +56,4 @@ jobs:
           cache-dependency-path: apps/mobile/package-lock.json
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run format:check

@@ -27,5 +27,11 @@ class Settings(BaseSettings):
     smtp_senha: str = ""
     email_remetente: str = "nao-responda@tourlocal.app"
 
+    # Serviços públicos do OpenStreetMap (geocodificação e importação de lugares).
+    # A política de uso do Nominatim exige um User-Agent que identifique a aplicação.
+    osm_user_agent: str = "TourLocal-TCC/0.1 (Fatec Araraquara)"
+    nominatim_url: str = "https://nominatim.openstreetmap.org"
+    overpass_url: str = "https://overpass-api.de/api/interpreter"
+
 
 settings = Settings()

@@ -1,8 +1,8 @@
-import { EixoPlaceholder } from '../../src/components/EixoPlaceholder';
+import { EixoTela } from '../../src/components/EixoTela';
 
 export default function ComerScreen() {
   return (
-    <EixoPlaceholder
+    <EixoTela
       titulo="Onde Comer"
       descricao="Restaurantes, lanchonetes, bares e cafeterias perto de você."
     />
