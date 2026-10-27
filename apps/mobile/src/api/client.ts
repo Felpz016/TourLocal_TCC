@@ -1,6 +1,22 @@
-// Endereço da API FastAPI. No celular físico, troque localhost pelo IP do computador
-// (ex.: EXPO_PUBLIC_API_URL=http://192.168.0.10:8000 no arquivo .env).
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
+import Constants from 'expo-constants';
+
+/**
+ * Endereço da API FastAPI.
+ *
+ * 1. EXPO_PUBLIC_API_URL no arquivo .env, se apontar para um endereço real (produção ou IP fixo).
+ * 2. Em desenvolvimento no celular, o mesmo computador de onde o Expo Go baixou o app
+ *    (hostUri, ex.: "172.20.10.2:8081"), na porta 8000. Assim não é preciso descobrir o IP.
+ * 3. localhost, que só funciona no navegador ou emulador do próprio computador.
+ */
+function descobrirApiUrl(): string {
+  const doEnv = process.env.EXPO_PUBLIC_API_URL;
+  if (doEnv && !doEnv.includes('localhost')) return doEnv;
+  const host = Constants.expoConfig?.hostUri?.split(':')[0];
+  if (__DEV__ && host && host !== 'localhost') return `http://${host}:8000`;
+  return doEnv ?? 'http://localhost:8000';
+}
+
+export const API_URL = descobrirApiUrl();
 
 /** Erro devolvido pela API, com o status HTTP e a mensagem já pronta para exibir. */
 export class ApiError extends Error {

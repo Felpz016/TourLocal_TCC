@@ -57,7 +57,15 @@ npm install
 npx expo start
 ```
 
-Abra no celular com o Expo Go. Para o app enxergar a API no celular físico, copie `.env.example` para `.env` e troque `localhost` pelo IP do computador na rede local.
+Abra no celular com o Expo Go, com o celular e o computador na mesma rede Wi-Fi. O app usa sozinho o IP do computador onde o Expo está rodando, na porta 8000; não é preciso configurar nada. Para usar outro servidor, defina `EXPO_PUBLIC_API_URL` num arquivo `.env` (veja `.env.example`).
+
+Se o celular não abrir `http://IP-DO-COMPUTADOR:8000/health`, libere a porta no firewall do Windows (PowerShell como administrador) e marque a rede Wi-Fi como privada:
+
+```powershell
+New-NetFirewallRule -DisplayName "TourLocal API" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow
+```
+
+Se o computador tiver várias placas de rede (VirtualBox, WSL), force o IP certo no QR code com `$env:REACT_NATIVE_PACKAGER_HOSTNAME="IP-DO-WI-FI"` antes de `npx expo start`.
 
 ## Documentação da API
 
