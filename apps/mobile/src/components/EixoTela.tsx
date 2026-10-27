@@ -4,28 +4,33 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native';
 
 import { ApiError } from '../api/client';
 import { buscarRecomendacoes } from '../api/recomendacoes';
-import type { Eixo, Recomendacoes } from '../api/recomendacoes';
+import type { Eixo, Filtros, Recomendacoes } from '../api/recomendacoes';
 import { useLocalizacao } from '../localizacao/LocalizacaoContext';
 import { cores } from '../theme/cores';
 import { BarraLocalizacao } from './BarraLocalizacao';
 import { CartaoLugar } from './CartaoLugar';
 import { Mapa } from './Mapa';
+import { PainelFiltros, temFiltroAtivo } from './PainelFiltros';
 import { Aviso } from './ui/Aviso';
+import { Botao } from './ui/Botao';
 
 type Props = { eixo: Eixo; vazio: string };
 
-// Tela de cada eixo (UC04): posição, mapa e a lista do mais perto ao mais longe.
+const km = (valor: number) => `${String(valor).replace('.', ',')} km`;
+
+// Tela de cada eixo (UC04): posição, mapa, filtros e a lista ordenada pela pontuação.
 export function EixoTela({ eixo, vazio }: Props) {
   const { posicao } = useLocalizacao();
   const [dados, setDados] = useState<Recomendacoes | null>(null);
-  const [incluirFechados, setIncluirFechados] = useState(false);
+  const [filtros, setFiltros] = useState<Filtros>({});
+  // Raio ampliado pelo usuário quando não há resultados (exceção E1); null = raio do perfil.
+  const [raioKm, setRaioKm] = useState<number | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -39,7 +44,8 @@ export function EixoTela({ eixo, vazio }: Props) {
           eixo,
           lat: posicao.latitude,
           lng: posicao.longitude,
-          incluirFechados,
+          raioKm,
+          filtros,
         }),
       );
     } catch (e) {
@@ -47,7 +53,7 @@ export function EixoTela({ eixo, vazio }: Props) {
     } finally {
       setCarregando(false);
     }
-  }, [eixo, posicao, incluirFechados]);
+  }, [eixo, posicao, raioKm, filtros]);
 
   useEffect(() => {
     carregar();
@@ -62,32 +68,33 @@ export function EixoTela({ eixo, vazio }: Props) {
     >
       <BarraLocalizacao />
       {posicao ? <Mapa posicao={posicao} lugares={resultados} /> : null}
-
-      {posicao ? (
-        <View style={styles.filtro}>
-          <Text style={styles.textoFiltro}>Mostrar também os fechados agora</Text>
-          <Switch
-            accessibilityLabel="Mostrar também os fechados agora"
-            value={incluirFechados}
-            onValueChange={setIncluirFechados}
-            trackColor={{ true: cores.primaria }}
-          />
-        </View>
-      ) : null}
+      {posicao ? <PainelFiltros eixo={eixo} filtros={filtros} onChange={setFiltros} /> : null}
 
       <Aviso texto={erro} />
       {carregando && !dados ? <ActivityIndicator color={cores.primaria} /> : null}
 
       {dados && resultados.length === 0 ? (
-        <Text style={styles.vazio}>
-          {vazio} num raio de {String(dados.raio_km).replace('.', ',')} km.
-        </Text>
+        // Exceção E1 do UC04: nada encontrado, sugere ampliar o raio ou limpar os filtros.
+        <View style={styles.vazio}>
+          <Text style={styles.textoVazio}>
+            {vazio} num raio de {km(dados.raio_km)}.
+          </Text>
+          {dados.raio_sugerido_km ? (
+            <Botao
+              titulo={`Buscar em até ${km(dados.raio_sugerido_km)}`}
+              onPress={() => setRaioKm(dados.raio_sugerido_km)}
+            />
+          ) : null}
+          {temFiltroAtivo(filtros) ? (
+            <Botao titulo="Limpar filtros" variante="link" onPress={() => setFiltros({})} />
+          ) : null}
+        </View>
       ) : null}
 
       {resultados.length > 0 ? (
         <Text style={styles.contagem} accessibilityRole="header">
-          {resultados.length} {resultados.length === 1 ? 'lugar' : 'lugares'} em até{' '}
-          {String(dados!.raio_km).replace('.', ',')} km
+          {resultados.length} {resultados.length === 1 ? 'recomendação' : 'recomendações'} em até{' '}
+          {km(dados!.raio_km)}
         </Text>
       ) : null}
       {resultados.map((lugar) => (
@@ -99,8 +106,7 @@ export function EixoTela({ eixo, vazio }: Props) {
 
 const styles = StyleSheet.create({
   conteudo: { padding: 16, gap: 12 },
-  filtro: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  textoFiltro: { fontSize: 15, color: cores.texto },
   contagem: { fontSize: 15, fontWeight: '700', color: cores.textoSecundario, marginTop: 4 },
-  vazio: { fontSize: 16, color: cores.textoSecundario, textAlign: 'center', paddingVertical: 24 },
+  vazio: { paddingVertical: 16, gap: 8 },
+  textoVazio: { fontSize: 16, color: cores.textoSecundario, textAlign: 'center' },
 });

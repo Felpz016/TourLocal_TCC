@@ -17,7 +17,7 @@ Cada resultado traz nome, categorias, endereço, coordenadas, faixa de preço, a
 
 1. **Filtragem espacial.** Primeiro, um retângulo em volta do usuário (`geo.caixa_delimitadora`), que o banco resolve com o índice de latitude e longitude (RNF02). Depois, a distância exata pela fórmula de Haversine (`geo.haversine_km`), mantendo só o que está dentro do raio. Na mesma consulta, saem os estabelecimentos não verificados (RN01).
 2. **Regras de negócio.** `horario.esta_aberto` confere os horários no fuso de São Paulo, inclusive faixas que passam da meia-noite. Os fechados saem da lista, a não ser que o usuário peça (RN02).
-3. **Ordenação.** Do mais perto para o mais longe, até 50 resultados. A pontuação ponderada (RN08) entra na Sprint 4.
+3. **Ordenação.** Pela pontuação ponderada, explicada em [sprint-4-motor.md](sprint-4-motor.md).
 
 A nota média considera só avaliações publicadas; as denunciadas ficam de fora (RN06).
 

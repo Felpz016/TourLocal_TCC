@@ -13,6 +13,7 @@ class RecomendacaoOut(BaseModel):
     longitude: float
     faixa_preco: FaixaPreco | None
     acessibilidade: bool
+    opcoes_alimentares: list[str]
     nota_media: float | None
     total_avaliacoes: int
     foto_url: str | None
@@ -22,8 +23,19 @@ class RecomendacaoOut(BaseModel):
     minutos_de_carro: int
     # None quando o estabelecimento não informou horários.
     aberto_agora: bool | None
+    # RN08 e RF11: pontuação de 0 a 1, nota de cada critério e os motivos em texto.
+    pontuacao: float
+    criterios: dict[str, float]
+    motivos: list[str]
 
 
 class RecomendacoesOut(BaseModel):
     raio_km: float
     resultados: list[RecomendacaoOut]
+    # Exceção E1 do UC04: quando nada é encontrado, o raio maior a sugerir (ou None).
+    raio_sugerido_km: float | None = None
+
+
+class CategoriaOut(BaseModel):
+    nome: str
+    eixo: Eixo

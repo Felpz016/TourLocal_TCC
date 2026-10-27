@@ -75,6 +75,7 @@ class LugarOsm:
     endereco: str
     descricao: str | None
     acessibilidade: bool
+    opcoes_alimentares: str | None = None
     horarios: list[tuple[int, time, time]] | None = field(default=None)
 
 
@@ -84,6 +85,20 @@ def _endereco(tags: dict[str, str], cidade: str) -> str:
     bairro = tags.get("addr:suburb")
     partes = [f"{rua}, {numero}" if rua and numero else rua, bairro, cidade]
     return " - ".join(p for p in partes if p)
+
+
+# Tags "diet:*" do OSM -> valores usados no perfil do turista.
+DIETAS = {
+    "diet:vegetarian": "vegetariano",
+    "diet:vegan": "vegano",
+    "diet:gluten_free": "sem_gluten",
+    "diet:lactose_free": "sem_lactose",
+}
+
+
+def _opcoes_alimentares(tags: dict[str, str]) -> str | None:
+    opcoes = [valor for tag, valor in DIETAS.items() if tags.get(tag) in ("yes", "only")]
+    return ",".join(opcoes) or None
 
 
 def converter(elemento: dict, cidade: str) -> LugarOsm | None:
@@ -112,6 +127,7 @@ def converter(elemento: dict, cidade: str) -> LugarOsm | None:
         endereco=_endereco(tags, cidade)[:255],
         descricao=descricao,
         acessibilidade=tags.get("wheelchair") == "yes",
+        opcoes_alimentares=_opcoes_alimentares(tags),
         horarios=interpretar(tags.get("opening_hours")),
     )
 
@@ -153,6 +169,7 @@ def salvar(db: Session, lugares: list[LugarOsm], verificar: bool = True) -> tupl
         estab.longitude = lugar.longitude
         estab.descricao = lugar.descricao
         estab.acessibilidade = lugar.acessibilidade
+        estab.opcoes_alimentares = lugar.opcoes_alimentares
         estab.categorias = [categorias[lugar.categoria]]
         if lugar.horarios is not None:
             estab.horarios = [

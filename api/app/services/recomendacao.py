@@ -1,14 +1,15 @@
-"""Motor de recomendação (UC04).
+"""Motor de recomendação (UC04), em três fases.
 
 Fase 1, filtragem espacial: retângulo em volta do usuário (usa o índice do banco) e
 depois a distância exata pela fórmula de Haversine, mantendo só o que está no raio.
-Fase 2, regras de negócio: só estabelecimentos verificados (RN01) e, salvo pedido
-explícito, só os abertos agora (RN02).
-Fase 3, ordenação: nesta versão, do mais próximo para o mais distante. A pontuação
-ponderada (RN08) entra na Sprint 4.
+Fase 2, regras de negócio e filtros: só verificados (RN01); só abertos agora, salvo
+pedido (RN02); só acessíveis quando o turista precisa; e os filtros escolhidos na tela
+(categoria, faixa de preço e nota mínima, RF09).
+Fase 3, ranqueamento: pontuação ponderada (RN08, app/services/pontuacao.py), da maior
+para a menor, com os motivos de cada recomendação (RF11).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from zoneinfo import ZoneInfo
@@ -17,13 +18,24 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
-from app.models import Avaliacao, Categoria, Estabelecimento
-from app.models.enums import Eixo, StatusAvaliacao
+from app.models import Avaliacao, Categoria, Estabelecimento, Perfil
+from app.models.enums import Eixo, FaixaPreco, StatusAvaliacao
 from app.repositories import usuario_repository
 from app.services import geo
 from app.services.horario import esta_aberto
+from app.services.pontuacao import Pontuacao, pontuar
 
 LIMITE_RESULTADOS = 50
+
+
+@dataclass
+class Filtros:
+    """Filtros adicionais da tela (RF09)."""
+
+    categoria: str | None = None
+    faixas_preco: list[FaixaPreco] = field(default_factory=list)
+    nota_minima: float | None = None
+    incluir_fechados: bool = False
 
 
 @dataclass
@@ -33,12 +45,16 @@ class Candidato:
     aberto_agora: bool | None
     nota_media: float | None = None
     total_avaliacoes: int = 0
+    pontuacao: Pontuacao | None = None
 
 
-def raio_do_usuario(db: Session, id_usuario: int, raio_pedido: float | None) -> float:
+def minutos(distancia_km: float, velocidade_kmh: float) -> int:
+    return max(1, round(distancia_km / velocidade_kmh * 60))
+
+
+def raio_do_usuario(perfil: Perfil | None, raio_pedido: float | None) -> float:
     """Raio pedido na consulta, senão o do perfil (RF03), senão o padrão (RN09); máx. 20 km."""
     if raio_pedido is None:
-        perfil = usuario_repository.buscar_perfil(db, id_usuario)
         raio_pedido = float(perfil.raio_busca_km) if perfil else settings.raio_busca_padrao_km
     return min(raio_pedido, settings.raio_busca_maximo_km)
 
@@ -73,13 +89,24 @@ def filtrar_por_raio(
 
 
 def aplicar_regras(
-    candidatos: list[tuple[Estabelecimento, float]], agora: datetime, incluir_fechados: bool
+    candidatos: list[tuple[Estabelecimento, float]],
+    agora: datetime,
+    filtros: Filtros,
+    perfil: Perfil | None,
 ) -> list[Candidato]:
-    """Fase 2. Locais sem horário informado continuam na lista (aberto_agora = None)."""
+    """Fase 2, exceto a nota mínima, que depende das notas calculadas depois."""
+    precisa_acessibilidade = bool(perfil and perfil.necessita_acessibilidade)
     resultado = []
     for estab, distancia in candidatos:
+        if precisa_acessibilidade and not estab.acessibilidade:
+            continue
+        if filtros.categoria and filtros.categoria not in {c.nome for c in estab.categorias}:
+            continue
+        if filtros.faixas_preco and estab.faixa_preco not in filtros.faixas_preco:
+            continue
+        # Lugares sem horário informado continuam na lista (aberto_agora = None).
         aberto = esta_aberto(estab.horarios, agora)
-        if aberto is False and not incluir_fechados:
+        if aberto is False and not filtros.incluir_fechados:
             continue
         resultado.append(Candidato(estab, distancia, aberto))
     return resultado
@@ -106,18 +133,32 @@ def recomendar(
     lat: float,
     lon: float,
     raio_km: float | None = None,
-    incluir_fechados: bool = False,
+    filtros: Filtros | None = None,
     agora: datetime | None = None,
 ) -> tuple[float, list[Candidato]]:
-    raio = raio_do_usuario(db, id_usuario, raio_km)
+    filtros = filtros or Filtros()
+    perfil = usuario_repository.buscar_perfil(db, id_usuario)
+    raio = raio_do_usuario(perfil, raio_km)
     agora = agora or datetime.now(ZoneInfo(settings.fuso_horario))
 
-    candidatos = aplicar_regras(filtrar_por_raio(db, eixo, lat, lon, raio), agora, incluir_fechados)
-    candidatos.sort(key=lambda c: c.distancia_km)
-    candidatos = candidatos[:LIMITE_RESULTADOS]
+    candidatos = aplicar_regras(filtrar_por_raio(db, eixo, lat, lon, raio), agora, filtros, perfil)
     _preencher_notas(db, candidatos)
-    return raio, candidatos
+    if filtros.nota_minima is not None:
+        candidatos = [
+            c
+            for c in candidatos
+            if c.nota_media is not None and c.nota_media >= filtros.nota_minima
+        ]
 
-
-def minutos(distancia_km: float, velocidade_kmh: float) -> int:
-    return max(1, round(distancia_km / velocidade_kmh * 60))
+    for c in candidatos:
+        c.pontuacao = pontuar(
+            c.estabelecimento,
+            c.distancia_km,
+            raio,
+            c.nota_media,
+            minutos(c.distancia_km, settings.velocidade_a_pe_kmh),
+            perfil,
+            eixo_comer=eixo == Eixo.COMER,
+        )
+    candidatos.sort(key=lambda c: (-c.pontuacao.total, c.distancia_km))
+    return raio, candidatos[:LIMITE_RESULTADOS]

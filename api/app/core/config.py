@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     # Velocidades médias para estimar o tempo de deslocamento (RF08).
     velocidade_a_pe_kmh: float = 4.5
     velocidade_carro_kmh: float = 25.0
+    # RN08: pesos da pontuação de recomendação; precisam somar 1.
+    peso_proximidade: float = 0.35
+    peso_avaliacao: float = 0.25
+    peso_orcamento: float = 0.20
+    peso_perfil: float = 0.20
 
     # Autenticação (RF02). Em produção, defina SECRET_KEY com um valor longo e aleatório.
     secret_key: str = "chave-de-desenvolvimento-troque-em-producao"
