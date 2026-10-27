@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, String, func
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -31,6 +31,8 @@ class Perfil(Base):
     faixa_orcamento: Mapped[FaixaPreco | None] = mapped_column(Enum(FaixaPreco))
     # Lista separada por vírgulas, ex.: "vegetariano,sem_gluten".
     restricoes_alimentares: Mapped[str | None] = mapped_column(String(255))
+    # RF03 pede a necessidade de acessibilidade no perfil; o campo não constava no DER original.
+    necessita_acessibilidade: Mapped[bool] = mapped_column(Boolean, default=False)
     tempo_disponivel_min: Mapped[int | None]
     raio_busca_km: Mapped[Decimal] = mapped_column(Numeric(4, 1), default=Decimal("3.0"))
 

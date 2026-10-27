@@ -20,6 +20,10 @@ services:
     build: ./api
     environment:
       DATABASE_URL: mysql+pymysql://tourlocal:${MYSQL_PASSWORD:-tourlocal}@db:3306/tourlocal
+      SECRET_KEY: ${SECRET_KEY:-chave-de-desenvolvimento-troque-em-producao}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_USUARIO: ${SMTP_USUARIO:-}
+      SMTP_SENHA: ${SMTP_SENHA:-}
     ports:
       - "8000:8000"
     depends_on:
