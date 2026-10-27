@@ -1,2 +1,52 @@
-# TourLocal_TCC
-Projeto de TCC visando criar um app voltado para turistas e vianjantes 
+# TourLocal
+
+Plataforma inteligente de recomendação e guia turístico personalizado em tempo real. Projeto de graduação do curso de Análise e Desenvolvimento de Sistemas da Fatec Araraquara.
+
+O app sugere, perto da localização do turista, opções em três eixos: **Onde Comer**, **Onde Ficar** e **O que Fazer**, filtradas por orçamento, preferências e tempo disponível.
+
+## Estrutura
+
+| Pasta | Conteúdo |
+|-------|----------|
+| `api/` | API REST em FastAPI (Python), SQLAlchemy e migrações Alembic |
+| `apps/mobile/` | App em React Native com Expo e Expo Router (TypeScript) |
+| `docs/` | Backlog do produto e documentação técnica |
+
+A versão web (RF20) entra na Sprint 6, consumindo a mesma API.
+
+## Como rodar
+
+### Banco de dados e API (Docker)
+
+```bash
+docker compose up --build
+```
+
+Isso sobe o MySQL 8.4, aplica as migrações e inicia a API em http://localhost:8000. A documentação interativa fica em http://localhost:8000/docs.
+
+### API sem Docker (desenvolvimento)
+
+```bash
+docker compose up -d db
+cd api
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+Testes e lint: `pytest` e `ruff check . && ruff format --check .`
+
+### App móvel
+
+```bash
+cd apps/mobile
+npm install
+npx expo start
+```
+
+Abra no celular com o Expo Go. Para o app enxergar a API no celular físico, copie `.env.example` para `.env` e troque `localhost` pelo IP do computador na rede local.
+
+## Backlog
+
+O planejamento das sprints está em [docs/backlog.md](docs/backlog.md) e cada item é uma issue com o rótulo da sprint (`sprint-0` a `sprint-6`).
