@@ -39,6 +39,14 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
         {formatarDistancia(lugar.distancia_km)} · {lugar.minutos_a_pe} min a pé ·{' '}
         {lugar.minutos_de_carro} min de carro
       </Text>
+      {/* RF11: por que este lugar foi recomendado. */}
+      <View style={styles.motivos}>
+        {lugar.motivos.map((motivo) => (
+          <Text key={motivo} style={styles.motivo}>
+            {motivo}
+          </Text>
+        ))}
+      </View>
       <Text style={styles.endereco} numberOfLines={1}>
         {lugar.endereco}
         {lugar.acessibilidade ? '  ♿' : ''}
@@ -70,4 +78,14 @@ const styles = StyleSheet.create({
   detalhes: { fontSize: 14, color: cores.textoSecundario },
   distancia: { fontSize: 14, color: cores.texto, fontWeight: '600' },
   endereco: { fontSize: 13, color: cores.textoSecundario },
+  motivos: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginVertical: 2 },
+  motivo: {
+    fontSize: 12,
+    color: cores.primaria,
+    backgroundColor: '#E6F4EA',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    overflow: 'hidden',
+  },
 });

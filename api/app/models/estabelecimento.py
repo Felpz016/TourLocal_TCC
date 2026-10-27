@@ -60,6 +60,9 @@ class Estabelecimento(Base):
     longitude: Mapped[Decimal] = mapped_column(Numeric(9, 6))
     faixa_preco: Mapped[FaixaPreco | None] = mapped_column(Enum(FaixaPreco))
     acessibilidade: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Opções para restrições alimentares, separadas por vírgula (ex.: "vegetariano,vegano").
+    # Usadas na aderência ao perfil (RF03); o campo não constava no DER original.
+    opcoes_alimentares: Mapped[str | None] = mapped_column(String(120))
     # RN01: só estabelecimentos verificados aparecem nas recomendações.
     verificado: Mapped[bool] = mapped_column(Boolean, default=False)
     # Identificador na fonte de dados pública (ex.: "osm:node/123"), para a importação (RF19)

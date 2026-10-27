@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 
 from app.models import Avaliacao, Estabelecimento, HorarioFuncionamento, Usuario
-from app.models.enums import StatusAvaliacao, TipoUsuario
+from app.models.enums import FaixaPreco, StatusAvaliacao, TipoUsuario
 from app.services import recomendacao
 from app.services.categorias import garantir_categorias
 from tests.conftest import cadastrar_e_logar
@@ -130,3 +130,72 @@ def test_exige_login(client):
         client.get("/recomendacoes", params={"eixo": "comer", "lat": 0, "lng": 0}).status_code
         == 401
     )
+
+
+@pytest.fixture
+def com_detalhes(db, lugares):
+    """Acrescenta preço, acessibilidade e notas aos lugares do fixture `lugares`."""
+    from sqlalchemy import select
+
+    estabs = {e.nome: e for e in db.scalars(select(Estabelecimento))}
+    estabs["Perto"].faixa_preco = FaixaPreco.ALTO
+    estabs["Mais longe"].faixa_preco = FaixaPreco.ECONOMICO
+    estabs["Mais longe"].acessibilidade = True
+    estabs["Mais longe"].opcoes_alimentares = "vegetariano"
+    autores = [
+        Usuario(nome=f"U{i}", email=f"u{i}@a.com", senha_hash="x", tipo=TipoUsuario.TURISTA)
+        for i in range(3)
+    ]
+    db.add_all(autores)
+    db.flush()
+    db.add_all(
+        Avaliacao(id_usuario=u.id_usuario, id_estab=estabs["Mais longe"].id_estab, nota=5)
+        for u in autores
+    )
+    db.commit()
+
+
+def test_pontuacao_ordena_e_explica(client, com_detalhes, meio_dia):
+    headers = cadastrar_e_logar(client)
+    client.put(
+        "/perfil",
+        json={"faixa_orcamento": "economico", "restricoes_alimentares": ["vegetariano"]},
+        headers=headers,
+    )
+    resultados = _consultar(client, headers).json()["resultados"]
+    # "Mais longe" está a 2,8 km, mas é barato, bem avaliado e tem opção vegetariana.
+    assert [r["nome"] for r in resultados] == ["Mais longe", "Perto"]
+    primeiro = resultados[0]
+    assert primeiro["pontuacao"] > resultados[1]["pontuacao"]
+    assert set(primeiro["criterios"]) == {"proximidade", "avaliacao", "orcamento", "perfil"}
+    assert "Tem opção vegetariana" in primeiro["motivos"]
+    assert "Dentro do seu orçamento" in primeiro["motivos"]
+
+
+def test_acessibilidade_e_obrigatoria_para_quem_precisa(client, com_detalhes, meio_dia):
+    headers = cadastrar_e_logar(client)
+    client.put("/perfil", json={"necessita_acessibilidade": True}, headers=headers)
+    assert [r["nome"] for r in _consultar(client, headers).json()["resultados"]] == ["Mais longe"]
+
+
+def test_filtros_de_categoria_preco_e_nota(client, com_detalhes, meio_dia):
+    headers = cadastrar_e_logar(client)
+    nomes = lambda **p: [r["nome"] for r in _consultar(client, headers, **p).json()["resultados"]]  # noqa: E731
+    assert nomes(categoria="Restaurante") == ["Perto"]
+    assert nomes(faixa_preco=["economico", "moderado"]) == ["Mais longe"]
+    assert nomes(nota_minima=4.5) == ["Mais longe"]
+    assert nomes(nota_minima=4.5, categoria="Restaurante") == []
+
+
+def test_sem_resultados_sugere_raio_maior(client, lugares, meio_dia):
+    headers = cadastrar_e_logar(client)
+    corpo = _consultar(client, headers, eixo="fazer").json()
+    assert corpo["resultados"] == [] and corpo["raio_sugerido_km"] == 6.0
+    corpo = _consultar(client, headers, eixo="fazer", raio_km=20).json()
+    assert corpo["raio_sugerido_km"] is None
+
+
+def test_lista_categorias_do_eixo(client, lugares):
+    headers = cadastrar_e_logar(client)
+    nomes = [c["nome"] for c in client.get("/categorias?eixo=ficar", headers=headers).json()]
+    assert nomes == ["Hostel", "Hotel", "Motel", "Pousada"]

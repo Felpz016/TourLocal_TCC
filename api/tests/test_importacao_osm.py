@@ -20,6 +20,8 @@ RESTAURANTE = {
         "addr:street": "Avenida Exemplo",
         "addr:housenumber": "100",
         "wheelchair": "yes",
+        "diet:vegetarian": "yes",
+        "diet:vegan": "no",
         "opening_hours": "Tu-Su 11:00-15:00",
     },
 }
@@ -38,6 +40,7 @@ def test_converte_restaurante_com_endereco_horario_e_acessibilidade():
     assert lugar.endereco == "Avenida Exemplo, 100 - Araraquara"
     assert lugar.descricao == "Cozinha: italian, pizza"
     assert lugar.acessibilidade is True
+    assert lugar.opcoes_alimentares == "vegetariano"
     assert lugar.latitude == Decimal("-21.794600")
     assert len(lugar.horarios) == 6
 
