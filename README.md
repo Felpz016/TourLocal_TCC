@@ -47,6 +47,10 @@ npx expo start
 
 Abra no celular com o Expo Go. Para o app enxergar a API no celular físico, copie `.env.example` para `.env` e troque `localhost` pelo IP do computador na rede local.
 
+## Documentação da API
+
+- [Sprint 1: autenticação e perfil](docs/sprint-1-api.md)
+
 ## Backlog
 
 O planejamento das sprints está em [docs/backlog.md](docs/backlog.md) e cada item é uma issue com o rótulo da sprint (`sprint-0` a `sprint-6`).
