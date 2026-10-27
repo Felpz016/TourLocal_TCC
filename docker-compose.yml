@@ -11,13 +11,17 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      # Testa por TCP (127.0.0.1), e não pelo socket: na primeira inicialização o MySQL sobe
+      # um servidor temporário sem rede, que responderia ao ping pelo socket antes da hora.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--protocol=tcp"]
       interval: 5s
       timeout: 5s
       retries: 20
 
   api:
     build: ./api
+    # Se o banco ainda não aceitar conexões, a API tenta de novo em vez de ficar parada.
+    restart: on-failure
     environment:
       DATABASE_URL: mysql+pymysql://tourlocal:${MYSQL_PASSWORD:-tourlocal}@db:3306/tourlocal
       SECRET_KEY: ${SECRET_KEY:-chave-de-desenvolvimento-troque-em-producao}
