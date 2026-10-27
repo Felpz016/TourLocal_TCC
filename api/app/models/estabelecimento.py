@@ -56,6 +56,9 @@ class Estabelecimento(Base):
     nome: Mapped[str] = mapped_column(String(150))
     descricao: Mapped[str | None] = mapped_column(Text)
     endereco: Mapped[str] = mapped_column(String(255))
+    # Contato exibido nos detalhes (RF10); não constava no DER original.
+    telefone: Mapped[str | None] = mapped_column(String(40))
+    site: Mapped[str | None] = mapped_column(String(255))
     latitude: Mapped[Decimal] = mapped_column(Numeric(9, 6))
     longitude: Mapped[Decimal] = mapped_column(Numeric(9, 6))
     faixa_preco: Mapped[FaixaPreco | None] = mapped_column(Enum(FaixaPreco))

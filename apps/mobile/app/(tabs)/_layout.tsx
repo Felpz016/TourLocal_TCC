@@ -27,7 +27,7 @@ function AcoesCabecalho() {
 
 // Os três eixos de recomendação definidos no TGI: Onde Comer, Onde Ficar e O que Fazer.
 export default function TabsLayout() {
-  const { primeiroAcesso } = useAuth();
+  const { usuario, primeiroAcesso } = useAuth();
 
   // Logo após o cadastro, o turista define as preferências antes de ver as recomendações.
   if (primeiroAcesso) return <Redirect href="/preferencias" />;
@@ -50,6 +50,15 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="fazer"
         options={{ title: 'Fazer', tabBarIcon: () => <Icone emoji="🗺️" /> }}
+      />
+      {/* Salvos é só do turista (RF14); para os outros perfis a aba fica escondida. */}
+      <Tabs.Screen
+        name="salvos"
+        options={{
+          title: 'Salvos',
+          tabBarIcon: () => <Icone emoji="♥" />,
+          href: usuario?.tipo === 'turista' ? undefined : null,
+        }}
       />
     </Tabs>
   );

@@ -14,13 +14,13 @@ from datetime import datetime
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
-from app.models import Avaliacao, Categoria, Estabelecimento, Perfil
-from app.models.enums import Eixo, FaixaPreco, StatusAvaliacao
-from app.repositories import usuario_repository
+from app.models import Categoria, Estabelecimento, Perfil
+from app.models.enums import Eixo, FaixaPreco
+from app.repositories import avaliacao_repository, usuario_repository
 from app.services import geo
 from app.services.horario import esta_aberto
 from app.services.pontuacao import Pontuacao, pontuar
@@ -113,15 +113,7 @@ def aplicar_regras(
 
 
 def _preencher_notas(db: Session, candidatos: list[Candidato]) -> None:
-    ids = [c.estabelecimento.id_estab for c in candidatos]
-    if not ids:
-        return
-    linhas = db.execute(
-        select(Avaliacao.id_estab, func.avg(Avaliacao.nota), func.count())
-        .where(Avaliacao.id_estab.in_(ids), Avaliacao.status == StatusAvaliacao.PUBLICADA)
-        .group_by(Avaliacao.id_estab)
-    )
-    notas = {id_estab: (float(media), total) for id_estab, media, total in linhas}
+    notas = avaliacao_repository.notas_medias(db, [c.estabelecimento.id_estab for c in candidatos])
     for c in candidatos:
         c.nota_media, c.total_avaliacoes = notas.get(c.estabelecimento.id_estab, (None, 0))
 
