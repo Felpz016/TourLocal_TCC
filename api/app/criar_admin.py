@@ -11,6 +11,7 @@ import argparse
 import getpass
 
 from app.core.security import gerar_hash_senha
+from app.core.senha import problemas_da_senha
 from app.db.session import SessionLocal
 from app.models import Usuario
 from app.models.enums import TipoUsuario
@@ -29,9 +30,11 @@ def main() -> None:
             usuario.tipo = TipoUsuario.ADMINISTRADOR
             print(f"{usuario.email} agora é administrador.")
         else:
-            senha = getpass.getpass("Senha (mínimo 8 caracteres): ")
-            if len(senha) < 8:
-                raise SystemExit("Senha curta demais.")
+            senha = getpass.getpass(
+                "Senha (8+ caracteres, com maiúscula, minúscula e caractere especial): "
+            )
+            if problemas := problemas_da_senha(senha):
+                raise SystemExit("A senha precisa " + ", ".join(problemas) + ".")
             db.add(
                 Usuario(
                     nome=args.nome,

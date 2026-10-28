@@ -11,9 +11,11 @@ import { Icone } from '../../src/components/ui/Icone';
 import type { NomeIcone } from '../../src/components/ui/Icone';
 import { Tela } from '../../src/components/ui/Tela';
 import { Pressionavel } from '../../src/components/ui/Pressionavel';
+import { RequisitosSenha } from '../../src/components/ui/RequisitosSenha';
 import { cores } from '../../src/theme/cores';
 import { curva, raio } from '../../src/theme/estilo';
 import { fonte, tamanho } from '../../src/theme/fontes';
+import { senhaForte } from '../../src/util/senha';
 import { vibrar } from '../../src/util/vibracao';
 
 type Tipo = 'turista' | 'comerciante';
@@ -50,7 +52,7 @@ export default function CadastroScreen() {
     const novos: Record<string, string> = {};
     if (nome.trim().length < 2) novos.nome = 'Informe seu nome.';
     if (!EMAIL_VALIDO.test(email.trim())) novos.email = 'Informe um e-mail válido.';
-    if (senha.length < 8) novos.senha = 'A senha precisa de pelo menos 8 caracteres.';
+    if (!senhaForte(senha)) novos.senha = 'A senha ainda não atende a todos os requisitos.';
     if (confirmacao !== senha) novos.confirmacao = 'As senhas não são iguais.';
     setErros(novos);
     return Object.keys(novos).length === 0;
@@ -133,11 +135,12 @@ export default function CadastroScreen() {
         icone="lock-closed-outline"
         value={senha}
         onChangeText={setSenha}
-        erro={erros.senha}
-        dica="Pelo menos 8 caracteres."
+        // O aviso some assim que a senha passa a atender a todos os requisitos.
+        erro={senhaForte(senha) ? null : erros.senha}
         secureTextEntry
         autoComplete="new-password"
       />
+      <RequisitosSenha senha={senha} />
       <Campo
         rotulo="Confirme a senha"
         icone="lock-closed-outline"

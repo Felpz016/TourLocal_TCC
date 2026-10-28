@@ -41,7 +41,7 @@ def client(sessao_factory):
     app.dependency_overrides.clear()
 
 
-def cadastrar_e_logar(client, email="ana@exemplo.com", tipo="turista", senha="senha-forte-1"):
+def cadastrar_e_logar(client, email="ana@exemplo.com", tipo="turista", senha="Senha-forte-1"):
     client.post(
         "/auth/cadastro", json={"nome": "Ana", "email": email, "senha": senha, "tipo": tipo}
     )
