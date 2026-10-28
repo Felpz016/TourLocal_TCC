@@ -2,7 +2,6 @@ import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { cores } from '../theme/cores';
-import { raio, sombraForte } from '../theme/estilo';
 import { Icone } from './ui/Icone';
 import type { NomeIcone } from './ui/Icone';
 
@@ -17,8 +16,8 @@ const ICONES: Record<string, NomeIcone> = {
 };
 
 /**
- * Barra de abas flutuante em azul-marinho. A aba ativa vira uma pílula clara com o
- * nome; as outras mostram só o ícone. Fica acima do indicador de início do iPhone.
+ * Barra de abas no padrão do iOS: ícone e nome em todas as abas, com a ativa em azul.
+ * Fica colada embaixo e respeita o indicador de início do iPhone.
  */
 export function BarraAbas({
   state,
@@ -31,63 +30,58 @@ export function BarraAbas({
   const visiveis = state.routes;
 
   return (
-    <View style={[styles.area, { paddingBottom: Math.max(insets.bottom - 6, 12) }]}>
-      <View style={styles.barra} accessibilityRole="tablist">
-        {visiveis.map((rota) => {
-          const ativa = state.routes[state.index]?.key === rota.key;
-          const titulo = descriptors[rota.key]?.options.title ?? rota.name;
-          const icone = ICONES[rota.name] ?? 'ellipse';
-          return (
-            <Pressable
-              key={rota.key}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: ativa }}
-              accessibilityLabel={titulo}
-              onPress={() => {
-                const evento = emitter.emit({
-                  type: 'tabPress',
-                  target: rota.key,
-                  canPreventDefault: true,
-                });
-                if (!ativa && !evento.defaultPrevented) navigateToTab(rota.key);
-              }}
-              style={[styles.aba, ativa && styles.abaAtiva]}
+    <View
+      style={[styles.barra, { paddingBottom: Math.max(insets.bottom, 8) }]}
+      accessibilityRole="tablist"
+    >
+      {visiveis.map((rota) => {
+        const ativa = state.routes[state.index]?.key === rota.key;
+        const titulo = descriptors[rota.key]?.options.title ?? rota.name;
+        const icone = ICONES[rota.name] ?? 'ellipse';
+        const cor = ativa ? cores.primaria : cores.textoSecundario;
+        return (
+          <Pressable
+            key={rota.key}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: ativa }}
+            accessibilityLabel={titulo}
+            onPress={() => {
+              const evento = emitter.emit({
+                type: 'tabPress',
+                target: rota.key,
+                canPreventDefault: true,
+              });
+              if (!ativa && !evento.defaultPrevented) navigateToTab(rota.key);
+            }}
+            style={styles.aba}
+          >
+            <Icone
+              nome={(ativa ? icone : `${icone}-outline`) as NomeIcone}
+              tamanho={24}
+              cor={cor}
+            />
+            <Text
+              style={[styles.rotulo, { color: cor }, ativa && styles.rotuloAtivo]}
+              numberOfLines={1}
             >
-              <Icone
-                nome={(ativa ? icone : `${icone}-outline`) as NomeIcone}
-                tamanho={22}
-                cor={ativa ? cores.tinta : 'rgba(255, 255, 255, 0.75)'}
-              />
-              {ativa ? <Text style={styles.rotulo}>{titulo}</Text> : null}
-            </Pressable>
-          );
-        })}
-      </View>
+              {titulo}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  area: { paddingHorizontal: 16, paddingTop: 8, backgroundColor: cores.fundo },
   barra: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 6,
-    borderRadius: raio.pilula,
-    backgroundColor: cores.tinta,
-    ...sombraForte,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: cores.borda,
+    backgroundColor: cores.superficie,
   },
-  aba: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 52,
-    minWidth: 52,
-    paddingHorizontal: 14,
-    borderRadius: raio.pilula,
-  },
-  abaAtiva: { backgroundColor: cores.sol, paddingHorizontal: 18 },
-  rotulo: { fontSize: 14, fontWeight: '800', color: cores.tinta },
+  aba: { flex: 1, alignItems: 'center', gap: 3, minHeight: 44 },
+  rotulo: { fontSize: 11, fontWeight: '500' },
+  rotuloAtivo: { fontWeight: '700' },
 });

@@ -2,7 +2,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 
 import type { Eixo } from '../api/recomendacoes';
 import { urlFoto } from '../api/gestao';
-import { corDoLugar, cores } from '../theme/cores';
+import { tomDoLugar } from '../theme/cores';
 import { fonte } from '../theme/fontes';
 import type { NomeIcone } from './ui/Icone';
 
@@ -22,20 +22,22 @@ export function inicial(nome: string) {
 type Props = { nome: string; foto?: string | null; tamanho?: number };
 
 /**
- * Foto do local; sem foto, um selo colorido com a inicial do nome, como os
- * monogramas de contatos. Cada lugar mantém sempre a mesma cor.
+ * Foto do local; sem foto, um selo em tom claro com a inicial do nome, como os
+ * avatares de contato. Cada lugar mantém sempre o mesmo tom.
  */
 export function Miniatura({ nome, foto, tamanho = 72 }: Props) {
-  const estilo = [styles.base, { width: tamanho, height: tamanho, borderRadius: tamanho * 0.26 }];
+  const estilo = [styles.base, { width: tamanho, height: tamanho, borderRadius: tamanho * 0.22 }];
   if (foto) {
     return (
       <Image source={{ uri: urlFoto(foto) }} style={estilo} accessibilityIgnoresInvertColors />
     );
   }
+  const tom = tomDoLugar(nome);
   return (
-    <View style={[estilo, styles.selo, { backgroundColor: corDoLugar(nome) }]}>
-      <Text style={[styles.letra, { fontSize: tamanho * 0.5 }]}>{inicial(nome)}</Text>
-      <View style={[styles.sol, { width: tamanho * 0.16, height: tamanho * 0.16 }]} />
+    <View style={[estilo, styles.selo, { backgroundColor: tom.fundo }]}>
+      <Text style={[styles.letra, { fontSize: tamanho * 0.42, color: tom.letra }]}>
+        {inicial(nome)}
+      </Text>
     </View>
   );
 }
@@ -43,12 +45,5 @@ export function Miniatura({ nome, foto, tamanho = 72 }: Props) {
 const styles = StyleSheet.create({
   base: { overflow: 'hidden' },
   selo: { alignItems: 'center', justifyContent: 'center' },
-  letra: { fontFamily: fonte.titulo, color: cores.primariaTexto, marginTop: -2 },
-  sol: {
-    position: 'absolute',
-    top: '14%',
-    right: '14%',
-    borderRadius: 99,
-    backgroundColor: cores.sol,
-  },
+  letra: { fontFamily: fonte.titulo, marginTop: -2 },
 });

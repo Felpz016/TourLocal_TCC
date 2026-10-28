@@ -34,6 +34,6 @@ const styles = StyleSheet.create({
   cabecalho: { paddingHorizontal: 20, paddingBottom: 8, backgroundColor: cores.fundo },
   interno: { gap: 4 },
   linha: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  titulo: { fontFamily: fonte.titulo, fontSize: 34, color: cores.texto, letterSpacing: -0.8 },
+  titulo: { fontFamily: fonte.titulo, fontSize: 32, color: cores.texto, letterSpacing: -0.6 },
   subtitulo: { fontSize: 15, color: cores.textoSecundario },
 });

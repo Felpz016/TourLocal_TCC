@@ -168,7 +168,7 @@ export function EixoTela({ eixo, vazio }: Props) {
   );
 }
 
-const ALTURA_MAPA = 250;
+const ALTURA_MAPA = 230;
 
 const styles = StyleSheet.create({
   tela: { flex: 1, backgroundColor: cores.fundo },
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     marginTop: -28,
     paddingHorizontal: 20,
     paddingTop: 10,
-    gap: 12,
+    gap: 10,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     backgroundColor: cores.fundo,
@@ -221,15 +221,15 @@ const styles = StyleSheet.create({
     backgroundColor: cores.borda,
     marginBottom: 6,
   },
-  titulo: { fontFamily: fonte.titulo, fontSize: 32, color: cores.texto, letterSpacing: -0.8 },
-  subtitulo: { fontSize: 15, color: cores.textoSecundario, marginTop: -8 },
+  titulo: { fontFamily: fonte.titulo, fontSize: 28, color: cores.texto, letterSpacing: -0.5 },
+  subtitulo: { fontSize: 15, color: cores.textoSecundario, marginTop: -10 },
   cabecalhoLista: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     marginTop: 6,
   },
-  contagem: { fontFamily: fonte.subtitulo, fontSize: 19, color: cores.texto },
+  contagem: { fontSize: 15, fontWeight: '600', color: cores.texto },
   raio: { fontSize: 14, color: cores.textoSecundario },
   vazio: {
     gap: 10,

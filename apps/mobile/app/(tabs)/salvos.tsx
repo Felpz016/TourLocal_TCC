@@ -9,7 +9,7 @@ import { Aviso } from '../../src/components/ui/Aviso';
 import { Cabecalho } from '../../src/components/ui/Cabecalho';
 import { Icone } from '../../src/components/ui/Icone';
 import { cores } from '../../src/theme/cores';
-import { raio, sombra } from '../../src/theme/estilo';
+import { cartaoPlano, raio } from '../../src/theme/estilo';
 import { fonte } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 import { formatarNota } from '../../src/util/formato';
@@ -115,8 +115,7 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12,
     borderRadius: raio.cartao,
-    backgroundColor: cores.superficie,
-    ...sombra,
+    ...cartaoPlano,
   },
   info: { flex: 1, gap: 2 },
   nome: { fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
