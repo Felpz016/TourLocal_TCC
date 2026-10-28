@@ -16,8 +16,8 @@ import { buscarRecomendacoes } from '../api/recomendacoes';
 import type { Eixo, Filtros, Recomendacoes } from '../api/recomendacoes';
 import { useLocalizacao } from '../localizacao/LocalizacaoContext';
 import { cores } from '../theme/cores';
-import { raio, sombraForte } from '../theme/estilo';
-import { fonte } from '../theme/fontes';
+import { curva, raio, sombraForte } from '../theme/estilo';
+import { fonte, tamanho } from '../theme/fontes';
 import { estilosLargura } from '../theme/layout';
 import { BarraLocalizacao, PilulaLocalizacao } from './BarraLocalizacao';
 import { CartaoLugar } from './CartaoLugar';
@@ -26,6 +26,7 @@ import { Categorias, FolhaFiltros, contarFiltros, temFiltroAtivo } from './Paine
 import { Aviso } from './ui/Aviso';
 import { Botao } from './ui/Botao';
 import { Icone } from './ui/Icone';
+import { Pressionavel } from './ui/Pressionavel';
 
 type Props = { eixo: Eixo; vazio: string };
 
@@ -63,7 +64,11 @@ export function EixoTela({ eixo, vazio }: Props) {
         }),
       );
     } catch (e) {
-      setErro(e instanceof ApiError ? e.message : 'Não foi possível carregar as recomendações.');
+      setErro(
+        e instanceof ApiError
+          ? e.message
+          : 'Não foi possível carregar as recomendações. Puxe a tela para baixo para tentar de novo.',
+      );
     } finally {
       setCarregando(false);
     }
@@ -95,7 +100,7 @@ export function EixoTela({ eixo, vazio }: Props) {
           )}
           <View style={[styles.flutuantes, { top: top + 8 }]} pointerEvents="box-none">
             <PilulaLocalizacao />
-            <Pressable
+            <Pressionavel
               onPress={() => setFiltrosAbertos(true)}
               accessibilityRole="button"
               accessibilityLabel={ativos ? `Filtros, ${ativos} ativos` : 'Filtros'}
@@ -107,7 +112,7 @@ export function EixoTela({ eixo, vazio }: Props) {
                   <Text style={styles.textoContador}>{ativos}</Text>
                 </View>
               ) : null}
-            </Pressable>
+            </Pressionavel>
           </View>
         </View>
 
@@ -126,7 +131,7 @@ export function EixoTela({ eixo, vazio }: Props) {
           {dados && resultados.length === 0 ? (
             // Exceção E1 do UC04: nada encontrado, sugere ampliar o raio ou limpar os filtros.
             <View style={styles.vazio}>
-              <Text style={styles.tituloVazio}>Nada por aqui… ainda.</Text>
+              <Text style={styles.tituloVazio}>Nenhum lugar por perto</Text>
               <Text style={styles.textoVazio}>
                 {vazio} num raio de {km(dados.raio_km)}.
               </Text>
@@ -185,7 +190,7 @@ const styles = StyleSheet.create({
   botaoFiltros: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: raio.pilula,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: cores.superficie,
@@ -197,48 +202,55 @@ const styles = StyleSheet.create({
     right: -2,
     minWidth: 18,
     height: 18,
-    borderRadius: 9,
+    borderRadius: raio.pilula,
     paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: cores.primaria,
   },
-  textoContador: { fontSize: 11, fontWeight: '800', color: cores.primariaTexto },
+  textoContador: { fontSize: tamanho.mini, fontWeight: '800', color: cores.primariaTexto },
   folha: {
     marginTop: -28,
     paddingHorizontal: 20,
     paddingTop: 10,
     gap: 10,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: raio.folha,
+    borderTopRightRadius: raio.folha,
+    ...curva,
     backgroundColor: cores.fundo,
   },
   alca: {
     alignSelf: 'center',
     width: 40,
     height: 5,
-    borderRadius: 3,
+    borderRadius: raio.pilula,
     backgroundColor: cores.borda,
     marginBottom: 6,
   },
-  titulo: { fontFamily: fonte.titulo, fontSize: 28, color: cores.texto, letterSpacing: -0.5 },
-  subtitulo: { fontSize: 15, color: cores.textoSecundario, marginTop: -10 },
+  titulo: {
+    fontFamily: fonte.titulo,
+    fontSize: tamanho.tela,
+    color: cores.texto,
+    letterSpacing: -0.5,
+  },
+  subtitulo: { fontSize: tamanho.corpo, color: cores.textoSecundario, marginTop: -10 },
   cabecalhoLista: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     marginTop: 6,
   },
-  contagem: { fontSize: 15, fontWeight: '600', color: cores.texto },
-  raio: { fontSize: 14, color: cores.textoSecundario },
+  contagem: { fontSize: tamanho.corpo, fontWeight: '600', color: cores.texto },
+  raio: { fontSize: tamanho.rotulo, color: cores.textoSecundario },
   vazio: {
     gap: 10,
     padding: 20,
     borderRadius: raio.cartao,
+    ...curva,
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: cores.borda,
   },
-  tituloVazio: { fontFamily: fonte.subtitulo, fontSize: 20, color: cores.texto },
-  textoVazio: { fontSize: 15, lineHeight: 21, color: cores.textoSecundario },
+  tituloVazio: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.texto },
+  textoVazio: { fontSize: tamanho.corpo, lineHeight: 21, color: cores.textoSecundario },
 });

@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { TextInputProps } from 'react-native';
 
 import { cores } from '../../theme/cores';
-import { raio } from '../../theme/estilo';
+import { curva, raio } from '../../theme/estilo';
+import { tamanho } from '../../theme/fontes';
 import { Icone } from './Icone';
 import type { NomeIcone } from './Icone';
 
@@ -79,7 +80,7 @@ export function Campo({
 
 const styles = StyleSheet.create({
   container: { gap: 6 },
-  rotulo: { fontSize: 14, fontWeight: '600', color: cores.texto },
+  rotulo: { fontSize: tamanho.rotulo, fontWeight: '600', color: cores.texto },
   caixa: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -89,12 +90,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: cores.borda,
     borderRadius: raio.campo,
+    ...curva,
     backgroundColor: cores.superficie,
   },
   caixaMultilinha: { alignItems: 'flex-start', paddingVertical: 12 },
   caixaFocada: { borderColor: cores.primaria, borderWidth: 2, paddingHorizontal: 13 },
   caixaErro: { borderColor: cores.erro },
-  input: { flex: 1, minWidth: 0, fontSize: 16, color: cores.texto, paddingVertical: 12 },
-  erro: { color: cores.erro, fontSize: 14 },
-  dica: { color: cores.textoSecundario, fontSize: 13 },
+  input: { flex: 1, minWidth: 0, fontSize: tamanho.campo, color: cores.texto, paddingVertical: 12 },
+  erro: { color: cores.erro, fontSize: tamanho.rotulo },
+  dica: { color: cores.textoSecundario, fontSize: tamanho.apoio },
 });

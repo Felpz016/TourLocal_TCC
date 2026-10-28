@@ -1,14 +1,15 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import type { Recomendacao } from '../api/recomendacoes';
 import { cores } from '../theme/cores';
-import { cartaoPlano, raio } from '../theme/estilo';
-import { fonte } from '../theme/fontes';
+import { cartaoPlano, curva, raio } from '../theme/estilo';
+import { fonte, tamanho } from '../theme/fontes';
 import { PRECO, formatarDistancia, formatarNota } from '../util/formato';
 import { Estrelas } from './detalhe/Estrelas';
 import { Miniatura } from './Miniatura';
 import { Icone } from './ui/Icone';
+import { Pressionavel } from './ui/Pressionavel';
 
 // Distância e nota já aparecem no cartão; o motivo mostrado é o próximo da lista.
 const repetido = (motivo: string) => / a pé | km de você|^Bem avaliado/.test(motivo);
@@ -24,7 +25,7 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
 
   return (
     // Um toque no cartão abre os detalhes, de onde sai a rota (RNF03: até 3 toques).
-    <Pressable
+    <Pressionavel
       style={({ pressed }) => [styles.cartao, pressed && styles.pressionado]}
       accessibilityRole="button"
       accessibilityLabel={`${lugar.nome}, ${detalhes.join(', ')}, ${lugar.minutos_a_pe} minutos a pé`}
@@ -80,7 +81,7 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
           </Text>
         ) : null}
       </View>
-    </Pressable>
+    </Pressionavel>
   );
 }
 
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
   pressionado: { backgroundColor: cores.fundoCampo },
   info: { flex: 1, gap: 3 },
   topo: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  nome: { flex: 1, fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
+  nome: { flex: 1, fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
   ape: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -105,19 +106,20 @@ const styles = StyleSheet.create({
     borderRadius: raio.pilula,
     backgroundColor: cores.fundoDestaque,
   },
-  textoApe: { fontSize: 13, fontWeight: '700', color: cores.primariaEscura },
+  textoApe: { fontSize: tamanho.apoio, fontWeight: '700', color: cores.primariaEscura },
   linha: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  nota: { fontSize: 13, fontWeight: '600', color: cores.texto },
-  detalhes: { flexShrink: 1, fontSize: 13, color: cores.textoSecundario },
-  situacao: { fontSize: 13, fontWeight: '600' },
+  nota: { fontSize: tamanho.apoio, fontWeight: '600', color: cores.texto },
+  detalhes: { flexShrink: 1, fontSize: tamanho.apoio, color: cores.textoSecundario },
+  situacao: { fontSize: tamanho.apoio, fontWeight: '600' },
   motivo: {
     alignSelf: 'flex-start',
     marginTop: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: raio.selo,
+    ...curva,
     overflow: 'hidden',
-    fontSize: 12,
+    fontSize: tamanho.legenda,
     fontWeight: '600',
     color: cores.texto,
     backgroundColor: cores.fundo,

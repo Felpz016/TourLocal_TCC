@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { cores } from '../../theme/cores';
+import { vibrar } from '../../util/vibracao';
 import { Icone } from '../ui/Icone';
 
 type Props = { nota: number; onChange?: (nota: number) => void; tamanho?: number };
@@ -26,7 +27,10 @@ export function Estrelas({ nota, onChange, tamanho = 16 }: Props) {
       {[1, 2, 3, 4, 5].map((valor) => (
         <Pressable
           key={valor}
-          onPress={() => onChange(valor)}
+          onPress={() => {
+            if (valor !== nota) vibrar.selecao();
+            onChange(valor);
+          }}
           accessibilityRole="radio"
           accessibilityState={{ checked: valor === nota }}
           accessibilityLabel={`${valor} ${valor === 1 ? 'estrela' : 'estrelas'}`}

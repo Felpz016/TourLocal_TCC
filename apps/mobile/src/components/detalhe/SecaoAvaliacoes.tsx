@@ -5,13 +5,14 @@ import { ApiError } from '../../api/client';
 import { avaliar, buscarAvaliacoes, denunciar, excluirAvaliacao } from '../../api/estabelecimentos';
 import type { Avaliacao, Detalhe } from '../../api/estabelecimentos';
 import { cores } from '../../theme/cores';
-import { raio } from '../../theme/estilo';
-import { fonte } from '../../theme/fontes';
+import { curva, raio } from '../../theme/estilo';
+import { fonte, tamanho } from '../../theme/fontes';
 import { formatarNota } from '../../util/formato';
 import { Aviso } from '../ui/Aviso';
 import { Botao } from '../ui/Botao';
 import { Campo } from '../ui/Campo';
 import { Estrelas } from './Estrelas';
+import { vibrar } from '../../util/vibracao';
 
 type Props = {
   lugar: Detalhe;
@@ -83,7 +84,10 @@ export function SecaoAvaliacoes({ lugar, podeAvaliar, aoMudar }: Props) {
     try {
       setAvaliacoes(await buscarAvaliacoes(lugar.id_estab));
     } catch {
-      setAviso({ texto: 'Não foi possível carregar as avaliações.', tipo: 'erro' });
+      setAviso({
+        texto: 'Não foi possível carregar as avaliações. Volte e abra o local de novo.',
+        tipo: 'erro',
+      });
     }
   }, [lugar.id_estab]);
 
@@ -96,13 +100,16 @@ export function SecaoAvaliacoes({ lugar, podeAvaliar, aoMudar }: Props) {
     setAviso(null);
     try {
       await acao();
+      vibrar.sucesso();
       setAviso({ texto: sucesso, tipo: 'sucesso' });
       await carregar();
       aoMudar();
       return true;
     } catch (e) {
+      vibrar.erro();
       setAviso({
-        texto: e instanceof ApiError ? e.message : 'Não foi possível concluir.',
+        texto:
+          e instanceof ApiError ? e.message : 'Não deu certo agora. Tente de novo em instantes.',
         tipo: 'erro',
       });
       return false;
@@ -200,34 +207,41 @@ export function SecaoAvaliacoes({ lugar, podeAvaliar, aoMudar }: Props) {
 
 const styles = StyleSheet.create({
   secao: { gap: 12 },
-  titulo: { fontFamily: fonte.subtitulo, fontSize: 21, color: cores.texto },
-  subtitulo: { fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
+  titulo: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.texto },
+  subtitulo: { fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
   placar: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  // A nota média é um número de destaque, como no resumo de avaliações da App Store.
   media: { fontFamily: fonte.titulo, fontSize: 48, lineHeight: 52, color: cores.texto },
   placarTextos: { gap: 4 },
-  resumo: { fontSize: 14, color: cores.textoSecundario },
+  resumo: { fontSize: tamanho.rotulo, color: cores.textoSecundario },
   formulario: {
     gap: 12,
     padding: 16,
     borderRadius: raio.cartao,
+    ...curva,
     backgroundColor: cores.fundo,
   },
   linha: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
-  item: { gap: 8, padding: 14, borderRadius: raio.cartao, backgroundColor: cores.fundo },
+  item: { gap: 8, padding: 14, borderRadius: raio.cartao, ...curva, backgroundColor: cores.fundo },
   itemTopo: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   itemTextos: { flex: 1, gap: 2 },
   avatar: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: raio.pilula,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: cores.tinta,
   },
-  letraAvatar: { fontFamily: fonte.subtitulo, fontSize: 15, color: cores.sol },
-  autor: { fontSize: 15, fontWeight: '700', color: cores.texto },
-  data: { fontSize: 12, color: cores.textoSecundario },
-  comentario: { fontSize: 15, lineHeight: 21, color: cores.texto },
-  denunciar: { fontSize: 13, color: cores.textoSecundario, fontWeight: '600', paddingVertical: 4 },
+  letraAvatar: { fontFamily: fonte.subtitulo, fontSize: tamanho.corpo, color: cores.sol },
+  autor: { fontSize: tamanho.corpo, fontWeight: '700', color: cores.texto },
+  data: { fontSize: tamanho.legenda, color: cores.textoSecundario },
+  comentario: { fontSize: tamanho.corpo, lineHeight: 21, color: cores.texto },
+  denunciar: {
+    fontSize: tamanho.apoio,
+    color: cores.textoSecundario,
+    fontWeight: '600',
+    paddingVertical: 4,
+  },
   confirmacao: { gap: 4 },
 });

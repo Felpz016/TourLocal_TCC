@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cores } from '../../theme/cores';
-import { fonte } from '../../theme/fontes';
+import { fonte, tamanho } from '../../theme/fontes';
 import { estilosLargura } from '../../theme/layout';
 
 type Props = { titulo: string; subtitulo?: string; acao?: ReactNode; children?: ReactNode };
@@ -18,7 +18,7 @@ export function Cabecalho({ titulo, subtitulo, acao, children }: Props) {
     <View style={[styles.cabecalho, { paddingTop: top + 16 }]}>
       <View style={[styles.interno, estilosLargura.conteudo]}>
         <View style={styles.linha}>
-          <Text style={styles.titulo} accessibilityRole="header">
+          <Text style={styles.titulo} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
             {titulo}
           </Text>
           {acao}
@@ -34,6 +34,11 @@ const styles = StyleSheet.create({
   cabecalho: { paddingHorizontal: 20, paddingBottom: 8, backgroundColor: cores.fundo },
   interno: { gap: 4 },
   linha: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  titulo: { fontFamily: fonte.titulo, fontSize: 32, color: cores.texto, letterSpacing: -0.6 },
-  subtitulo: { fontSize: 15, color: cores.textoSecundario },
+  titulo: {
+    fontFamily: fonte.titulo,
+    fontSize: tamanho.grande,
+    color: cores.texto,
+    letterSpacing: -0.6,
+  },
+  subtitulo: { fontSize: tamanho.corpo, color: cores.textoSecundario },
 });

@@ -1,13 +1,14 @@
 import { router } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { useLocalizacao } from '../localizacao/LocalizacaoContext';
 import { cores } from '../theme/cores';
-import { raio, sombraForte } from '../theme/estilo';
-import { fonte } from '../theme/fontes';
+import { curva, raio, sombraForte } from '../theme/estilo';
+import { fonte, tamanho } from '../theme/fontes';
 import { Botao } from './ui/Botao';
 import { Icone } from './ui/Icone';
+import { Pressionavel } from './ui/Pressionavel';
 
 /** Pílula no topo azul que mostra de onde vem a posição e abre a troca de local. */
 export function PilulaLocalizacao() {
@@ -28,7 +29,7 @@ export function PilulaLocalizacao() {
           : (posicao.endereco ?? 'Endereço informado');
 
   return (
-    <Pressable
+    <Pressionavel
       onPress={() => router.push('/localizacao')}
       accessibilityRole="button"
       accessibilityLabel={`Localização: ${texto}. Alterar`}
@@ -39,7 +40,7 @@ export function PilulaLocalizacao() {
         {texto}
       </Text>
       <Icone nome="chevron-down" tamanho={14} cor={cores.texto} />
-    </Pressable>
+    </Pressionavel>
   );
 }
 
@@ -88,11 +89,12 @@ const styles = StyleSheet.create({
     backgroundColor: cores.superficie,
     ...sombraForte,
   },
-  textoPilula: { flexShrink: 1, fontSize: 14, fontWeight: '700', color: cores.texto },
+  textoPilula: { flexShrink: 1, fontSize: tamanho.rotulo, fontWeight: '700', color: cores.texto },
   cartao: {
     gap: 10,
     padding: 20,
     borderRadius: raio.cartao,
+    ...curva,
     backgroundColor: cores.superficie,
     borderWidth: 1,
     borderColor: cores.divisoria,
@@ -101,11 +103,12 @@ const styles = StyleSheet.create({
   icone: {
     width: 48,
     height: 48,
-    borderRadius: 14,
+    borderRadius: raio.bloco,
+    ...curva,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: cores.fundoDestaque,
   },
-  titulo: { fontFamily: fonte.subtitulo, fontSize: 20, color: cores.texto },
-  texto: { flexShrink: 1, fontSize: 15, lineHeight: 21, color: cores.textoSecundario },
+  titulo: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.texto },
+  texto: { flexShrink: 1, fontSize: tamanho.corpo, lineHeight: 21, color: cores.textoSecundario },
 });

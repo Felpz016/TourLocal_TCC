@@ -25,13 +25,15 @@ import { Aviso } from '../../src/components/ui/Aviso';
 import { Mapa } from '../../src/components/Mapa';
 import { Icone } from '../../src/components/ui/Icone';
 import type { NomeIcone } from '../../src/components/ui/Icone';
+import { Pressionavel } from '../../src/components/ui/Pressionavel';
 import { useLocalizacao } from '../../src/localizacao/LocalizacaoContext';
 import { cores } from '../../src/theme/cores';
-import { fonte } from '../../src/theme/fontes';
-import { sombraForte } from '../../src/theme/estilo';
+import { curva, raio, sombraForte } from '../../src/theme/estilo';
+import { fonte, tamanho } from '../../src/theme/fontes';
 import { LARGURA_MAXIMA, estilosLargura } from '../../src/theme/layout';
 import { PRECO, formatarDistancia, formatarNota } from '../../src/util/formato';
 import { abrirRota } from '../../src/util/rota';
+import { vibrar } from '../../src/util/vibracao';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 // getDay() conta a partir do domingo; a API, a partir da segunda.
@@ -88,7 +90,7 @@ function BotaoRedondo({
   selecionado?: boolean;
 }) {
   return (
-    <Pressable
+    <Pressionavel
       onPress={onPress}
       hitSlop={8}
       accessibilityRole="button"
@@ -97,7 +99,7 @@ function BotaoRedondo({
       style={({ pressed }) => [styles.redondo, pressed && { opacity: 0.8 }]}
     >
       <Icone nome={icone} tamanho={22} cor={cor} />
-    </Pressable>
+    </Pressionavel>
   );
 }
 
@@ -144,7 +146,7 @@ export default function LugarTela() {
       setErro(
         e instanceof ApiError && e.status === 404
           ? 'Este local não está disponível.'
-          : 'Não foi possível carregar o local.',
+          : 'Não foi possível carregar o local. Volte e tente de novo.',
       );
     }
   }, [idEstab, posicao]);
@@ -156,12 +158,13 @@ export default function LugarTela() {
   async function alternarFavorito() {
     if (!lugar) return;
     const novo = !lugar.favorito;
+    vibrar.toque();
     setLugar({ ...lugar, favorito: novo }); // muda na hora e desfaz se a API falhar
     try {
       await definirFavorito(lugar.id_estab, novo);
     } catch {
       setLugar((atual) => (atual ? { ...atual, favorito: !novo } : atual));
-      setErro('Não foi possível atualizar os salvos.');
+      setErro('Não foi possível salvar o local agora. Tente de novo.');
     }
   }
 
@@ -440,7 +443,7 @@ function BotaoAcao({
 }) {
   const cor = principal ? cores.primariaTexto : cores.primaria;
   return (
-    <Pressable
+    <Pressionavel
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={titulo}
@@ -452,7 +455,7 @@ function BotaoAcao({
     >
       <Icone nome={icone} tamanho={20} cor={cor} />
       <Text style={[styles.textoAcao, { color: cor }]}>{titulo}</Text>
-    </Pressable>
+    </Pressionavel>
   );
 }
 
@@ -513,7 +516,7 @@ const styles = StyleSheet.create({
   redondo: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: raio.pilula,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: cores.superficie,
@@ -524,45 +527,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 22,
     gap: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: raio.cartao,
+    borderTopRightRadius: raio.cartao,
+    ...curva,
     backgroundColor: cores.superficie,
   },
   cabecalho: { gap: 4 },
   bloco: { gap: 10 },
   nome: {
     fontFamily: fonte.titulo,
-    fontSize: 28,
+    fontSize: tamanho.tela,
     lineHeight: 32,
     color: cores.texto,
     letterSpacing: -0.5,
   },
-  subtitulo: { fontSize: 15, color: cores.textoSecundario },
-  situacao: { fontSize: 15, fontWeight: '600' },
-  titulo: { fontFamily: fonte.subtitulo, fontSize: 20, color: cores.texto },
-  texto: { fontSize: 15, lineHeight: 22, color: cores.texto },
+  subtitulo: { fontSize: tamanho.corpo, color: cores.textoSecundario },
+  situacao: { fontSize: tamanho.corpo, fontWeight: '600' },
+  titulo: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.texto },
+  texto: { fontSize: tamanho.corpo, lineHeight: 22, color: cores.texto },
   selos: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
   selo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    borderRadius: 8,
+    borderRadius: raio.selo,
+    ...curva,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  textoSelo: { fontSize: 13, fontWeight: '500' },
+  textoSelo: { fontSize: tamanho.apoio, fontWeight: '500' },
   acoes: { flexDirection: 'row', gap: 8 },
   botaoAcao: {
     flex: 1,
     height: 60,
     gap: 4,
-    borderRadius: 14,
+    borderRadius: raio.bloco,
+    ...curva,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: cores.fundoDestaque,
   },
   botaoPrincipal: { backgroundColor: cores.primaria },
-  textoAcao: { fontSize: 12, fontWeight: '600' },
+  textoAcao: { fontSize: tamanho.legenda, fontWeight: '600' },
   resumo: {
     flexDirection: 'row',
     paddingVertical: 12,
@@ -573,21 +579,26 @@ const styles = StyleSheet.create({
   coluna: { flex: 1, gap: 4, paddingHorizontal: 4 },
   separador: { width: StyleSheet.hairlineWidth, backgroundColor: cores.borda, marginRight: 12 },
   rotuloResumo: {
-    fontSize: 11,
+    fontSize: tamanho.mini,
     fontWeight: '600',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
     color: cores.textoSecundario,
   },
   valorLinha: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  valorResumo: { fontSize: 18, fontWeight: '700', color: cores.texto },
-  lista: { borderRadius: 14, paddingHorizontal: 14, backgroundColor: cores.fundo },
+  valorResumo: { fontSize: tamanho.cabecalho, fontWeight: '700', color: cores.texto },
+  lista: {
+    borderRadius: raio.bloco,
+    ...curva,
+    paddingHorizontal: 14,
+    backgroundColor: cores.fundo,
+  },
   linhaInfo: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   textosInfo: { flex: 1, gap: 2 },
-  rotuloInfo: { fontSize: 13, color: cores.textoSecundario },
-  valorInfo: { fontSize: 15, color: cores.texto },
+  rotuloInfo: { fontSize: tamanho.apoio, color: cores.textoSecundario },
+  valorInfo: { fontSize: tamanho.corpo, color: cores.texto },
   linhaHorario: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 11 },
   divisoria: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: cores.borda },
-  dia: { fontSize: 15, color: cores.texto },
+  dia: { fontSize: tamanho.corpo, color: cores.texto },
   hoje: { fontWeight: '700' },
 });

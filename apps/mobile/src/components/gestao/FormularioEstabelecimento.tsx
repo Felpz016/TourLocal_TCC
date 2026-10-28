@@ -10,6 +10,8 @@ import { buscarCategorias } from '../../api/recomendacoes';
 import type { Categoria, Eixo } from '../../api/recomendacoes';
 import type { FaixaPreco } from '../../api/tipos';
 import { cores } from '../../theme/cores';
+import { curva, raio } from '../../theme/estilo';
+import { tamanho } from '../../theme/fontes';
 import { Mapa } from '../Mapa';
 import { Aviso } from '../ui/Aviso';
 import { Botao } from '../ui/Botao';
@@ -17,6 +19,7 @@ import { Campo } from '../ui/Campo';
 import { Opcao } from '../ui/Opcao';
 import { Secao } from '../ui/Secao';
 import { EditorHorarios, horariosIniciais, paraApi } from './EditorHorarios';
+import { vibrar } from '../../util/vibracao';
 
 const EIXOS: { valor: Eixo; rotulo: string }[] = [
   { valor: 'comer', rotulo: 'Onde comer' },
@@ -139,7 +142,12 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
         fechado_temporariamente: fechado,
       });
     } catch (e) {
-      setErro(e instanceof ApiError ? e.message : 'Não foi possível salvar.');
+      vibrar.erro();
+      setErro(
+        e instanceof ApiError
+          ? e.message
+          : 'Não foi possível salvar. Confira a conexão e tente de novo.',
+      );
     } finally {
       setSalvando(false);
     }
@@ -294,9 +302,9 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
 const styles = StyleSheet.create({
   formulario: { gap: 20 },
   botoesLinha: { flexDirection: 'row', gap: 10 },
-  mapa: { borderRadius: 16, overflow: 'hidden' },
-  dica: { fontSize: 14, color: cores.textoSecundario },
-  rotulo: { fontSize: 16, fontWeight: '600', color: cores.texto },
+  mapa: { borderRadius: raio.bloco, ...curva, overflow: 'hidden' },
+  dica: { fontSize: tamanho.rotulo, color: cores.textoSecundario },
+  rotulo: { fontSize: tamanho.campo, fontWeight: '600', color: cores.texto },
   interruptor: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -2,6 +2,8 @@ import { StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import type { HorarioIn } from '../../api/gestao';
 import { cores } from '../../theme/cores';
+import { curva, raio } from '../../theme/estilo';
+import { tamanho } from '../../theme/fontes';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
@@ -81,18 +83,19 @@ export function EditorHorarios({ dias, onChange }: Props) {
 const styles = StyleSheet.create({
   lista: { gap: 6 },
   linha: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48 },
-  dia: { width: 72, fontSize: 15, color: cores.texto, fontWeight: '600' },
+  dia: { width: 72, fontSize: tamanho.corpo, color: cores.texto, fontWeight: '600' },
   hora: {
     width: 70,
     borderWidth: 1,
     borderColor: cores.borda,
-    borderRadius: 8,
+    borderRadius: raio.selo,
+    ...curva,
     paddingVertical: 8,
     textAlign: 'center',
-    fontSize: 15,
+    fontSize: tamanho.corpo,
     color: cores.texto,
     backgroundColor: cores.fundoCampo,
   },
-  ate: { fontSize: 15, color: cores.textoSecundario },
-  fechado: { fontSize: 15, color: cores.textoSecundario },
+  ate: { fontSize: tamanho.corpo, color: cores.textoSecundario },
+  fechado: { fontSize: tamanho.corpo, color: cores.textoSecundario },
 });

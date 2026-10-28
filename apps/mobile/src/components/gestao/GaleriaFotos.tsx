@@ -1,12 +1,15 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '../../api/client';
 import { enviarFoto, removerFoto, urlFoto } from '../../api/gestao';
 import { cores } from '../../theme/cores';
+import { curva, raio } from '../../theme/estilo';
+import { tamanho } from '../../theme/fontes';
 import { Aviso } from '../ui/Aviso';
 import { Icone } from '../ui/Icone';
+import { Pressionavel } from '../ui/Pressionavel';
 
 type Foto = { id_foto: number; url: string };
 type Props = { idEstab: number; fotos: Foto[]; aoMudar: () => void };
@@ -53,19 +56,19 @@ export function GaleriaFotos({ idEstab, fotos, aoMudar }: Props) {
               style={styles.foto}
               accessibilityLabel="Foto do local"
             />
-            <Pressable
+            <Pressionavel
               onPress={() => remover(f.id_foto)}
               accessibilityRole="button"
               accessibilityLabel="Remover foto"
-              hitSlop={8}
+              hitSlop={10}
               style={styles.remover}
             >
               <Icone nome="close" tamanho={14} cor={cores.primariaTexto} />
-            </Pressable>
+            </Pressionavel>
           </View>
         ))}
         {fotos.length < 10 ? (
-          <Pressable
+          <Pressionavel
             onPress={escolher}
             disabled={enviando}
             accessibilityRole="button"
@@ -80,7 +83,7 @@ export function GaleriaFotos({ idEstab, fotos, aoMudar }: Props) {
                 <Text style={styles.textoAdicionar}>Adicionar</Text>
               </>
             )}
-          </Pressable>
+          </Pressionavel>
         ) : null}
       </View>
       {fotos.length === 0 ? (
@@ -94,14 +97,20 @@ export function GaleriaFotos({ idEstab, fotos, aoMudar }: Props) {
 const styles = StyleSheet.create({
   galeria: { gap: 10 },
   grade: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  foto: { width: 96, height: 96, borderRadius: 16, backgroundColor: cores.fundoCampo },
+  foto: {
+    width: 96,
+    height: 96,
+    borderRadius: raio.bloco,
+    ...curva,
+    backgroundColor: cores.fundoCampo,
+  },
   remover: {
     position: 'absolute',
     top: 6,
     right: 6,
     width: 26,
     height: 26,
-    borderRadius: 13,
+    borderRadius: raio.pilula,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(11, 27, 58, 0.75)',
@@ -109,7 +118,8 @@ const styles = StyleSheet.create({
   adicionar: {
     width: 96,
     height: 96,
-    borderRadius: 16,
+    borderRadius: raio.bloco,
+    ...curva,
     gap: 2,
     alignItems: 'center',
     justifyContent: 'center',
@@ -118,6 +128,6 @@ const styles = StyleSheet.create({
     borderColor: cores.primaria,
     backgroundColor: cores.fundoDestaque,
   },
-  textoAdicionar: { fontSize: 13, fontWeight: '700', color: cores.primaria },
-  dica: { fontSize: 14, color: cores.textoSecundario },
+  textoAdicionar: { fontSize: tamanho.apoio, fontWeight: '700', color: cores.primaria },
+  dica: { fontSize: tamanho.rotulo, color: cores.textoSecundario },
 });

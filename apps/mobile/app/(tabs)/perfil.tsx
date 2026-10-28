@@ -6,8 +6,8 @@ import { ItemLista } from '../../src/components/ui/ItemLista';
 import { Cabecalho } from '../../src/components/ui/Cabecalho';
 import { useLocalizacao } from '../../src/localizacao/LocalizacaoContext';
 import { cores } from '../../src/theme/cores';
-import { raio, sombraForte } from '../../src/theme/estilo';
-import { fonte } from '../../src/theme/fontes';
+import { curva, raio, sombraForte } from '../../src/theme/estilo';
+import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 
 const TIPOS = { turista: 'Turista', comerciante: 'Comerciante', administrador: 'Administrador' };
@@ -85,21 +85,23 @@ const styles = StyleSheet.create({
     gap: 16,
     padding: 18,
     borderRadius: raio.cartao,
+    ...curva,
     backgroundColor: cores.tinta,
     ...sombraForte,
   },
   avatar: {
     width: 64,
     height: 64,
-    borderRadius: 20,
+    borderRadius: raio.cartao,
+    ...curva,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: cores.sol,
   },
-  iniciais: { fontFamily: fonte.titulo, fontSize: 26, color: cores.tinta },
+  iniciais: { fontFamily: fonte.titulo, fontSize: tamanho.titulo, color: cores.tinta },
   dados: { flex: 1, gap: 2 },
-  nome: { fontFamily: fonte.subtitulo, fontSize: 22, color: cores.primariaTexto },
-  email: { fontSize: 14, color: 'rgba(255, 255, 255, 0.75)' },
+  nome: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.primariaTexto },
+  email: { fontSize: tamanho.rotulo, color: 'rgba(255, 255, 255, 0.75)' },
   tipo: {
     alignSelf: 'flex-start',
     marginTop: 6,
@@ -107,7 +109,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: raio.pilula,
     overflow: 'hidden',
-    fontSize: 12,
+    fontSize: tamanho.legenda,
     fontWeight: '700',
     color: cores.primariaTexto,
     backgroundColor: 'rgba(255, 255, 255, 0.14)',
@@ -115,6 +117,7 @@ const styles = StyleSheet.create({
   conteudo: { padding: 20, paddingTop: 8, gap: 16 },
   grupo: {
     borderRadius: raio.cartao,
+    ...curva,
     backgroundColor: cores.superficie,
     overflow: 'hidden',
   },
