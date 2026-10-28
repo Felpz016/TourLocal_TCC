@@ -1,12 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '../../api/client';
 import { enviarFoto, removerFoto, urlFoto } from '../../api/gestao';
 import { cores } from '../../theme/cores';
 import { Aviso } from '../ui/Aviso';
-import { Botao } from '../ui/Botao';
+import { Icone } from '../ui/Icone';
 
 type Foto = { id_foto: number; url: string };
 type Props = { idEstab: number; fotos: Foto[]; aoMudar: () => void };
@@ -45,34 +45,79 @@ export function GaleriaFotos({ idEstab, fotos, aoMudar }: Props) {
 
   return (
     <View style={styles.galeria}>
-      {fotos.length > 0 ? (
-        <ScrollView horizontal contentContainerStyle={styles.lista}>
-          {fotos.map((f) => (
-            <View key={f.id_foto}>
-              <Image
-                source={{ uri: urlFoto(f.url) }}
-                style={styles.foto}
-                accessibilityLabel="Foto do local"
-              />
-              <Pressable onPress={() => remover(f.id_foto)} accessibilityRole="button" hitSlop={8}>
-                <Text style={styles.remover}>Remover</Text>
-              </Pressable>
-            </View>
-          ))}
-        </ScrollView>
-      ) : (
+      <View style={styles.grade}>
+        {fotos.map((f) => (
+          <View key={f.id_foto}>
+            <Image
+              source={{ uri: urlFoto(f.url) }}
+              style={styles.foto}
+              accessibilityLabel="Foto do local"
+            />
+            <Pressable
+              onPress={() => remover(f.id_foto)}
+              accessibilityRole="button"
+              accessibilityLabel="Remover foto"
+              hitSlop={8}
+              style={styles.remover}
+            >
+              <Icone nome="close" tamanho={14} cor={cores.primariaTexto} />
+            </Pressable>
+          </View>
+        ))}
+        {fotos.length < 10 ? (
+          <Pressable
+            onPress={escolher}
+            disabled={enviando}
+            accessibilityRole="button"
+            accessibilityLabel="Adicionar foto"
+            style={({ pressed }) => [styles.adicionar, pressed && { opacity: 0.7 }]}
+          >
+            {enviando ? (
+              <ActivityIndicator color={cores.primaria} />
+            ) : (
+              <>
+                <Icone nome="add" tamanho={26} cor={cores.primaria} />
+                <Text style={styles.textoAdicionar}>Adicionar</Text>
+              </>
+            )}
+          </Pressable>
+        ) : null}
+      </View>
+      {fotos.length === 0 ? (
         <Text style={styles.dica}>Nenhuma foto ainda. Locais com foto chamam mais atenção.</Text>
-      )}
+      ) : null}
       <Aviso texto={erro} />
-      <Botao titulo="Adicionar foto" variante="link" onPress={escolher} carregando={enviando} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  galeria: { gap: 8 },
-  lista: { gap: 8 },
-  foto: { width: 140, height: 100, borderRadius: 10, backgroundColor: cores.fundoCampo },
-  remover: { color: cores.erro, fontSize: 14, fontWeight: '600', paddingVertical: 6 },
+  galeria: { gap: 10 },
+  grade: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  foto: { width: 96, height: 96, borderRadius: 16, backgroundColor: cores.fundoCampo },
+  remover: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(11, 27, 58, 0.75)',
+  },
+  adicionar: {
+    width: 96,
+    height: 96,
+    borderRadius: 16,
+    gap: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: cores.primaria,
+    backgroundColor: cores.fundoDestaque,
+  },
+  textoAdicionar: { fontSize: 13, fontWeight: '700', color: cores.primaria },
   dica: { fontSize: 14, color: cores.textoSecundario },
 });

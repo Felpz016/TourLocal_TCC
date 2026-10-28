@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { cores } from '../../theme/cores';
 import { raio } from '../../theme/estilo';
+import { fonte } from '../../theme/fontes';
 import { Icone } from './Icone';
 import type { NomeIcone } from './Icone';
 
@@ -55,7 +56,7 @@ const styles = StyleSheet.create({
     backgroundColor: cores.fundoDestaque,
   },
   textos: { flex: 1, gap: 2 },
-  titulo: { fontSize: 17, fontWeight: '700', color: cores.texto },
+  titulo: { fontFamily: fonte.subtitulo, fontSize: 18, color: cores.texto },
   dica: { fontSize: 13, color: cores.textoSecundario },
   linha: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   coluna: { gap: 12 },

@@ -1,3 +1,4 @@
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
@@ -5,12 +6,15 @@ import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider, useAuth } from '../src/auth/AuthContext';
 import { LocalizacaoProvider } from '../src/localizacao/LocalizacaoContext';
 import { cores } from '../src/theme/cores';
+import { arquivosDeFonte } from '../src/theme/fontes';
 import { opcoesCabecalho } from '../src/theme/navegacao';
 
 function Navegacao() {
   const { usuario, carregando } = useAuth();
+  // Se a fonte falhar, o app segue com a do sistema em vez de travar no carregamento.
+  const [fontesProntas, erroFontes] = useFonts(arquivosDeFonte);
 
-  if (carregando) {
+  if (carregando || (!fontesProntas && !erroFontes)) {
     return (
       <View
         style={{

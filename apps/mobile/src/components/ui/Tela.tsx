@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cores } from '../../theme/cores';
+import { fonte } from '../../theme/fontes';
 import { estilosLargura } from '../../theme/layout';
 
 type Props = {
@@ -51,7 +52,13 @@ export function Tela({ titulo, subtitulo, children, rodape }: Props) {
 const styles = StyleSheet.create({
   area: { flex: 1, backgroundColor: cores.fundo },
   conteudo: { padding: 20, gap: 16, flexGrow: 1 },
-  titulo: { fontSize: 28, fontWeight: '800', color: cores.texto, letterSpacing: -0.4 },
+  titulo: {
+    fontFamily: fonte.titulo,
+    fontSize: 30,
+    lineHeight: 34,
+    color: cores.texto,
+    letterSpacing: -0.6,
+  },
   subtitulo: { fontSize: 15, lineHeight: 21, color: cores.textoSecundario, marginTop: -8 },
   rodape: {
     paddingHorizontal: 20,

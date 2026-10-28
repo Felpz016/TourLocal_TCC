@@ -12,11 +12,17 @@ import type { NomeIcone } from '../../src/components/ui/Icone';
 import { Tela } from '../../src/components/ui/Tela';
 import { cores } from '../../src/theme/cores';
 import { raio } from '../../src/theme/estilo';
+import { fonte } from '../../src/theme/fontes';
 
 type Tipo = 'turista' | 'comerciante';
 
 const TIPOS: { valor: Tipo; titulo: string; descricao: string; icone: NomeIcone }[] = [
-  { valor: 'turista', titulo: 'Sou turista', descricao: 'Quero descobrir lugares', icone: 'compass' },
+  {
+    valor: 'turista',
+    titulo: 'Sou turista',
+    descricao: 'Quero descobrir lugares',
+    icone: 'compass',
+  },
   {
     valor: 'comerciante',
     titulo: 'Tenho um negócio',
@@ -85,13 +91,17 @@ export default function CadastroScreen() {
               style={[styles.tipo, ativo && styles.tipoAtivo]}
             >
               <View style={styles.tipoTopo}>
-                <View style={[styles.tipoIcone, ativo && { backgroundColor: cores.superficie }]}>
-                  <Icone nome={t.icone} tamanho={22} cor={cores.primaria} />
+                <View style={[styles.tipoIcone, ativo && { backgroundColor: cores.sol }]}>
+                  <Icone nome={t.icone} tamanho={22} cor={ativo ? cores.tinta : cores.primaria} />
                 </View>
-                {ativo ? <Icone nome="checkmark-circle" tamanho={22} cor={cores.primaria} /> : null}
+                {ativo ? <Icone nome="checkmark-circle" tamanho={22} cor={cores.sol} /> : null}
               </View>
-              <Text style={styles.tipoTitulo}>{t.titulo}</Text>
-              <Text style={styles.tipoDescricao}>{t.descricao}</Text>
+              <Text style={[styles.tipoTitulo, ativo && { color: cores.primariaTexto }]}>
+                {t.titulo}
+              </Text>
+              <Text style={[styles.tipoDescricao, ativo && styles.descricaoAtiva]}>
+                {t.descricao}
+              </Text>
             </Pressable>
           );
         })}
@@ -150,7 +160,7 @@ const styles = StyleSheet.create({
     borderColor: cores.divisoria,
     backgroundColor: cores.superficie,
   },
-  tipoAtivo: { borderColor: cores.primaria, backgroundColor: cores.fundoDestaque },
+  tipoAtivo: { borderColor: cores.tinta, backgroundColor: cores.tinta },
   tipoTopo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   tipoIcone: {
     width: 42,
@@ -161,6 +171,7 @@ const styles = StyleSheet.create({
     backgroundColor: cores.fundoDestaque,
     marginBottom: 4,
   },
-  tipoTitulo: { fontSize: 15, fontWeight: '700', color: cores.texto },
+  tipoTitulo: { fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
   tipoDescricao: { fontSize: 13, color: cores.textoSecundario },
+  descricaoAtiva: { color: 'rgba(255, 255, 255, 0.75)' },
 });

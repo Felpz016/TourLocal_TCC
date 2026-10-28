@@ -1,11 +1,16 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { listarFavoritos } from '../../src/api/estabelecimentos';
 import type { Favorito } from '../../src/api/estabelecimentos';
+import { Miniatura } from '../../src/components/Miniatura';
 import { Aviso } from '../../src/components/ui/Aviso';
+import { Cabecalho } from '../../src/components/ui/Cabecalho';
+import { Icone } from '../../src/components/ui/Icone';
 import { cores } from '../../src/theme/cores';
+import { raio, sombra } from '../../src/theme/estilo';
+import { fonte } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 import { formatarNota } from '../../src/util/formato';
 
@@ -35,53 +40,85 @@ export default function SalvosTela() {
   );
 
   return (
-    <ScrollView
-      contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}
-      refreshControl={<RefreshControl refreshing={carregando} onRefresh={carregar} />}
-    >
-      <Aviso texto={erro} />
-      {favoritos?.length === 0 ? (
-        <Text style={styles.vazio}>
-          Você ainda não salvou nenhum local. Toque em ♡ nos detalhes de um lugar para guardá-lo
-          aqui.
-        </Text>
-      ) : null}
-      {favoritos?.map((f) => (
-        <Pressable
-          key={f.id_estab}
-          style={({ pressed }) => [styles.cartao, pressed && { opacity: 0.7 }]}
-          accessibilityRole="button"
-          onPress={() => router.push(`/lugar/${f.id_estab}`)}
-        >
-          <Text style={styles.nome}>{f.nome}</Text>
-          <Text style={styles.secundario}>
-            {[
-              f.categorias.join(', '),
-              f.nota_media !== null ? `★ ${formatarNota(f.nota_media)}` : null,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </Text>
-          <Text style={styles.secundario} numberOfLines={1}>
-            {f.endereco}
-          </Text>
-        </Pressable>
-      ))}
-    </ScrollView>
+    <View style={styles.tela}>
+      <Cabecalho
+        titulo="Salvos"
+        subtitulo={
+          favoritos?.length
+            ? `${favoritos.length} ${favoritos.length === 1 ? 'lugar guardado' : 'lugares guardados'} para depois`
+            : undefined
+        }
+      />
+      <ScrollView
+        contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}
+        refreshControl={<RefreshControl refreshing={carregando} onRefresh={carregar} />}
+      >
+        <Aviso texto={erro} />
+        {favoritos?.length === 0 ? (
+          <View style={styles.vazio}>
+            <Icone nome="heart-outline" tamanho={32} cor={cores.favorito} />
+            <Text style={styles.tituloVazio}>Sua lista está vazia</Text>
+            <Text style={styles.textoVazio}>
+              Toque no coração nos detalhes de um lugar para guardá-lo aqui.
+            </Text>
+          </View>
+        ) : null}
+        {favoritos?.map((f) => (
+          <Pressable
+            key={f.id_estab}
+            style={({ pressed }) => [styles.cartao, pressed && { opacity: 0.85 }]}
+            accessibilityRole="button"
+            onPress={() => router.push(`/lugar/${f.id_estab}`)}
+          >
+            <Miniatura nome={f.nome} tamanho={60} />
+            <View style={styles.info}>
+              <Text style={styles.nome} numberOfLines={1}>
+                {f.nome}
+              </Text>
+              <Text style={styles.secundario} numberOfLines={1}>
+                {[
+                  f.nota_media !== null ? `★ ${formatarNota(f.nota_media)}` : null,
+                  f.categorias.join(', '),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+              <Text style={styles.secundario} numberOfLines={1}>
+                {f.endereco}
+              </Text>
+            </View>
+            <Icone nome="heart" tamanho={22} cor={cores.favorito} />
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  conteudo: { padding: 16, gap: 12 },
-  vazio: { fontSize: 16, color: cores.textoSecundario, textAlign: 'center', paddingVertical: 24 },
-  cartao: {
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E2E2',
-    backgroundColor: cores.fundo,
-    gap: 4,
+  tela: { flex: 1, backgroundColor: cores.fundo },
+  conteudo: { padding: 20, paddingTop: 8, gap: 12 },
+  vazio: {
+    alignItems: 'center',
+    gap: 8,
+    padding: 28,
+    borderRadius: raio.cartao,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: cores.borda,
   },
-  nome: { fontSize: 17, fontWeight: '700', color: cores.texto },
-  secundario: { fontSize: 14, color: cores.textoSecundario },
+  tituloVazio: { fontFamily: fonte.subtitulo, fontSize: 20, color: cores.texto },
+  textoVazio: { fontSize: 15, color: cores.textoSecundario, textAlign: 'center' },
+  cartao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: raio.cartao,
+    backgroundColor: cores.superficie,
+    ...sombra,
+  },
+  info: { flex: 1, gap: 2 },
+  nome: { fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
+  secundario: { fontSize: 13, color: cores.textoSecundario },
 });

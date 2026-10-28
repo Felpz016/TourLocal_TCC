@@ -41,7 +41,9 @@ export function Campo({
           erro ? styles.caixaErro : null,
         ]}
       >
-        {icone ? <Icone nome={icone} cor={focado ? cores.primaria : cores.textoSecundario} /> : null}
+        {icone ? (
+          <Icone nome={icone} cor={focado ? cores.primaria : cores.textoSecundario} />
+        ) : null}
         <TextInput
           accessibilityLabel={rotulo}
           placeholderTextColor={cores.textoSecundario}
@@ -92,7 +94,7 @@ const styles = StyleSheet.create({
   caixaMultilinha: { alignItems: 'flex-start', paddingVertical: 12 },
   caixaFocada: { borderColor: cores.primaria, borderWidth: 2, paddingHorizontal: 13 },
   caixaErro: { borderColor: cores.erro },
-  input: { flex: 1, fontSize: 16, color: cores.texto, paddingVertical: 12 },
+  input: { flex: 1, minWidth: 0, fontSize: 16, color: cores.texto, paddingVertical: 12 },
   erro: { color: cores.erro, fontSize: 14 },
   dica: { color: cores.textoSecundario, fontSize: 13 },
 });

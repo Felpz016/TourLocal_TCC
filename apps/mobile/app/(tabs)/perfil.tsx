@@ -3,10 +3,11 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '../../src/auth/AuthContext';
 import { ItemLista } from '../../src/components/ui/ItemLista';
-import { TopoGradiente } from '../../src/components/ui/TopoGradiente';
+import { Cabecalho } from '../../src/components/ui/Cabecalho';
 import { useLocalizacao } from '../../src/localizacao/LocalizacaoContext';
 import { cores } from '../../src/theme/cores';
-import { raio } from '../../src/theme/estilo';
+import { raio, sombraForte } from '../../src/theme/estilo';
+import { fonte } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 
 const TIPOS = { turista: 'Turista', comerciante: 'Comerciante', administrador: 'Administrador' };
@@ -33,7 +34,9 @@ export default function PerfilTela() {
 
   return (
     <View style={styles.tela}>
-      <TopoGradiente titulo="Perfil">
+      <Cabecalho titulo="Perfil" />
+      <ScrollView contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}>
+        {/* Cartão no formato de passaporte, com as iniciais em destaque. */}
         <View style={styles.cartaoUsuario}>
           <View style={styles.avatar}>
             <Text style={styles.iniciais}>{iniciais(usuario.nome)}</Text>
@@ -43,13 +46,12 @@ export default function PerfilTela() {
               {usuario.nome}
             </Text>
             <Text style={styles.email} numberOfLines={1}>
-              {usuario.email} · {TIPOS[usuario.tipo]}
+              {usuario.email}
             </Text>
+            <Text style={styles.tipo}>{TIPOS[usuario.tipo]}</Text>
           </View>
         </View>
-      </TopoGradiente>
 
-      <ScrollView contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}>
         <View style={styles.grupo}>
           {usuario.tipo === 'turista' ? (
             <ItemLista
@@ -80,29 +82,39 @@ const styles = StyleSheet.create({
   cartaoUsuario: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    marginTop: 10,
-    padding: 14,
+    gap: 16,
+    padding: 18,
     borderRadius: raio.cartao,
-    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: cores.tinta,
+    ...sombraForte,
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: cores.superficie,
+    backgroundColor: cores.sol,
   },
-  iniciais: { fontSize: 20, fontWeight: '800', color: cores.primaria },
+  iniciais: { fontFamily: fonte.titulo, fontSize: 26, color: cores.tinta },
   dados: { flex: 1, gap: 2 },
-  nome: { fontSize: 18, fontWeight: '700', color: cores.primariaTexto },
-  email: { fontSize: 13, color: 'rgba(255, 255, 255, 0.85)' },
-  conteudo: { padding: 20, gap: 16 },
+  nome: { fontFamily: fonte.subtitulo, fontSize: 22, color: cores.primariaTexto },
+  email: { fontSize: 14, color: 'rgba(255, 255, 255, 0.75)' },
+  tipo: {
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: raio.pilula,
+    overflow: 'hidden',
+    fontSize: 12,
+    fontWeight: '700',
+    color: cores.primariaTexto,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+  },
+  conteudo: { padding: 20, paddingTop: 8, gap: 16 },
   grupo: {
     borderRadius: raio.cartao,
-    borderWidth: 1,
-    borderColor: cores.divisoria,
     backgroundColor: cores.superficie,
     overflow: 'hidden',
   },

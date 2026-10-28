@@ -147,35 +147,51 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
 
   return (
     <View style={styles.formulario}>
-      <Campo rotulo="Nome do local" value={nome} onChangeText={setNome} maxLength={150} />
-      <Campo
-        rotulo="Descrição"
-        value={descricao}
-        onChangeText={setDescricao}
-        multiline
-        maxLength={2000}
-        style={{ minHeight: 90, textAlignVertical: 'top' }}
-      />
+      <Secao titulo="Informações" icone="storefront-outline">
+        <Campo rotulo="Nome do local" value={nome} onChangeText={setNome} maxLength={150} />
+        <Campo
+          rotulo="Descrição"
+          value={descricao}
+          onChangeText={setDescricao}
+          multiline
+          maxLength={2000}
+          style={{ minHeight: 90, textAlignVertical: 'top' }}
+        />
+      </Secao>
 
-      <Secao titulo="Endereço e posição no mapa">
+      <Secao
+        titulo="Endereço e posição no mapa"
+        icone="map-outline"
+        dica="Os turistas usam isso para chegar até você."
+      >
         <Campo rotulo="Endereço" value={endereco} onChangeText={setEndereco} maxLength={255} />
         <View style={styles.botoesLinha}>
           <Botao
-            titulo="Localizar endereço"
-            variante="link"
+            titulo="Buscar"
+            icone="search"
+            variante="secundario"
+            flexivel
             onPress={localizarEndereco}
             carregando={localizando}
           />
-          <Botao titulo="Usar minha posição atual" variante="link" onPress={usarPosicaoAtual} />
+          <Botao
+            titulo="Usar GPS"
+            icone="locate"
+            variante="secundario"
+            flexivel
+            onPress={usarPosicaoAtual}
+          />
         </View>
         {coordenadas ? (
-          <Mapa posicao={{ ...coordenadas, origem: 'manual', endereco }} />
+          <View style={styles.mapa}>
+            <Mapa posicao={{ ...coordenadas, origem: 'manual', endereco }} />
+          </View>
         ) : (
           <Text style={styles.dica}>O local ainda não foi marcado no mapa.</Text>
         )}
       </Secao>
 
-      <Secao titulo="Tipo de local" linha>
+      <Secao titulo="Tipo de local" icone="compass-outline" linha>
         {EIXOS.map((e) => (
           <Opcao
             key={e.valor}
@@ -185,7 +201,7 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
           />
         ))}
       </Secao>
-      <Secao titulo="Categorias" dica="Escolha até 3." linha>
+      <Secao titulo="Categorias" icone="pricetags-outline" dica="Escolha até 3." linha>
         {categoriasDoEixo.map((c) => (
           <Opcao
             key={c.nome}
@@ -200,7 +216,7 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
         ))}
       </Secao>
 
-      <Secao titulo="Faixa de preço" linha>
+      <Secao titulo="Faixa de preço" icone="wallet-outline" linha>
         {PRECOS.map((p) => (
           <Opcao
             key={p.valor}
@@ -212,7 +228,7 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
       </Secao>
 
       {eixo === 'comer' ? (
-        <Secao titulo="Opções no cardápio" linha>
+        <Secao titulo="Opções no cardápio" icone="leaf-outline" linha>
           {DIETAS.map((d) => (
             <Opcao
               key={d.valor}
@@ -234,7 +250,7 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
         />
       </View>
 
-      <Secao titulo="Contato">
+      <Secao titulo="Contato" icone="call-outline">
         <Campo
           rotulo="Telefone"
           value={telefone}
@@ -252,7 +268,7 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
         />
       </Secao>
 
-      <Secao titulo="Horário de funcionamento">
+      <Secao titulo="Horário de funcionamento" icone="time-outline">
         <EditorHorarios dias={dias} onChange={setDias} />
       </Secao>
 
@@ -277,7 +293,8 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
 
 const styles = StyleSheet.create({
   formulario: { gap: 20 },
-  botoesLinha: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  botoesLinha: { flexDirection: 'row', gap: 10 },
+  mapa: { borderRadius: 16, overflow: 'hidden' },
   dica: { fontSize: 14, color: cores.textoSecundario },
   rotulo: { fontSize: 16, fontWeight: '600', color: cores.texto },
   interruptor: {

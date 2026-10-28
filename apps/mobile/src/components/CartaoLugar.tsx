@@ -4,73 +4,71 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Recomendacao } from '../api/recomendacoes';
 import { cores } from '../theme/cores';
 import { raio, sombra } from '../theme/estilo';
+import { fonte } from '../theme/fontes';
 import { PRECO, formatarDistancia, formatarNota } from '../util/formato';
 import { Miniatura } from './Miniatura';
 import { Icone } from './ui/Icone';
-
-function Situacao({ aberto }: { aberto: boolean | null }) {
-  if (aberto === null) return null;
-  const cor = aberto ? '#047857' : cores.erro;
-  return (
-    <View style={styles.situacao}>
-      <View style={[styles.ponto, { backgroundColor: cor }]} />
-      <Text style={[styles.textoSituacao, { color: cor }]}>{aberto ? 'Aberto' : 'Fechado'}</Text>
-    </View>
-  );
-}
 
 export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
   const detalhes = [
     lugar.categorias.join(', '),
     lugar.faixa_preco ? PRECO[lugar.faixa_preco] : null,
   ].filter(Boolean);
+  const aberto = lugar.aberto_agora;
 
   return (
     // Um toque no cartão abre os detalhes, de onde sai a rota (RNF03: até 3 toques).
     <Pressable
       style={({ pressed }) => [styles.cartao, pressed && styles.pressionado]}
       accessibilityRole="button"
-      accessibilityLabel={`${lugar.nome}, ${detalhes.join(', ')}, ${formatarDistancia(lugar.distancia_km)}`}
+      accessibilityLabel={`${lugar.nome}, ${detalhes.join(', ')}, ${lugar.minutos_a_pe} minutos a pé`}
       accessibilityHint="Abre os detalhes do local"
       onPress={() => router.push(`/lugar/${lugar.id_estab}`)}
     >
-      <Miniatura foto={lugar.foto_url} eixo={lugar.eixo} />
-      <View style={styles.info}>
-        <View style={styles.topo}>
+      <View style={styles.corpo}>
+        <Miniatura nome={lugar.nome} foto={lugar.foto_url} />
+        <View style={styles.info}>
           <Text style={styles.nome} numberOfLines={2}>
             {lugar.nome}
           </Text>
-          {lugar.nota_media !== null ? (
-            <View style={styles.nota}>
-              <Icone nome="star" tamanho={12} cor={cores.estrela} />
-              <Text style={styles.textoNota}>{formatarNota(lugar.nota_media)}</Text>
+          <View style={styles.linha}>
+            {lugar.nota_media !== null ? (
+              <>
+                <Icone nome="star" tamanho={12} cor={cores.estrela} />
+                <Text style={styles.nota}>{formatarNota(lugar.nota_media)}</Text>
+                <Text style={styles.detalhes}> · </Text>
+              </>
+            ) : null}
+            <Text style={styles.detalhes} numberOfLines={1}>
+              {detalhes.join(' · ')}
+              {lugar.acessibilidade ? '  ♿' : ''}
+            </Text>
+          </View>
+          {aberto !== null ? (
+            <Text style={[styles.situacao, { color: aberto ? cores.sucesso : cores.erro }]}>
+              {aberto ? 'Aberto agora' : 'Fechado agora'}
+            </Text>
+          ) : null}
+          {/* RF11: o motivo mais forte da recomendação. */}
+          {lugar.motivos[0] ? (
+            <View style={styles.motivo}>
+              <Icone nome="sparkles" tamanho={12} cor={cores.primaria} />
+              <Text style={styles.textoMotivo} numberOfLines={1}>
+                {lugar.motivos[0]}
+              </Text>
             </View>
           ) : null}
         </View>
-        <Text style={styles.detalhes} numberOfLines={1}>
-          {detalhes.join(' · ')}
-          {lugar.acessibilidade ? '  ♿' : ''}
-        </Text>
-        {/* RF08: distância e tempo estimado de deslocamento. */}
-        <View style={styles.distancia}>
-          <Situacao aberto={lugar.aberto_agora} />
-          <Icone nome="walk" tamanho={14} cor={cores.textoSecundario} />
-          <Text style={styles.textoDistancia}>
-            {formatarDistancia(lugar.distancia_km)} · {lugar.minutos_a_pe} min
-          </Text>
-          <Icone nome="car" tamanho={14} cor={cores.textoSecundario} />
-          <Text style={styles.textoDistancia}>{lugar.minutos_de_carro} min</Text>
-        </View>
-        {/* RF11: por que este lugar foi recomendado (os dois motivos mais fortes). */}
-        {lugar.motivos.length > 0 ? (
-          <View style={styles.motivos}>
-            {lugar.motivos.slice(0, 2).map((motivo) => (
-              <Text key={motivo} style={styles.motivo} numberOfLines={1}>
-                {motivo}
-              </Text>
-            ))}
-          </View>
-        ) : null}
+      </View>
+
+      {/* RF08: o tempo a pé em destaque, como num canhoto de bilhete. */}
+      <View style={styles.canhoto}>
+        {/* Recortes de bilhete no papel de fundo, em cima e embaixo do picote. */}
+        <View style={[styles.recorte, { top: -9 }]} />
+        <View style={[styles.recorte, { bottom: -9 }]} />
+        <Text style={styles.minutos}>{lugar.minutos_a_pe}</Text>
+        <Text style={styles.unidade}>min a pé</Text>
+        <Text style={styles.metros}>{formatarDistancia(lugar.distancia_km)}</Text>
       </View>
     </Pressable>
   );
@@ -79,42 +77,38 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
 const styles = StyleSheet.create({
   cartao: {
     flexDirection: 'row',
-    gap: 12,
-    padding: 12,
     borderRadius: raio.cartao,
     backgroundColor: cores.superficie,
     ...sombra,
   },
-  pressionado: { opacity: 0.85, transform: [{ scale: 0.99 }] },
-  info: { flex: 1, gap: 4 },
-  topo: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  nome: { flex: 1, fontSize: 16, fontWeight: '700', color: cores.texto },
-  nota: {
-    flexDirection: 'row',
+  pressionado: { opacity: 0.9, transform: [{ scale: 0.985 }] },
+  corpo: { flex: 1, flexDirection: 'row', gap: 12, padding: 12 },
+  info: { flex: 1, gap: 3, justifyContent: 'center' },
+  nome: { fontFamily: fonte.subtitulo, fontSize: 17, lineHeight: 21, color: cores.texto },
+  linha: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  nota: { fontSize: 13, fontWeight: '700', color: cores.texto },
+  detalhes: { flexShrink: 1, fontSize: 13, color: cores.textoSecundario },
+  situacao: { fontSize: 13, fontWeight: '600' },
+  motivo: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  textoMotivo: { flexShrink: 1, fontSize: 12, fontWeight: '600', color: cores.primaria },
+  canhoto: {
+    width: 74,
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: raio.pilula,
-    backgroundColor: cores.fundoAlerta,
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderLeftWidth: 1.5,
+    borderLeftColor: cores.divisoria,
+    borderStyle: 'dashed',
   },
-  textoNota: { fontSize: 12, fontWeight: '700', color: cores.estrela },
-  detalhes: { fontSize: 13, color: cores.textoSecundario },
-  distancia: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-  textoDistancia: { fontSize: 13, fontWeight: '600', color: cores.texto, marginRight: 4 },
-  situacao: { flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 6 },
-  ponto: { width: 7, height: 7, borderRadius: 4 },
-  textoSituacao: { fontSize: 13, fontWeight: '700' },
-  motivos: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2 },
-  motivo: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: cores.primariaEscura,
-    backgroundColor: cores.fundoDestaque,
+  recorte: {
+    position: 'absolute',
+    left: -9,
+    width: 16,
+    height: 16,
     borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    overflow: 'hidden',
-    maxWidth: '100%',
+    backgroundColor: cores.fundo,
   },
+  minutos: { fontFamily: fonte.titulo, fontSize: 28, lineHeight: 30, color: cores.primaria },
+  unidade: { fontSize: 11, fontWeight: '700', color: cores.texto, textTransform: 'uppercase' },
+  metros: { fontSize: 11, color: cores.textoSecundario, marginTop: 4 },
 });

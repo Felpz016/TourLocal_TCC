@@ -5,6 +5,8 @@ import { ApiError } from '../../api/client';
 import { avaliar, buscarAvaliacoes, denunciar, excluirAvaliacao } from '../../api/estabelecimentos';
 import type { Avaliacao, Detalhe } from '../../api/estabelecimentos';
 import { cores } from '../../theme/cores';
+import { raio } from '../../theme/estilo';
+import { fonte } from '../../theme/fontes';
 import { formatarNota } from '../../util/formato';
 import { Aviso } from '../ui/Aviso';
 import { Botao } from '../ui/Botao';
@@ -31,9 +33,18 @@ function ItemAvaliacao({
   return (
     <View style={styles.item}>
       <View style={styles.itemTopo}>
-        <Text style={styles.autor}>{avaliacao.minha ? 'Você' : avaliacao.autor}</Text>
-        <Estrelas nota={avaliacao.nota} tamanho={14} />
-        <Text style={styles.data}>{data(avaliacao.data_registro)}</Text>
+        <View style={styles.avatar}>
+          <Text style={styles.letraAvatar}>
+            {(avaliacao.minha ? 'Você' : avaliacao.autor).slice(0, 1).toUpperCase()}
+          </Text>
+        </View>
+        <View style={styles.itemTextos}>
+          <Text style={styles.autor}>{avaliacao.minha ? 'Você' : avaliacao.autor}</Text>
+          <View style={styles.linha}>
+            <Estrelas nota={avaliacao.nota} tamanho={12} />
+            <Text style={styles.data}>{data(avaliacao.data_registro)}</Text>
+          </View>
+        </View>
       </View>
       {avaliacao.comentario ? <Text style={styles.comentario}>{avaliacao.comentario}</Text> : null}
       {/* RN06: a denúncia esconde a avaliação até a moderação decidir. */}
@@ -126,13 +137,19 @@ export function SecaoAvaliacoes({ lugar, podeAvaliar, aoMudar }: Props) {
       <Text style={styles.titulo} accessibilityRole="header">
         Avaliações
       </Text>
-      <Text style={styles.resumo}>
-        {lugar.nota_media !== null
-          ? `★ ${formatarNota(lugar.nota_media)} · ${lugar.total_avaliacoes} ${
-              lugar.total_avaliacoes === 1 ? 'avaliação' : 'avaliações'
-            }`
-          : 'Ainda sem avaliações.'}
-      </Text>
+      {lugar.nota_media !== null ? (
+        <View style={styles.placar}>
+          <Text style={styles.media}>{formatarNota(lugar.nota_media)}</Text>
+          <View style={styles.placarTextos}>
+            <Estrelas nota={Math.round(lugar.nota_media)} tamanho={18} />
+            <Text style={styles.resumo}>
+              {lugar.total_avaliacoes} {lugar.total_avaliacoes === 1 ? 'avaliação' : 'avaliações'}
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <Text style={styles.resumo}>Ainda sem avaliações. Seja o primeiro a contar como foi.</Text>
+      )}
 
       {podeAvaliar && editando ? (
         <View style={styles.formulario}>
@@ -182,22 +199,37 @@ export function SecaoAvaliacoes({ lugar, podeAvaliar, aoMudar }: Props) {
 }
 
 const styles = StyleSheet.create({
-  secao: { gap: 10 },
-  titulo: { fontSize: 20, fontWeight: '700', color: cores.texto },
-  subtitulo: { fontSize: 16, fontWeight: '700', color: cores.texto },
-  resumo: { fontSize: 15, color: cores.textoSecundario },
+  secao: { gap: 12 },
+  titulo: { fontFamily: fonte.subtitulo, fontSize: 21, color: cores.texto },
+  subtitulo: { fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
+  placar: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  media: { fontFamily: fonte.titulo, fontSize: 48, lineHeight: 52, color: cores.texto },
+  placarTextos: { gap: 4 },
+  resumo: { fontSize: 14, color: cores.textoSecundario },
   formulario: {
-    gap: 10,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: cores.fundoCampo,
+    gap: 12,
+    padding: 16,
+    borderRadius: raio.cartao,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: cores.borda,
   },
-  linha: { flexDirection: 'row', gap: 16, alignItems: 'center', flexWrap: 'wrap' },
-  item: { gap: 4, paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#E2E2E2' },
-  itemTopo: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
+  linha: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
+  item: { gap: 8, padding: 14, borderRadius: raio.cartao, backgroundColor: cores.fundo },
+  itemTopo: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  itemTextos: { flex: 1, gap: 2 },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: cores.tinta,
+  },
+  letraAvatar: { fontFamily: fonte.subtitulo, fontSize: 15, color: cores.sol },
   autor: { fontSize: 15, fontWeight: '700', color: cores.texto },
-  data: { fontSize: 13, color: cores.textoSecundario },
-  comentario: { fontSize: 15, color: cores.texto },
-  denunciar: { fontSize: 14, color: cores.textoSecundario, fontWeight: '600', paddingVertical: 4 },
+  data: { fontSize: 12, color: cores.textoSecundario },
+  comentario: { fontSize: 15, lineHeight: 21, color: cores.texto },
+  denunciar: { fontSize: 13, color: cores.textoSecundario, fontWeight: '600', paddingVertical: 4 },
   confirmacao: { gap: 4 },
 });

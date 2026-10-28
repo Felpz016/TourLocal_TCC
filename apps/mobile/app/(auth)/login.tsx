@@ -1,15 +1,7 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { Link, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '../../src/api/client';
@@ -18,8 +10,9 @@ import { Aviso } from '../../src/components/ui/Aviso';
 import { Botao } from '../../src/components/ui/Botao';
 import { Campo } from '../../src/components/ui/Campo';
 import { Icone } from '../../src/components/ui/Icone';
-import { cores, degrade } from '../../src/theme/cores';
-import { sombra, sombraForte } from '../../src/theme/estilo';
+import { cores } from '../../src/theme/cores';
+import { sombra } from '../../src/theme/estilo';
+import { fonte } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 
 export default function LoginScreen() {
@@ -57,25 +50,30 @@ export default function LoginScreen() {
         contentContainerStyle={[styles.rolagem, { paddingBottom: bottom + 24 }]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Topo azul atrás da Dynamic Island, com a marca do app. */}
-        <LinearGradient
-          colors={degrade}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.topo, { paddingTop: top + 32 }]}
-        >
-          <View style={styles.logo}>
-            <Icone nome="location" tamanho={36} cor={cores.primaria} />
+        {/* Topo azul-marinho com anéis de "raio de busca" em volta do ponto do usuário. */}
+        <View style={[styles.topo, { paddingTop: top + 20 }]}>
+          <View style={styles.aneis} pointerEvents="none">
+            {[260, 190, 120].map((d) => (
+              <View key={d} style={[styles.anel, { width: d, height: d, borderRadius: d / 2 }]} />
+            ))}
+            <View style={styles.ponto} />
           </View>
-          <Text style={styles.marca} accessibilityRole="header">
-            TourLocal
+          <View style={styles.marcaLinha}>
+            <View style={styles.logo}>
+              <Icone nome="navigate" tamanho={18} cor={cores.tinta} />
+            </View>
+            <Text style={styles.marca}>TourLocal</Text>
+          </View>
+          <Text style={styles.manchete} accessibilityRole="header">
+            O melhor da cidade,{'\n'}
+            <Text style={styles.mancheteDestaque}>a poucos passos.</Text>
           </Text>
           <Text style={styles.slogan}>Onde comer, ficar e o que fazer, perto de você.</Text>
-        </LinearGradient>
+        </View>
 
         <View style={[styles.corpo, estilosLargura.conteudo]}>
           <View style={styles.cartao}>
-            <Text style={styles.titulo}>Entrar</Text>
+            <Text style={styles.titulo}>Entrar na conta</Text>
             <Campo
               rotulo="E-mail"
               icone="mail-outline"
@@ -106,7 +104,11 @@ export default function LoginScreen() {
           </View>
 
           <Text style={styles.semConta}>Ainda não tem conta?</Text>
-          <Botao titulo="Criar conta" variante="secundario" onPress={() => router.push('/cadastro')} />
+          <Botao
+            titulo="Criar conta"
+            variante="secundario"
+            onPress={() => router.push('/cadastro')}
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -117,33 +119,63 @@ const styles = StyleSheet.create({
   tela: { flex: 1, backgroundColor: cores.fundo },
   rolagem: { flexGrow: 1 },
   topo: {
-    alignItems: 'center',
-    gap: 10,
+    gap: 14,
     paddingHorizontal: 24,
     paddingBottom: 72,
-    borderBottomLeftRadius: 36,
-    borderBottomRightRadius: 36,
+    backgroundColor: cores.tinta,
+    overflow: 'hidden',
   },
-  logo: {
-    width: 76,
-    height: 76,
-    borderRadius: 24,
+  aneis: {
+    position: 'absolute',
+    right: -70,
+    top: 10,
+    width: 260,
+    height: 260,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: cores.superficie,
-    ...sombraForte,
   },
-  marca: { fontSize: 34, fontWeight: '800', color: cores.primariaTexto, letterSpacing: -0.6 },
-  slogan: { fontSize: 16, color: 'rgba(255, 255, 255, 0.85)', textAlign: 'center' },
-  corpo: { gap: 12, paddingHorizontal: 20, marginTop: -44 },
+  anel: {
+    position: 'absolute',
+    borderWidth: 1.5,
+    borderColor: 'rgba(36, 91, 255, 0.55)',
+    borderStyle: 'dashed',
+  },
+  ponto: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: cores.sol,
+    borderWidth: 4,
+    borderColor: 'rgba(255, 200, 61, 0.35)',
+  },
+  marcaLinha: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 28 },
+  logo: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: cores.sol,
+  },
+  marca: { fontFamily: fonte.subtitulo, fontSize: 20, color: cores.primariaTexto },
+  manchete: {
+    fontFamily: fonte.titulo,
+    fontSize: 40,
+    lineHeight: 44,
+    color: cores.primariaTexto,
+    letterSpacing: -1,
+  },
+  mancheteDestaque: { color: cores.sol },
+  slogan: { fontSize: 16, color: 'rgba(255, 255, 255, 0.75)' },
+  corpo: { gap: 12, paddingHorizontal: 20, marginTop: -40 },
   cartao: {
     gap: 14,
     padding: 20,
-    borderRadius: 24,
+    borderRadius: 26,
     backgroundColor: cores.superficie,
     ...sombra,
   },
-  titulo: { fontSize: 22, fontWeight: '800', color: cores.texto },
+  titulo: { fontFamily: fonte.subtitulo, fontSize: 24, color: cores.texto },
   esqueci: {
     alignSelf: 'flex-end',
     color: cores.primaria,

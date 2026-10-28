@@ -1,23 +1,10 @@
 import { Redirect, router } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import type { ColorValue } from 'react-native';
 import { useEffect, useRef } from 'react';
 
 import { useAuth } from '../../src/auth/AuthContext';
-import { Icone } from '../../src/components/ui/Icone';
-import type { NomeIcone } from '../../src/components/ui/Icone';
+import { BarraAbas } from '../../src/components/BarraAbas';
 import { cores } from '../../src/theme/cores';
-
-// Ícone cheio na aba ativa e contornado nas outras, como nos apps do iOS.
-const icone =
-  (nome: string) =>
-  ({ focused, color }: { focused: boolean; color: ColorValue }) => (
-    <Icone
-      nome={(focused ? nome : `${nome}-outline`) as NomeIcone}
-      tamanho={24}
-      cor={String(color)}
-    />
-  );
 
 // Os três eixos de recomendação definidos no TGI: Onde Comer, Onde Ficar e O que Fazer.
 // Cada tela desenha o próprio topo azul, então o cabeçalho padrão fica escondido.
@@ -39,27 +26,17 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: cores.primaria,
-        tabBarInactiveTintColor: cores.textoSecundario,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-        tabBarStyle: {
-          backgroundColor: cores.superficie,
-          borderTopColor: cores.divisoria,
-        },
-        sceneStyle: { backgroundColor: cores.fundo },
-      }}
+      tabBar={(props) => <BarraAbas {...props} />}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: cores.fundo } }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Comer', tabBarIcon: icone('restaurant') }} />
-      <Tabs.Screen name="ficar" options={{ title: 'Ficar', tabBarIcon: icone('bed') }} />
-      <Tabs.Screen name="fazer" options={{ title: 'Fazer', tabBarIcon: icone('compass') }} />
+      <Tabs.Screen name="index" options={{ title: 'Comer' }} />
+      <Tabs.Screen name="ficar" options={{ title: 'Ficar' }} />
+      <Tabs.Screen name="fazer" options={{ title: 'Fazer' }} />
       {/* Salvos é só do turista (RF14); para os outros perfis a aba fica escondida. */}
       <Tabs.Screen
         name="salvos"
         options={{
           title: 'Salvos',
-          tabBarIcon: icone('heart'),
           href: tipo === 'turista' ? undefined : null,
         }}
       />
@@ -68,7 +45,6 @@ export default function TabsLayout() {
         name="meus-locais"
         options={{
           title: 'Meus locais',
-          tabBarIcon: icone('storefront'),
           href: tipo === 'comerciante' ? undefined : null,
         }}
       />
@@ -76,12 +52,11 @@ export default function TabsLayout() {
         name="moderacao"
         options={{
           title: 'Moderação',
-          tabBarIcon: icone('shield-checkmark'),
           href: tipo === 'administrador' ? undefined : null,
         }}
       />
       {/* Preferências, localização e sair ficam no Perfil, longe do cabeçalho. */}
-      <Tabs.Screen name="perfil" options={{ title: 'Perfil', tabBarIcon: icone('person') }} />
+      <Tabs.Screen name="perfil" options={{ title: 'Perfil' }} />
     </Tabs>
   );
 }

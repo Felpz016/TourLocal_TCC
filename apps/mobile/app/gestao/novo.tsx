@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 
 import { cadastrar } from '../../src/api/gestao';
+import { Aviso } from '../../src/components/ui/Aviso';
 import { FormularioEstabelecimento } from '../../src/components/gestao/FormularioEstabelecimento';
 import { cores } from '../../src/theme/cores';
 import { estilosLargura } from '../../src/theme/layout';
@@ -10,9 +11,10 @@ import { estilosLargura } from '../../src/theme/layout';
 export default function NovoLocalTela() {
   return (
     <ScrollView contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}>
-      <Text style={styles.aviso}>
-        O cadastro passa por uma verificação antes de aparecer para os turistas.
-      </Text>
+      <Aviso
+        tipo="alerta"
+        texto="O cadastro passa por uma verificação antes de aparecer para os turistas."
+      />
       <FormularioEstabelecimento
         tituloBotao="Enviar para verificação"
         onSalvar={async (dados) => {
@@ -25,6 +27,5 @@ export default function NovoLocalTela() {
 }
 
 const styles = StyleSheet.create({
-  conteudo: { padding: 16, gap: 16, backgroundColor: cores.fundo },
-  aviso: { fontSize: 15, color: cores.textoSecundario },
+  conteudo: { padding: 20, gap: 16, paddingBottom: 48, backgroundColor: cores.fundo },
 });

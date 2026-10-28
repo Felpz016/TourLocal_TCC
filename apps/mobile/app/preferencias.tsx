@@ -8,9 +8,13 @@ import type { FaixaPreco, Perfil } from '../src/api/tipos';
 import { useAuth } from '../src/auth/AuthContext';
 import { Aviso } from '../src/components/ui/Aviso';
 import { Botao } from '../src/components/ui/Botao';
+import { Icone } from '../src/components/ui/Icone';
 import { Opcao } from '../src/components/ui/Opcao';
+import { Secao } from '../src/components/ui/Secao';
 import { Tela } from '../src/components/ui/Tela';
 import { cores } from '../src/theme/cores';
+import { raio } from '../src/theme/estilo';
+import { fonte } from '../src/theme/fontes';
 
 const ORCAMENTOS: { valor: FaixaPreco; rotulo: string }[] = [
   { valor: 'economico', rotulo: '$ Econômico' },
@@ -34,17 +38,6 @@ const TEMPOS = [
 
 // RN03: raio máximo de 20 km. RN09: 3 km é o padrão.
 const RAIOS = ['1', '3', '5', '10', '20'];
-
-function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.secao}>
-      <Text style={styles.tituloSecao} accessibilityRole="header">
-        {titulo}
-      </Text>
-      <View style={styles.opcoes}>{children}</View>
-    </View>
-  );
-}
 
 export default function PreferenciasScreen() {
   const { primeiroAcesso, concluirPrimeiroAcesso } = useAuth();
@@ -97,8 +90,9 @@ export default function PreferenciasScreen() {
     <Tela
       titulo={primeiroAcesso ? 'Conte um pouco sobre você' : undefined}
       subtitulo="Usamos isso para escolher as melhores recomendações. Dá para mudar quando quiser."
+      rodape={<Botao titulo="Salvar preferências" onPress={aoSalvar} carregando={salvando} />}
     >
-      <Secao titulo="Orçamento">
+      <Secao titulo="Orçamento" dica="Quanto você quer gastar" icone="wallet-outline" linha>
         {ORCAMENTOS.map((o) => (
           <Opcao
             key={o.valor}
@@ -111,7 +105,12 @@ export default function PreferenciasScreen() {
         ))}
       </Secao>
 
-      <Secao titulo="Restrições alimentares">
+      <Secao
+        titulo="Restrições alimentares"
+        dica="Marque todas que valem para você"
+        icone="leaf-outline"
+        linha
+      >
         {RESTRICOES.map((r) => (
           <Opcao
             key={r.valor}
@@ -122,7 +121,12 @@ export default function PreferenciasScreen() {
         ))}
       </Secao>
 
-      <Secao titulo="Tempo disponível">
+      <Secao
+        titulo="Tempo disponível"
+        dica="Para sugerir passeios que cabem no seu dia"
+        icone="time-outline"
+        linha
+      >
         {TEMPOS.map((t) => (
           <Opcao
             key={t.valor}
@@ -137,7 +141,7 @@ export default function PreferenciasScreen() {
         ))}
       </Secao>
 
-      <Secao titulo="Distância máxima">
+      <Secao titulo="Distância máxima" dica="Até onde você topa ir" icone="walk-outline" linha>
         {RAIOS.map((r) => (
           <Opcao
             key={r}
@@ -149,7 +153,13 @@ export default function PreferenciasScreen() {
       </Secao>
 
       <View style={styles.acessibilidade}>
-        <Text style={styles.tituloSecao}>Preciso de acessibilidade</Text>
+        <View style={styles.iconeAcesso}>
+          <Icone nome="accessibility" tamanho={18} cor={cores.primaria} />
+        </View>
+        <View style={styles.textosAcesso}>
+          <Text style={styles.tituloSecao}>Preciso de acessibilidade</Text>
+          <Text style={styles.dica}>Mostrar só lugares acessíveis</Text>
+        </View>
         <Switch
           accessibilityLabel="Preciso de acessibilidade"
           value={perfil.necessita_acessibilidade}
@@ -159,19 +169,30 @@ export default function PreferenciasScreen() {
       </View>
 
       <Aviso texto={erro} />
-      <Botao titulo="Salvar preferências" onPress={aoSalvar} carregando={salvando} />
     </Tela>
   );
 }
 
 const styles = StyleSheet.create({
-  secao: { gap: 10 },
-  tituloSecao: { fontSize: 17, fontWeight: '700', color: cores.texto },
-  opcoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tituloSecao: { fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
+  dica: { fontSize: 13, color: cores.textoSecundario },
   acessibilidade: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
+    gap: 12,
+    padding: 16,
+    borderRadius: raio.cartao,
+    borderWidth: 1,
+    borderColor: cores.divisoria,
+    backgroundColor: cores.superficie,
   },
+  iconeAcesso: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: cores.fundoDestaque,
+  },
+  textosAcesso: { flex: 1, gap: 2 },
 });

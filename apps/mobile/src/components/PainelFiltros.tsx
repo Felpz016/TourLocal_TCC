@@ -7,6 +7,7 @@ import type { Categoria, Eixo, Filtros } from '../api/recomendacoes';
 import type { FaixaPreco } from '../api/tipos';
 import { cores } from '../theme/cores';
 import { raio } from '../theme/estilo';
+import { fonte } from '../theme/fontes';
 import { Botao } from './ui/Botao';
 import { Opcao } from './ui/Opcao';
 
@@ -152,7 +153,9 @@ export function FolhaFiltros({ visivel, filtros, total, onChange, onFechar }: Pr
 
           <Botao
             titulo={
-              total === null ? 'Ver resultados' : `Ver ${total} ${total === 1 ? 'lugar' : 'lugares'}`
+              total === null
+                ? 'Ver resultados'
+                : `Ver ${total} ${total === 1 ? 'lugar' : 'lugares'}`
             }
             onPress={onFechar}
           />
@@ -163,19 +166,20 @@ export function FolhaFiltros({ visivel, filtros, total, onChange, onFechar }: Pr
 }
 
 const styles = StyleSheet.create({
-  rolagem: { marginHorizontal: -20, marginTop: 10 },
+  rolagem: { marginHorizontal: -20, flexGrow: 0 },
   categorias: { gap: 8, paddingHorizontal: 20 },
   chipTopo: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
     minHeight: 40,
     justifyContent: 'center',
     borderRadius: raio.pilula,
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderWidth: 1,
+    borderColor: cores.borda,
+    backgroundColor: cores.superficie,
   },
-  chipTopoAtivo: { backgroundColor: cores.superficie },
-  textoTopo: { fontSize: 14, fontWeight: '600', color: cores.primariaTexto },
-  textoTopoAtivo: { color: cores.primaria, fontWeight: '700' },
+  chipTopoAtivo: { backgroundColor: cores.tinta, borderColor: cores.tinta },
+  textoTopo: { fontSize: 14, fontWeight: '600', color: cores.texto },
+  textoTopoAtivo: { color: cores.primariaTexto, fontWeight: '700' },
   fundoModal: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15, 23, 42, 0.45)' },
   folha: {
     gap: 12,
@@ -194,7 +198,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   cabecalho: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  titulo: { fontSize: 22, fontWeight: '800', color: cores.texto },
+  titulo: { fontFamily: fonte.titulo, fontSize: 26, color: cores.texto },
   limpar: { fontSize: 15, fontWeight: '700', color: cores.primaria },
   rotulo: { fontSize: 15, fontWeight: '700', color: cores.texto },
   dica: { fontSize: 13, color: cores.textoSecundario },

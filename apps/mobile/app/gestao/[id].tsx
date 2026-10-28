@@ -1,6 +1,6 @@
-import { Link, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
 import { buscarDetalhe } from '../../src/api/estabelecimentos';
 import type { Detalhe } from '../../src/api/estabelecimentos';
@@ -8,6 +8,7 @@ import { atualizar } from '../../src/api/gestao';
 import { FormularioEstabelecimento } from '../../src/components/gestao/FormularioEstabelecimento';
 import { GaleriaFotos } from '../../src/components/gestao/GaleriaFotos';
 import { Aviso } from '../../src/components/ui/Aviso';
+import { Botao } from '../../src/components/ui/Botao';
 import { Secao } from '../../src/components/ui/Secao';
 import { cores } from '../../src/theme/cores';
 import { estilosLargura } from '../../src/theme/layout';
@@ -45,15 +46,22 @@ export default function EditarLocalTela() {
     <ScrollView contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}>
       {!lugar.verificado ? (
         <Aviso
-          tipo="sucesso"
-          texto="Aguardando verificação. Você já pode completar os dados e enviar fotos."
+          tipo="alerta"
+          texto="Aguardando verificação. Você já pode completar os dados e enviar fotos; avisamos quando o local for aprovado."
         />
       ) : null}
-      <Link href={`/lugar/${idEstab}`} style={styles.link}>
-        Ver como o turista vê
-      </Link>
+      <Botao
+        titulo="Ver como o turista vê"
+        icone="eye-outline"
+        variante="secundario"
+        onPress={() => router.push(`/lugar/${idEstab}`)}
+      />
 
-      <Secao titulo="Fotos" dica="JPG, PNG ou WebP, até 5 MB cada, no máximo 10.">
+      <Secao
+        titulo="Fotos"
+        icone="images-outline"
+        dica="JPG, PNG ou WebP, até 5 MB cada (máximo 10)."
+      >
         <GaleriaFotos idEstab={idEstab} fotos={lugar.fotos} aoMudar={carregar} />
       </Secao>
 
@@ -81,6 +89,5 @@ export default function EditarLocalTela() {
 
 const styles = StyleSheet.create({
   centro: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  conteudo: { padding: 16, gap: 20, backgroundColor: cores.fundo },
-  link: { color: cores.primaria, fontSize: 16, fontWeight: '600' },
+  conteudo: { padding: 20, gap: 16, paddingBottom: 48 },
 });

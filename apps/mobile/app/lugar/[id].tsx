@@ -21,16 +21,16 @@ import { urlFoto } from '../../src/api/gestao';
 import { useAuth } from '../../src/auth/AuthContext';
 import { SecaoAvaliacoes } from '../../src/components/detalhe/SecaoAvaliacoes';
 import { Aviso } from '../../src/components/ui/Aviso';
-import { ICONE_EIXO } from '../../src/components/Miniatura';
+import { inicial } from '../../src/components/Miniatura';
 import { Botao } from '../../src/components/ui/Botao';
 import { Icone } from '../../src/components/ui/Icone';
 import type { NomeIcone } from '../../src/components/ui/Icone';
 import { useLocalizacao } from '../../src/localizacao/LocalizacaoContext';
-import { cores, degrade } from '../../src/theme/cores';
+import { corDoLugar, cores } from '../../src/theme/cores';
+import { fonte } from '../../src/theme/fontes';
 import { raio } from '../../src/theme/estilo';
 import { LARGURA_MAXIMA, estilosLargura } from '../../src/theme/layout';
 import { PRECO, formatarDistancia, formatarNota } from '../../src/util/formato';
-import { LinearGradient } from 'expo-linear-gradient';
 import { abrirRota } from '../../src/util/rota';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
@@ -176,18 +176,9 @@ export default function LugarTela() {
               ))}
             </ScrollView>
           ) : (
-            <LinearGradient
-              colors={degrade}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.semFoto}
-            >
-              <Icone
-                nome={lugar.eixo ? ICONE_EIXO[lugar.eixo] : 'location'}
-                tamanho={64}
-                cor="rgba(255, 255, 255, 0.55)"
-              />
-            </LinearGradient>
+            <View style={[styles.semFoto, { backgroundColor: corDoLugar(lugar.nome) }]}>
+              <Text style={styles.letraCapa}>{inicial(lugar.nome)}</Text>
+            </View>
           )}
           <View style={[styles.botoesCapa, { top: top + 8 }]}>
             <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={() => router.back()} />
@@ -211,23 +202,10 @@ export default function LugarTela() {
 
         <View style={[styles.folha, estilosLargura.conteudo]}>
           <View style={styles.bloco}>
+            <Text style={styles.sobretitulo}>{lugar.categorias.join(' · ') || 'Local'}</Text>
             <Text style={styles.nome} accessibilityRole="header">
               {lugar.nome}
             </Text>
-            <View style={styles.resumo}>
-              {lugar.nota_media !== null ? (
-                <>
-                  <Icone nome="star" tamanho={16} cor={cores.estrela} />
-                  <Text style={styles.nota}>{formatarNota(lugar.nota_media)}</Text>
-                  <Text style={styles.secundario}>({lugar.total_avaliacoes}) · </Text>
-                </>
-              ) : null}
-              <Text style={styles.secundario}>
-                {[lugar.categorias.join(', '), lugar.faixa_preco ? PRECO[lugar.faixa_preco] : null]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Text>
-            </View>
             <View style={styles.selos}>
               {lugar.aberto_agora === true ? (
                 <Selo texto="Aberto agora" icone="time-outline" />
@@ -244,6 +222,30 @@ export default function LugarTela() {
                 <Selo key={o} texto={DIETAS[o] ?? o} icone="leaf-outline" />
               ))}
             </View>
+          </View>
+
+          {/* Resumo em formato de bilhete: nota, distância e preço. */}
+          <View style={styles.bilhete}>
+            <View style={[styles.recorte, { left: -10 }]} />
+            <View style={[styles.recorte, { right: -10 }]} />
+            <ColunaBilhete
+              valor={lugar.nota_media !== null ? `★ ${formatarNota(lugar.nota_media)}` : '—'}
+              rotulo={
+                lugar.total_avaliacoes === 1
+                  ? '1 avaliação'
+                  : `${lugar.total_avaliacoes} avaliações`
+              }
+            />
+            <View style={styles.picote} />
+            <ColunaBilhete
+              valor={lugar.distancia_km !== null ? formatarDistancia(lugar.distancia_km) : '—'}
+              rotulo="de você"
+            />
+            <View style={styles.picote} />
+            <ColunaBilhete
+              valor={lugar.faixa_preco ? PRECO[lugar.faixa_preco] : '—'}
+              rotulo="preço"
+            />
           </View>
 
           <Aviso texto={erro} />
@@ -308,24 +310,7 @@ export default function LugarTela() {
               <Text style={styles.titulo} accessibilityRole="header">
                 Horários
               </Text>
-              <View style={styles.horarios}>
-                {linhasDeHorario(lugar.horarios).map(({ dia, texto, fechado, hoje: ehHoje }) => (
-                  <View key={dia} style={[styles.horario, ehHoje && styles.horarioHoje]}>
-                    <Text style={[styles.texto, ehHoje && styles.textoHoje]}>
-                      {ehHoje ? `${dia} (hoje)` : dia}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.texto,
-                        ehHoje && styles.textoHoje,
-                        fechado && { color: cores.erro },
-                      ]}
-                    >
-                      {texto}
-                    </Text>
-                  </View>
-                ))}
-              </View>
+              <SemanaHorarios horarios={lugar.horarios} />
             </View>
           ) : null}
 
@@ -337,6 +322,60 @@ export default function LugarTela() {
           />
         </View>
       </ScrollView>
+    </View>
+  );
+}
+
+function ColunaBilhete({ valor, rotulo }: { valor: string; rotulo: string }) {
+  return (
+    <View style={styles.coluna} accessible accessibilityLabel={`${valor} ${rotulo}`}>
+      <Text style={styles.valorBilhete}>{valor}</Text>
+      <Text style={styles.rotuloBilhete}>{rotulo}</Text>
+    </View>
+  );
+}
+
+/** Semana em pílulas (hoje já marcado); tocar num dia mostra o horário dele. */
+function SemanaHorarios({ horarios }: { horarios: Horario[] }) {
+  const linhas = linhasDeHorario(horarios);
+  const [dia, setDia] = useState(hoje());
+  const escolhido = linhas[dia]!;
+  return (
+    <View style={styles.semana}>
+      <View style={styles.dias} accessibilityRole="tablist">
+        {linhas.map((l, i) => {
+          const ativo = i === dia;
+          return (
+            <Pressable
+              key={l.dia}
+              onPress={() => setDia(i)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: ativo }}
+              accessibilityLabel={l.dia}
+              style={[
+                styles.diaBolha,
+                ativo && styles.diaAtivo,
+                l.fechado && !ativo && styles.diaFechado,
+              ]}
+            >
+              <Text style={[styles.letraDia, ativo && { color: cores.primariaTexto }]}>
+                {l.dia[0]}
+              </Text>
+              {l.hoje ? (
+                <View style={[styles.marcaHoje, ativo && { backgroundColor: cores.sol }]} />
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={styles.horarioEscolhido}>
+        <Text style={styles.nomeDia}>
+          {escolhido.hoje ? `${escolhido.dia} (hoje)` : escolhido.dia}
+        </Text>
+        <Text style={[styles.horaDia, escolhido.fechado && { color: cores.erro }]}>
+          {escolhido.texto}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -423,10 +462,24 @@ const styles = StyleSheet.create({
     backgroundColor: cores.superficie,
   },
   bloco: { gap: 10 },
-  nome: { fontSize: 28, fontWeight: '800', color: cores.texto, letterSpacing: -0.5 },
+  sobretitulo: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: cores.primaria,
+  },
+  nome: {
+    fontFamily: fonte.titulo,
+    fontSize: 32,
+    lineHeight: 36,
+    color: cores.texto,
+    letterSpacing: -0.8,
+  },
+  letraCapa: { fontFamily: fonte.titulo, fontSize: 180, color: 'rgba(255, 255, 255, 0.18)' },
   resumo: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
   nota: { fontSize: 15, fontWeight: '800', color: cores.texto },
-  titulo: { fontSize: 20, fontWeight: '800', color: cores.texto },
+  titulo: { fontFamily: fonte.subtitulo, fontSize: 21, color: cores.texto },
   secundario: { fontSize: 14, color: cores.textoSecundario },
   texto: { fontSize: 15, lineHeight: 22, color: cores.texto },
   selos: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
@@ -461,19 +514,60 @@ const styles = StyleSheet.create({
   },
   textosInfo: { flex: 1, gap: 2 },
   tituloInfo: { fontSize: 15, fontWeight: '600', color: cores.texto },
-  horarios: {
-    padding: 6,
+  bilhete: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
     borderRadius: raio.cartao,
-    borderWidth: 1,
-    borderColor: cores.divisoria,
+    backgroundColor: cores.fundo,
   },
-  horario: {
+  recorte: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -10,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: cores.superficie,
+  },
+  coluna: { flex: 1, alignItems: 'center', gap: 2 },
+  picote: {
+    width: 0,
+    alignSelf: 'stretch',
+    borderLeftWidth: 1.5,
+    borderLeftColor: cores.borda,
+    borderStyle: 'dashed',
+  },
+  valorBilhete: { fontFamily: fonte.subtitulo, fontSize: 20, color: cores.texto },
+  rotuloBilhete: { fontSize: 12, color: cores.textoSecundario },
+  semana: { gap: 12 },
+  dias: { flexDirection: 'row', justifyContent: 'space-between' },
+  diaBolha: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: cores.fundo,
+  },
+  diaAtivo: { backgroundColor: cores.tinta },
+  diaFechado: { opacity: 0.45 },
+  letraDia: { fontSize: 15, fontWeight: '700', color: cores.texto },
+  marcaHoje: {
+    position: 'absolute',
+    bottom: 5,
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: cores.primaria,
+  },
+  horarioEscolhido: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: raio.campo,
+    backgroundColor: cores.fundo,
   },
-  horarioHoje: { backgroundColor: cores.fundoDestaque },
-  textoHoje: { fontWeight: '700', color: cores.primariaEscura },
+  nomeDia: { fontSize: 15, fontWeight: '600', color: cores.texto },
+  horaDia: { fontSize: 15, fontWeight: '700', color: cores.texto },
 });
