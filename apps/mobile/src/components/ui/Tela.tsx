@@ -1,40 +1,63 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cores } from '../../theme/cores';
 import { estilosLargura } from '../../theme/layout';
 
-type Props = { titulo?: string; subtitulo?: string; children: ReactNode };
+type Props = {
+  titulo?: string;
+  subtitulo?: string;
+  children: ReactNode;
+  /** Botão principal fixo no rodapé, acima da barra de início do iPhone. */
+  rodape?: ReactNode;
+};
 
 /** Moldura das telas de formulário: área segura, rolagem e teclado sem cobrir os campos. */
-export function Tela({ titulo, subtitulo, children }: Props) {
+export function Tela({ titulo, subtitulo, children, rodape }: Props) {
+  const { top, bottom } = useSafeAreaInsets();
   return (
-    <SafeAreaView style={styles.area} edges={['bottom', 'left', 'right']}>
-      <KeyboardAvoidingView
-        style={styles.area}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <KeyboardAvoidingView
+      style={styles.area}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      // O cabeçalho nativo ocupa a área segura de cima mais 44 pt de barra.
+      keyboardVerticalOffset={Platform.OS === 'ios' ? top + 44 : 0}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          styles.conteudo,
+          { paddingBottom: rodape ? 24 : bottom + 24 },
+          estilosLargura.conteudo,
+        ]}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}
-          keyboardShouldPersistTaps="handled"
-        >
-          {titulo ? (
-            <Text style={styles.titulo} accessibilityRole="header">
-              {titulo}
-            </Text>
-          ) : null}
-          {subtitulo ? <Text style={styles.subtitulo}>{subtitulo}</Text> : null}
-          {children}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        {titulo ? (
+          <Text style={styles.titulo} accessibilityRole="header">
+            {titulo}
+          </Text>
+        ) : null}
+        {subtitulo ? <Text style={styles.subtitulo}>{subtitulo}</Text> : null}
+        {children}
+      </ScrollView>
+      {rodape ? (
+        <View style={[styles.rodape, { paddingBottom: Math.max(bottom, 12) }]}>
+          <View style={estilosLargura.conteudo}>{rodape}</View>
+        </View>
+      ) : null}
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   area: { flex: 1, backgroundColor: cores.fundo },
-  conteudo: { padding: 24, gap: 16, flexGrow: 1 },
-  titulo: { fontSize: 26, fontWeight: '700', color: cores.texto },
-  subtitulo: { fontSize: 16, color: cores.textoSecundario, marginTop: -8 },
+  conteudo: { padding: 20, gap: 16, flexGrow: 1 },
+  titulo: { fontSize: 28, fontWeight: '800', color: cores.texto, letterSpacing: -0.4 },
+  subtitulo: { fontSize: 15, lineHeight: 21, color: cores.textoSecundario, marginTop: -8 },
+  rodape: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    backgroundColor: cores.superficie,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: cores.divisoria,
+  },
 });

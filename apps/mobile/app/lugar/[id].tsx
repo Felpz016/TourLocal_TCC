@@ -1,4 +1,5 @@
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,7 +10,9 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '../../src/api/client';
 import { buscarDetalhe, definirFavorito } from '../../src/api/estabelecimentos';
@@ -18,14 +21,21 @@ import { urlFoto } from '../../src/api/gestao';
 import { useAuth } from '../../src/auth/AuthContext';
 import { SecaoAvaliacoes } from '../../src/components/detalhe/SecaoAvaliacoes';
 import { Aviso } from '../../src/components/ui/Aviso';
+import { ICONE_EIXO } from '../../src/components/Miniatura';
 import { Botao } from '../../src/components/ui/Botao';
+import { Icone } from '../../src/components/ui/Icone';
+import type { NomeIcone } from '../../src/components/ui/Icone';
 import { useLocalizacao } from '../../src/localizacao/LocalizacaoContext';
-import { cores } from '../../src/theme/cores';
-import { estilosLargura } from '../../src/theme/layout';
+import { cores, degrade } from '../../src/theme/cores';
+import { raio } from '../../src/theme/estilo';
+import { LARGURA_MAXIMA, estilosLargura } from '../../src/theme/layout';
 import { PRECO, formatarDistancia, formatarNota } from '../../src/util/formato';
+import { LinearGradient } from 'expo-linear-gradient';
 import { abrirRota } from '../../src/util/rota';
 
-const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+// getDay() conta a partir do domingo; a API, a partir da segunda.
+const hoje = () => (new Date().getDay() + 6) % 7;
 const DIETAS: Record<string, string> = {
   vegetariano: 'Opção vegetariana',
   vegano: 'Opção vegana',
@@ -41,24 +51,55 @@ function linhasDeHorario(horarios: Horario[]) {
     const texto = doDia.length
       ? doDia.map((h) => `${hora(h.hora_abertura)}–${hora(h.hora_fechamento)}`).join(', ')
       : 'Fechado';
-    return { dia, texto };
+    return { dia, texto, fechado: !doDia.length, hoje: indice === hoje() };
   });
 }
 
-function BotaoFavorito({ ativo, onPress }: { ativo: boolean; onPress: () => void }) {
+function BotaoRedondo({
+  icone,
+  cor = cores.texto,
+  rotulo,
+  onPress,
+  selecionado,
+}: {
+  icone: NomeIcone;
+  cor?: string;
+  rotulo: string;
+  onPress: () => void;
+  selecionado?: boolean;
+}) {
   return (
     <Pressable
       onPress={onPress}
-      hitSlop={12}
+      hitSlop={8}
       accessibilityRole="button"
-      accessibilityState={{ selected: ativo }}
-      accessibilityLabel={ativo ? 'Remover dos salvos' : 'Salvar local'}
-      style={styles.favorito}
+      accessibilityLabel={rotulo}
+      accessibilityState={selecionado === undefined ? undefined : { selected: selecionado }}
+      style={({ pressed }) => [styles.redondo, pressed && { opacity: 0.8 }]}
     >
-      <Text style={{ fontSize: 24, color: ativo ? cores.favorito : cores.textoSecundario }}>
-        {ativo ? '♥' : '♡'}
-      </Text>
+      <Icone nome={icone} tamanho={22} cor={cor} />
     </Pressable>
+  );
+}
+
+function Selo({
+  texto,
+  icone,
+  tipo = 'normal',
+}: {
+  texto: string;
+  icone?: NomeIcone;
+  tipo?: 'normal' | 'alerta' | 'erro';
+}) {
+  const cor =
+    tipo === 'erro' ? cores.erro : tipo === 'alerta' ? cores.alerta : cores.primariaEscura;
+  const fundo =
+    tipo === 'erro' ? cores.fundoErro : tipo === 'alerta' ? cores.fundoAlerta : cores.fundoDestaque;
+  return (
+    <View style={[styles.selo, { backgroundColor: fundo }]}>
+      {icone ? <Icone nome={icone} tamanho={13} cor={cor} /> : null}
+      <Text style={[styles.textoSelo, { color: cor }]}>{texto}</Text>
+    </View>
   );
 }
 
@@ -71,6 +112,9 @@ export default function LugarTela() {
   const [lugar, setLugar] = useState<Detalhe | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const turista = usuario?.tipo === 'turista';
+  const { top, bottom } = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const larguraFoto = Math.min(width, LARGURA_MAXIMA);
 
   const carregar = useCallback(async () => {
     try {
@@ -103,177 +147,333 @@ export default function LugarTela() {
 
   if (!lugar) {
     return (
-      <View style={styles.centro}>
-        <Stack.Screen options={{ title: 'Local' }} />
+      <View style={[styles.centro, { paddingTop: top }]}>
+        <View style={[styles.voltarSolto, { top: top + 8 }]}>
+          <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={() => router.back()} />
+        </View>
         {erro ? <Aviso texto={erro} /> : <ActivityIndicator color={cores.primaria} />}
       </View>
     );
   }
 
-  const resumo = [
-    lugar.categorias.join(', '),
-    lugar.faixa_preco ? PRECO[lugar.faixa_preco] : null,
-    lugar.nota_media !== null ? `★ ${formatarNota(lugar.nota_media)}` : null,
-  ].filter(Boolean);
+  const hojeTexto = linhasDeHorario(lugar.horarios).find((h) => h.hoje);
 
   return (
-    <ScrollView contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}>
-      <Stack.Screen
-        options={{
-          title: lugar.nome,
-          headerRight: turista
-            ? () => <BotaoFavorito ativo={lugar.favorito} onPress={alternarFavorito} />
-            : lugar.pode_editar
-              ? () => (
-                  <Pressable
-                    onPress={() => router.push(`/gestao/${lugar.id_estab}`)}
-                    accessibilityRole="button"
-                    hitSlop={12}
-                    style={styles.favorito}
-                  >
-                    <Text style={styles.editar}>Editar</Text>
-                  </Pressable>
-                )
-              : undefined,
-        }}
-      />
-      {lugar.fotos.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.fotos}
-        >
-          {lugar.fotos.map((foto) => (
-            <Image
-              key={foto.url}
-              source={{ uri: urlFoto(foto.url) }}
-              style={styles.foto}
-              accessibilityLabel={foto.legenda ?? `Foto de ${lugar.nome}`}
-            />
-          ))}
-        </ScrollView>
-      ) : null}
+    <View style={styles.tela}>
+      <StatusBar style="light" />
+      <ScrollView contentContainerStyle={{ paddingBottom: bottom + 32 }}>
+        {/* Fotos em tela cheia; sem fotos, um degradê azul com o ícone do eixo. */}
+        <View style={[styles.capa, estilosLargura.conteudo]}>
+          {lugar.fotos.length > 0 ? (
+            <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+              {lugar.fotos.map((foto) => (
+                <Image
+                  key={foto.url}
+                  source={{ uri: urlFoto(foto.url) }}
+                  style={[styles.foto, { width: larguraFoto }]}
+                  accessibilityLabel={foto.legenda ?? `Foto de ${lugar.nome}`}
+                />
+              ))}
+            </ScrollView>
+          ) : (
+            <LinearGradient
+              colors={degrade}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.semFoto}
+            >
+              <Icone
+                nome={lugar.eixo ? ICONE_EIXO[lugar.eixo] : 'location'}
+                tamanho={64}
+                cor="rgba(255, 255, 255, 0.55)"
+              />
+            </LinearGradient>
+          )}
+          <View style={[styles.botoesCapa, { top: top + 8 }]}>
+            <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={() => router.back()} />
+            {turista ? (
+              <BotaoRedondo
+                icone={lugar.favorito ? 'heart' : 'heart-outline'}
+                cor={lugar.favorito ? cores.favorito : cores.texto}
+                rotulo={lugar.favorito ? 'Remover dos salvos' : 'Salvar local'}
+                selecionado={lugar.favorito}
+                onPress={alternarFavorito}
+              />
+            ) : lugar.pode_editar ? (
+              <BotaoRedondo
+                icone="create-outline"
+                rotulo="Editar local"
+                onPress={() => router.push(`/gestao/${lugar.id_estab}`)}
+              />
+            ) : null}
+          </View>
+        </View>
 
-      <View style={styles.bloco}>
-        <Text style={styles.nome} accessibilityRole="header">
-          {lugar.nome}
-        </Text>
-        <Text style={styles.secundario}>{resumo.join(' · ')}</Text>
-        <View style={styles.selos}>
-          {lugar.aberto_agora === true ? <Text style={styles.selo}>Aberto agora</Text> : null}
-          {!lugar.verificado ? (
-            <Text style={[styles.selo, styles.seloPendente]}>Aguardando verificação</Text>
-          ) : null}
-          {lugar.fechado_temporariamente ? (
-            <Text style={[styles.selo, styles.seloFechado]}>Fechado temporariamente</Text>
-          ) : null}
-          {lugar.aberto_agora === false && !lugar.fechado_temporariamente ? (
-            <Text style={[styles.selo, styles.seloFechado]}>Fechado agora</Text>
-          ) : null}
-          {lugar.acessibilidade ? <Text style={styles.selo}>♿ Acessível</Text> : null}
-          {lugar.opcoes_alimentares.map((o) => (
-            <Text key={o} style={styles.selo}>
-              {DIETAS[o] ?? o}
+        <View style={[styles.folha, estilosLargura.conteudo]}>
+          <View style={styles.bloco}>
+            <Text style={styles.nome} accessibilityRole="header">
+              {lugar.nome}
             </Text>
-          ))}
-        </View>
-      </View>
-
-      <Aviso texto={erro} />
-
-      <View style={styles.bloco}>
-        <Botao
-          titulo="Como chegar"
-          onPress={() =>
-            abrirRota({ latitude: lugar.latitude, longitude: lugar.longitude, nome: lugar.nome })
-          }
-        />
-        <Text style={styles.secundario}>
-          {lugar.endereco}
-          {lugar.distancia_km !== null ? ` · ${formatarDistancia(lugar.distancia_km)} de você` : ''}
-        </Text>
-        <View style={styles.contato}>
-          {lugar.telefone ? (
-            <Botao
-              titulo={`Ligar: ${lugar.telefone}`}
-              variante="link"
-              onPress={() => Linking.openURL(`tel:${lugar.telefone!.replace(/[^\d+]/g, '')}`)}
-            />
-          ) : null}
-          {lugar.site ? (
-            <Botao
-              titulo="Abrir site"
-              variante="link"
-              onPress={() => Linking.openURL(lugar.site!)}
-            />
-          ) : null}
-        </View>
-      </View>
-
-      {lugar.descricao ? (
-        <View style={styles.bloco}>
-          <Text style={styles.titulo} accessibilityRole="header">
-            Sobre
-          </Text>
-          <Text style={styles.texto}>{lugar.descricao}</Text>
-        </View>
-      ) : null}
-
-      {lugar.horarios.length > 0 ? (
-        <View style={styles.bloco}>
-          <Text style={styles.titulo} accessibilityRole="header">
-            Horários
-          </Text>
-          {linhasDeHorario(lugar.horarios).map(({ dia, texto }) => (
-            <View key={dia} style={styles.horario}>
-              <Text style={[styles.texto, styles.dia]}>{dia}</Text>
-              <Text style={styles.texto}>{texto}</Text>
+            <View style={styles.resumo}>
+              {lugar.nota_media !== null ? (
+                <>
+                  <Icone nome="star" tamanho={16} cor={cores.estrela} />
+                  <Text style={styles.nota}>{formatarNota(lugar.nota_media)}</Text>
+                  <Text style={styles.secundario}>({lugar.total_avaliacoes}) · </Text>
+                </>
+              ) : null}
+              <Text style={styles.secundario}>
+                {[lugar.categorias.join(', '), lugar.faixa_preco ? PRECO[lugar.faixa_preco] : null]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
             </View>
-          ))}
-        </View>
-      ) : null}
+            <View style={styles.selos}>
+              {lugar.aberto_agora === true ? (
+                <Selo texto="Aberto agora" icone="time-outline" />
+              ) : null}
+              {!lugar.verificado ? <Selo texto="Aguardando verificação" tipo="alerta" /> : null}
+              {lugar.fechado_temporariamente ? (
+                <Selo texto="Fechado temporariamente" tipo="erro" />
+              ) : null}
+              {lugar.aberto_agora === false && !lugar.fechado_temporariamente ? (
+                <Selo texto="Fechado agora" tipo="erro" />
+              ) : null}
+              {lugar.acessibilidade ? <Selo texto="Acessível" icone="accessibility" /> : null}
+              {lugar.opcoes_alimentares.map((o) => (
+                <Selo key={o} texto={DIETAS[o] ?? o} icone="leaf-outline" />
+              ))}
+            </View>
+          </View>
 
-      <SecaoAvaliacoes
-        key={lugar.minha_avaliacao?.id_avaliacao ?? 'nova'}
-        lugar={lugar}
-        podeAvaliar={turista}
-        aoMudar={carregar}
-      />
-    </ScrollView>
+          <Aviso texto={erro} />
+
+          {/* RF12: a rota abre no app de mapas; ligar e site ficam ao lado. */}
+          <View style={styles.acoes}>
+            <Botao
+              titulo="Como chegar"
+              icone="navigate"
+              flexivel
+              onPress={() =>
+                abrirRota({
+                  latitude: lugar.latitude,
+                  longitude: lugar.longitude,
+                  nome: lugar.nome,
+                })
+              }
+            />
+            {lugar.telefone ? (
+              <BotaoAcao
+                icone="call-outline"
+                rotulo={`Ligar para ${lugar.telefone}`}
+                onPress={() => Linking.openURL(`tel:${lugar.telefone!.replace(/[^\d+]/g, '')}`)}
+              />
+            ) : null}
+            {lugar.site ? (
+              <BotaoAcao
+                icone="globe-outline"
+                rotulo="Abrir site"
+                onPress={() => Linking.openURL(lugar.site!)}
+              />
+            ) : null}
+          </View>
+
+          <View style={styles.info}>
+            <LinhaInfo
+              icone="location-outline"
+              titulo={lugar.endereco}
+              detalhe={
+                lugar.distancia_km !== null
+                  ? `${formatarDistancia(lugar.distancia_km)} de você`
+                  : undefined
+              }
+            />
+            {lugar.telefone ? <LinhaInfo icone="call-outline" titulo={lugar.telefone} /> : null}
+            {hojeTexto && lugar.horarios.length > 0 ? (
+              <LinhaInfo icone="time-outline" titulo={`Hoje: ${hojeTexto.texto}`} />
+            ) : null}
+          </View>
+
+          {lugar.descricao ? (
+            <View style={styles.bloco}>
+              <Text style={styles.titulo} accessibilityRole="header">
+                Sobre
+              </Text>
+              <Text style={styles.texto}>{lugar.descricao}</Text>
+            </View>
+          ) : null}
+
+          {lugar.horarios.length > 0 ? (
+            <View style={styles.bloco}>
+              <Text style={styles.titulo} accessibilityRole="header">
+                Horários
+              </Text>
+              <View style={styles.horarios}>
+                {linhasDeHorario(lugar.horarios).map(({ dia, texto, fechado, hoje: ehHoje }) => (
+                  <View key={dia} style={[styles.horario, ehHoje && styles.horarioHoje]}>
+                    <Text style={[styles.texto, ehHoje && styles.textoHoje]}>
+                      {ehHoje ? `${dia} (hoje)` : dia}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.texto,
+                        ehHoje && styles.textoHoje,
+                        fechado && { color: cores.erro },
+                      ]}
+                    >
+                      {texto}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          <SecaoAvaliacoes
+            key={lugar.minha_avaliacao?.id_avaliacao ?? 'nova'}
+            lugar={lugar}
+            podeAvaliar={turista}
+            aoMudar={carregar}
+          />
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+function BotaoAcao({
+  icone,
+  rotulo,
+  onPress,
+}: {
+  icone: NomeIcone;
+  rotulo: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={rotulo}
+      style={({ pressed }) => [styles.botaoAcao, pressed && { opacity: 0.7 }]}
+    >
+      <Icone nome={icone} tamanho={22} cor={cores.primaria} />
+    </Pressable>
+  );
+}
+
+function LinhaInfo({
+  icone,
+  titulo,
+  detalhe,
+}: {
+  icone: NomeIcone;
+  titulo: string;
+  detalhe?: string;
+}) {
+  return (
+    <View style={styles.linhaInfo}>
+      <View style={styles.iconeInfo}>
+        <Icone nome={icone} tamanho={18} cor={cores.primaria} />
+      </View>
+      <View style={styles.textosInfo}>
+        <Text style={styles.tituloInfo}>{titulo}</Text>
+        {detalhe ? <Text style={styles.secundario}>{detalhe}</Text> : null}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  centro: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  conteudo: { padding: 16, gap: 20, backgroundColor: cores.fundo },
-  fotos: { gap: 8 },
-  foto: { width: 260, height: 170, borderRadius: 12, backgroundColor: cores.fundoCampo },
-  bloco: { gap: 8 },
-  nome: { fontSize: 24, fontWeight: '700', color: cores.texto },
-  titulo: { fontSize: 20, fontWeight: '700', color: cores.texto },
-  secundario: { fontSize: 15, color: cores.textoSecundario },
-  texto: { fontSize: 15, color: cores.texto },
-  selos: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  selo: {
-    fontSize: 13,
-    color: cores.primaria,
-    backgroundColor: cores.fundoDestaque,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    overflow: 'hidden',
-  },
-  seloFechado: { color: cores.erro, backgroundColor: '#FDECEA' },
-  seloPendente: { color: '#7A4A00', backgroundColor: '#FFF4E0' },
-  editar: { color: cores.primaria, fontSize: 16, fontWeight: '600' },
-  contato: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  horario: { flexDirection: 'row', gap: 12 },
-  dia: { width: 40, fontWeight: '600' },
-  favorito: {
-    marginRight: 16,
-    minWidth: 44,
-    minHeight: 44,
+  tela: { flex: 1, backgroundColor: cores.superficie },
+  centro: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 24,
+    backgroundColor: cores.fundo,
   },
+  voltarSolto: { position: 'absolute', left: 16 },
+  capa: { height: 300, backgroundColor: cores.fundoDestaque },
+  foto: { height: 300 },
+  semFoto: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  botoesCapa: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  redondo: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.18)',
+  },
+  folha: {
+    marginTop: -28,
+    padding: 20,
+    paddingTop: 24,
+    gap: 22,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    backgroundColor: cores.superficie,
+  },
+  bloco: { gap: 10 },
+  nome: { fontSize: 28, fontWeight: '800', color: cores.texto, letterSpacing: -0.5 },
+  resumo: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
+  nota: { fontSize: 15, fontWeight: '800', color: cores.texto },
+  titulo: { fontSize: 20, fontWeight: '800', color: cores.texto },
+  secundario: { fontSize: 14, color: cores.textoSecundario },
+  texto: { fontSize: 15, lineHeight: 22, color: cores.texto },
+  selos: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  selo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: raio.pilula,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  textoSelo: { fontSize: 13, fontWeight: '600' },
+  acoes: { flexDirection: 'row', gap: 10 },
+  botaoAcao: {
+    width: 52,
+    height: 52,
+    borderRadius: raio.campo,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: cores.primaria,
+  },
+  info: { gap: 14, padding: 16, borderRadius: raio.cartao, backgroundColor: cores.fundo },
+  linhaInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  iconeInfo: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: cores.superficie,
+  },
+  textosInfo: { flex: 1, gap: 2 },
+  tituloInfo: { fontSize: 15, fontWeight: '600', color: cores.texto },
+  horarios: {
+    padding: 6,
+    borderRadius: raio.cartao,
+    borderWidth: 1,
+    borderColor: cores.divisoria,
+  },
+  horario: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+  },
+  horarioHoje: { backgroundColor: cores.fundoDestaque },
+  textoHoje: { fontWeight: '700', color: cores.primariaEscura },
 });

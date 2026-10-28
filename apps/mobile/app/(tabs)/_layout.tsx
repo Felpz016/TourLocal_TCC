@@ -1,32 +1,26 @@
-import { Link, Redirect, router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
+import type { ColorValue } from 'react-native';
 import { useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '../../src/auth/AuthContext';
+import { Icone } from '../../src/components/ui/Icone';
+import type { NomeIcone } from '../../src/components/ui/Icone';
 import { cores } from '../../src/theme/cores';
 
-function Icone({ emoji }: { emoji: string }) {
-  return <Text style={{ fontSize: 20 }}>{emoji}</Text>;
-}
-
-function AcoesCabecalho() {
-  const { usuario, sair } = useAuth();
-  return (
-    <View style={styles.acoes}>
-      {usuario?.tipo === 'turista' ? (
-        <Link href="/preferencias" style={styles.acao} accessibilityLabel="Minhas preferências">
-          Preferências
-        </Link>
-      ) : null}
-      <Pressable accessibilityRole="button" onPress={sair} hitSlop={8}>
-        <Text style={styles.acao}>Sair</Text>
-      </Pressable>
-    </View>
+// Ícone cheio na aba ativa e contornado nas outras, como nos apps do iOS.
+const icone =
+  (nome: string) =>
+  ({ focused, color }: { focused: boolean; color: ColorValue }) => (
+    <Icone
+      nome={(focused ? nome : `${nome}-outline`) as NomeIcone}
+      tamanho={24}
+      cor={String(color)}
+    />
   );
-}
 
 // Os três eixos de recomendação definidos no TGI: Onde Comer, Onde Ficar e O que Fazer.
+// Cada tela desenha o próprio topo azul, então o cabeçalho padrão fica escondido.
 export default function TabsLayout() {
   const { usuario, primeiroAcesso } = useAuth();
 
@@ -46,28 +40,26 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false,
         tabBarActiveTintColor: cores.primaria,
-        headerRight: () => <AcoesCabecalho />,
+        tabBarInactiveTintColor: cores.textoSecundario,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarStyle: {
+          backgroundColor: cores.superficie,
+          borderTopColor: cores.divisoria,
+        },
+        sceneStyle: { backgroundColor: cores.fundo },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{ title: 'Comer', tabBarIcon: () => <Icone emoji="🍽️" /> }}
-      />
-      <Tabs.Screen
-        name="ficar"
-        options={{ title: 'Ficar', tabBarIcon: () => <Icone emoji="🛏️" /> }}
-      />
-      <Tabs.Screen
-        name="fazer"
-        options={{ title: 'Fazer', tabBarIcon: () => <Icone emoji="🗺️" /> }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Comer', tabBarIcon: icone('restaurant') }} />
+      <Tabs.Screen name="ficar" options={{ title: 'Ficar', tabBarIcon: icone('bed') }} />
+      <Tabs.Screen name="fazer" options={{ title: 'Fazer', tabBarIcon: icone('compass') }} />
       {/* Salvos é só do turista (RF14); para os outros perfis a aba fica escondida. */}
       <Tabs.Screen
         name="salvos"
         options={{
           title: 'Salvos',
-          tabBarIcon: () => <Icone emoji="♥" />,
+          tabBarIcon: icone('heart'),
           href: tipo === 'turista' ? undefined : null,
         }}
       />
@@ -76,7 +68,7 @@ export default function TabsLayout() {
         name="meus-locais"
         options={{
           title: 'Meus locais',
-          tabBarIcon: () => <Icone emoji="🏪" />,
+          tabBarIcon: icone('storefront'),
           href: tipo === 'comerciante' ? undefined : null,
         }}
       />
@@ -84,15 +76,12 @@ export default function TabsLayout() {
         name="moderacao"
         options={{
           title: 'Moderação',
-          tabBarIcon: () => <Icone emoji="🛡️" />,
+          tabBarIcon: icone('shield-checkmark'),
           href: tipo === 'administrador' ? undefined : null,
         }}
       />
+      {/* Preferências, localização e sair ficam no Perfil, longe do cabeçalho. */}
+      <Tabs.Screen name="perfil" options={{ title: 'Perfil', tabBarIcon: icone('person') }} />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  acoes: { flexDirection: 'row', gap: 16, marginRight: 16, alignItems: 'center' },
-  acao: { color: cores.primaria, fontSize: 15, fontWeight: '600' },
-});

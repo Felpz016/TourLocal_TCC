@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import * as authApi from '../../src/api/auth';
 import { ApiError } from '../../src/api/client';
@@ -7,11 +7,23 @@ import { useAuth } from '../../src/auth/AuthContext';
 import { Aviso } from '../../src/components/ui/Aviso';
 import { Botao } from '../../src/components/ui/Botao';
 import { Campo } from '../../src/components/ui/Campo';
-import { Opcao } from '../../src/components/ui/Opcao';
+import { Icone } from '../../src/components/ui/Icone';
+import type { NomeIcone } from '../../src/components/ui/Icone';
 import { Tela } from '../../src/components/ui/Tela';
 import { cores } from '../../src/theme/cores';
+import { raio } from '../../src/theme/estilo';
 
 type Tipo = 'turista' | 'comerciante';
+
+const TIPOS: { valor: Tipo; titulo: string; descricao: string; icone: NomeIcone }[] = [
+  { valor: 'turista', titulo: 'Sou turista', descricao: 'Quero descobrir lugares', icone: 'compass' },
+  {
+    valor: 'comerciante',
+    titulo: 'Tenho um negócio',
+    descricao: 'Quero divulgar meu local',
+    icone: 'storefront',
+  },
+];
 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -56,25 +68,38 @@ export default function CadastroScreen() {
   }
 
   return (
-    <Tela titulo="Criar conta" subtitulo="Leva menos de um minuto.">
-      <View style={styles.tipos}>
-        <Text style={styles.rotulo}>Eu sou</Text>
-        <View style={styles.linha}>
-          <Opcao
-            rotulo="Turista"
-            selecionada={tipo === 'turista'}
-            onPress={() => setTipo('turista')}
-          />
-          <Opcao
-            rotulo="Dono de estabelecimento"
-            selecionada={tipo === 'comerciante'}
-            onPress={() => setTipo('comerciante')}
-          />
-        </View>
+    <Tela
+      titulo="Como você vai usar o TourLocal?"
+      rodape={<Botao titulo="Criar conta" onPress={aoCadastrar} carregando={enviando} />}
+    >
+      <View style={styles.tipos} accessibilityRole="radiogroup">
+        {TIPOS.map((t) => {
+          const ativo = tipo === t.valor;
+          return (
+            <Pressable
+              key={t.valor}
+              onPress={() => setTipo(t.valor)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: ativo }}
+              accessibilityLabel={`${t.titulo}. ${t.descricao}`}
+              style={[styles.tipo, ativo && styles.tipoAtivo]}
+            >
+              <View style={styles.tipoTopo}>
+                <View style={[styles.tipoIcone, ativo && { backgroundColor: cores.superficie }]}>
+                  <Icone nome={t.icone} tamanho={22} cor={cores.primaria} />
+                </View>
+                {ativo ? <Icone nome="checkmark-circle" tamanho={22} cor={cores.primaria} /> : null}
+              </View>
+              <Text style={styles.tipoTitulo}>{t.titulo}</Text>
+              <Text style={styles.tipoDescricao}>{t.descricao}</Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       <Campo
         rotulo="Nome"
+        icone="person-outline"
         value={nome}
         onChangeText={setNome}
         erro={erros.nome}
@@ -82,6 +107,7 @@ export default function CadastroScreen() {
       />
       <Campo
         rotulo="E-mail"
+        icone="mail-outline"
         value={email}
         onChangeText={setEmail}
         erro={erros.email}
@@ -91,14 +117,17 @@ export default function CadastroScreen() {
       />
       <Campo
         rotulo="Senha"
+        icone="lock-closed-outline"
         value={senha}
         onChangeText={setSenha}
         erro={erros.senha}
+        dica="Pelo menos 8 caracteres."
         secureTextEntry
         autoComplete="new-password"
       />
       <Campo
         rotulo="Confirme a senha"
+        icone="lock-closed-outline"
         value={confirmacao}
         onChangeText={setConfirmacao}
         erro={erros.confirmacao}
@@ -106,13 +135,32 @@ export default function CadastroScreen() {
         autoComplete="new-password"
       />
       <Aviso texto={erroGeral} />
-      <Botao titulo="Criar conta" onPress={aoCadastrar} carregando={enviando} />
     </Tela>
   );
 }
 
 const styles = StyleSheet.create({
-  tipos: { gap: 8 },
-  rotulo: { fontSize: 15, fontWeight: '600', color: cores.texto },
-  linha: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tipos: { flexDirection: 'row', gap: 12 },
+  tipo: {
+    flex: 1,
+    gap: 6,
+    padding: 14,
+    borderRadius: raio.cartao,
+    borderWidth: 1.5,
+    borderColor: cores.divisoria,
+    backgroundColor: cores.superficie,
+  },
+  tipoAtivo: { borderColor: cores.primaria, backgroundColor: cores.fundoDestaque },
+  tipoTopo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  tipoIcone: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: cores.fundoDestaque,
+    marginBottom: 4,
+  },
+  tipoTitulo: { fontSize: 15, fontWeight: '700', color: cores.texto },
+  tipoDescricao: { fontSize: 13, color: cores.textoSecundario },
 });

@@ -14,7 +14,7 @@ export function Mapa({ posicao }: Props) {
     <iframe
       title="Mapa com a sua posição"
       src={url}
-      style={{ width: '100%', height: 220, border: 0, borderRadius: 12 }}
+      style={{ width: '100%', height: 180, border: 0, display: 'block' }}
     />
   );
 }

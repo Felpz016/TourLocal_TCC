@@ -1,24 +1,34 @@
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { cores } from '../../theme/cores';
+import { raio } from '../../theme/estilo';
+import { Icone } from './Icone';
 
-type Props = { texto: string | null; tipo?: 'erro' | 'sucesso' };
+type Tipo = 'erro' | 'sucesso' | 'alerta';
+type Props = { texto: string | null; tipo?: Tipo };
+
+const ESTILO = {
+  erro: { fundo: cores.fundoErro, cor: cores.erro, icone: 'alert-circle' },
+  sucesso: { fundo: cores.fundoDestaque, cor: cores.primariaEscura, icone: 'checkmark-circle' },
+  alerta: { fundo: cores.fundoAlerta, cor: cores.alerta, icone: 'time' },
+} as const;
 
 export function Aviso({ texto, tipo = 'erro' }: Props) {
   if (!texto) return null;
+  const e = ESTILO[tipo];
   return (
-    <Text
+    <View
       accessibilityLiveRegion="polite"
       accessibilityRole="alert"
-      style={[styles.aviso, tipo === 'erro' ? styles.erro : styles.sucesso]}
+      style={[styles.aviso, { backgroundColor: e.fundo }]}
     >
-      {texto}
-    </Text>
+      <Icone nome={e.icone} cor={e.cor} />
+      <Text style={[styles.texto, { color: e.cor }]}>{texto}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  aviso: { padding: 12, borderRadius: 10, fontSize: 15 },
-  erro: { backgroundColor: '#FDECEA', color: cores.erro },
-  sucesso: { backgroundColor: '#E6F4EA', color: cores.primaria },
+  aviso: { flexDirection: 'row', gap: 10, padding: 14, borderRadius: raio.campo },
+  texto: { flex: 1, fontSize: 15, lineHeight: 21 },
 });
