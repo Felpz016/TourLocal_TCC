@@ -2,6 +2,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider, useAuth } from '../src/auth/AuthContext';
 import { LocalizacaoProvider } from '../src/localizacao/LocalizacaoContext';
@@ -55,9 +56,12 @@ function Navegacao() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <Navegacao />
-      <StatusBar style="dark" />
-    </AuthProvider>
+    // Raiz dos gestos (arrastar a lista sobre o mapa); sem ela, os gestos não respondem.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <Navegacao />
+        <StatusBar style="dark" />
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }
