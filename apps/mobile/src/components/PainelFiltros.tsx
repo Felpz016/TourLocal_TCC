@@ -6,10 +6,12 @@ import { buscarCategorias } from '../api/recomendacoes';
 import type { Categoria, Eixo, Filtros } from '../api/recomendacoes';
 import type { FaixaPreco } from '../api/tipos';
 import { cores } from '../theme/cores';
-import { raio } from '../theme/estilo';
-import { fonte } from '../theme/fontes';
+import { curva, raio } from '../theme/estilo';
+import { fonte, tamanho } from '../theme/fontes';
 import { Botao } from './ui/Botao';
 import { Opcao } from './ui/Opcao';
+import { Pressionavel } from './ui/Pressionavel';
+import { vibrar } from '../util/vibracao';
 
 const PRECOS: { valor: FaixaPreco; rotulo: string }[] = [
   { valor: 'economico', rotulo: '$' },
@@ -35,15 +37,18 @@ export function Categorias({ eixo, filtros, onChange }: Props) {
   }, [eixo]);
 
   const chip = (rotulo: string, ativo: boolean, valor: string | null) => (
-    <Pressable
+    <Pressionavel
       key={rotulo}
       accessibilityRole="radio"
       accessibilityState={{ checked: ativo }}
-      onPress={() => onChange({ ...filtros, categoria: valor })}
+      onPress={() => {
+        if (!ativo) vibrar.selecao();
+        onChange({ ...filtros, categoria: valor });
+      }}
       style={[styles.chipTopo, ativo && styles.chipTopoAtivo]}
     >
       <Text style={[styles.textoTopo, ativo && styles.textoTopoAtivo]}>{rotulo}</Text>
-    </Pressable>
+    </Pressionavel>
   );
 
   return (
@@ -170,7 +175,8 @@ const styles = StyleSheet.create({
   categorias: { gap: 8, paddingHorizontal: 20 },
   chipTopo: {
     paddingHorizontal: 16,
-    minHeight: 40,
+    // 44 pt: a menor área de toque recomendada pela Apple (WCAG 2.5.5).
+    minHeight: 44,
     justifyContent: 'center',
     borderRadius: raio.pilula,
     borderWidth: 1,
@@ -178,30 +184,31 @@ const styles = StyleSheet.create({
     backgroundColor: cores.superficie,
   },
   chipTopoAtivo: { backgroundColor: cores.tinta, borderColor: cores.tinta },
-  textoTopo: { fontSize: 14, fontWeight: '600', color: cores.texto },
+  textoTopo: { fontSize: tamanho.rotulo, fontWeight: '600', color: cores.texto },
   textoTopoAtivo: { color: cores.primariaTexto, fontWeight: '700' },
   fundoModal: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15, 23, 42, 0.45)' },
   folha: {
     gap: 12,
     paddingHorizontal: 20,
     paddingTop: 10,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: raio.folha,
+    borderTopRightRadius: raio.folha,
+    ...curva,
     backgroundColor: cores.superficie,
   },
   alca: {
     alignSelf: 'center',
     width: 40,
     height: 5,
-    borderRadius: 3,
+    borderRadius: raio.pilula,
     backgroundColor: cores.borda,
     marginBottom: 4,
   },
   cabecalho: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  titulo: { fontFamily: fonte.titulo, fontSize: 26, color: cores.texto },
-  limpar: { fontSize: 15, fontWeight: '700', color: cores.primaria },
-  rotulo: { fontSize: 15, fontWeight: '700', color: cores.texto },
-  dica: { fontSize: 13, color: cores.textoSecundario },
+  titulo: { fontFamily: fonte.titulo, fontSize: tamanho.titulo, color: cores.texto },
+  limpar: { fontSize: tamanho.corpo, fontWeight: '700', color: cores.primaria },
+  rotulo: { fontSize: tamanho.corpo, fontWeight: '700', color: cores.texto },
+  dica: { fontSize: tamanho.apoio, color: cores.textoSecundario },
   linha: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 },
   interruptor: {
     flexDirection: 'row',

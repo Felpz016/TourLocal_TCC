@@ -12,6 +12,7 @@ import { Botao } from '../../src/components/ui/Botao';
 import { Secao } from '../../src/components/ui/Secao';
 import { cores } from '../../src/theme/cores';
 import { estilosLargura } from '../../src/theme/layout';
+import { vibrar } from '../../src/util/vibracao';
 
 // Edição pelo dono ou pelo administrador (UC11, RF16, RN07) e envio de fotos (RF17).
 export default function EditarLocalTela() {
@@ -26,7 +27,7 @@ export default function EditarLocalTela() {
     try {
       setLugar(await buscarDetalhe(idEstab));
     } catch {
-      setAviso({ texto: 'Não foi possível carregar o local.', tipo: 'erro' });
+      setAviso({ texto: 'Não foi possível carregar o local. Volte e abra de novo.', tipo: 'erro' });
     }
   }, [idEstab]);
 
@@ -72,6 +73,7 @@ export default function EditarLocalTela() {
         tituloBotao="Salvar alterações"
         onSalvar={async (dados) => {
           const r = await atualizar(idEstab, dados);
+          vibrar.sucesso();
           setAviso({
             tipo: 'sucesso',
             texto:

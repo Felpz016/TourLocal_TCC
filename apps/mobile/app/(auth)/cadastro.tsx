@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import * as authApi from '../../src/api/auth';
 import { ApiError } from '../../src/api/client';
@@ -10,9 +10,11 @@ import { Campo } from '../../src/components/ui/Campo';
 import { Icone } from '../../src/components/ui/Icone';
 import type { NomeIcone } from '../../src/components/ui/Icone';
 import { Tela } from '../../src/components/ui/Tela';
+import { Pressionavel } from '../../src/components/ui/Pressionavel';
 import { cores } from '../../src/theme/cores';
-import { raio } from '../../src/theme/estilo';
-import { fonte } from '../../src/theme/fontes';
+import { curva, raio } from '../../src/theme/estilo';
+import { fonte, tamanho } from '../../src/theme/fontes';
+import { vibrar } from '../../src/util/vibracao';
 
 type Tipo = 'turista' | 'comerciante';
 
@@ -63,6 +65,7 @@ export default function CadastroScreen() {
       // Entra direto após o cadastro; o layout raiz leva o usuário para o app.
       await entrar(email.trim(), senha, { primeiroAcesso: true });
     } catch (e) {
+      vibrar.erro();
       if (e instanceof ApiError && e.status === 409) {
         setErros({ email: 'Este e-mail já tem uma conta.' });
       } else {
@@ -82,7 +85,7 @@ export default function CadastroScreen() {
         {TIPOS.map((t) => {
           const ativo = tipo === t.valor;
           return (
-            <Pressable
+            <Pressionavel
               key={t.valor}
               onPress={() => setTipo(t.valor)}
               accessibilityRole="radio"
@@ -102,7 +105,7 @@ export default function CadastroScreen() {
               <Text style={[styles.tipoDescricao, ativo && styles.descricaoAtiva]}>
                 {t.descricao}
               </Text>
-            </Pressable>
+            </Pressionavel>
           );
         })}
       </View>
@@ -156,6 +159,7 @@ const styles = StyleSheet.create({
     gap: 6,
     padding: 14,
     borderRadius: raio.cartao,
+    ...curva,
     borderWidth: 1.5,
     borderColor: cores.divisoria,
     backgroundColor: cores.superficie,
@@ -165,13 +169,14 @@ const styles = StyleSheet.create({
   tipoIcone: {
     width: 42,
     height: 42,
-    borderRadius: 12,
+    borderRadius: raio.campo,
+    ...curva,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: cores.fundoDestaque,
     marginBottom: 4,
   },
-  tipoTitulo: { fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
-  tipoDescricao: { fontSize: 13, color: cores.textoSecundario },
+  tipoTitulo: { fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
+  tipoDescricao: { fontSize: tamanho.apoio, color: cores.textoSecundario },
   descricaoAtiva: { color: 'rgba(255, 255, 255, 0.75)' },
 });

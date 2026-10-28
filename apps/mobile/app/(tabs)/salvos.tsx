@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { listarFavoritos } from '../../src/api/estabelecimentos';
 import type { Favorito } from '../../src/api/estabelecimentos';
@@ -8,9 +8,10 @@ import { Miniatura } from '../../src/components/Miniatura';
 import { Aviso } from '../../src/components/ui/Aviso';
 import { Cabecalho } from '../../src/components/ui/Cabecalho';
 import { Icone } from '../../src/components/ui/Icone';
+import { Pressionavel } from '../../src/components/ui/Pressionavel';
 import { cores } from '../../src/theme/cores';
-import { cartaoPlano, raio } from '../../src/theme/estilo';
-import { fonte } from '../../src/theme/fontes';
+import { cartaoPlano, curva, raio } from '../../src/theme/estilo';
+import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 import { formatarNota } from '../../src/util/formato';
 
@@ -27,7 +28,7 @@ export default function SalvosTela() {
       setFavoritos(await listarFavoritos());
       setErro(null);
     } catch {
-      setErro('Não foi possível carregar seus locais salvos.');
+      setErro('Não foi possível carregar seus salvos. Puxe a tela para baixo para tentar de novo.');
     } finally {
       setCarregando(false);
     }
@@ -64,7 +65,7 @@ export default function SalvosTela() {
           </View>
         ) : null}
         {favoritos?.map((f) => (
-          <Pressable
+          <Pressionavel
             key={f.id_estab}
             style={({ pressed }) => [styles.cartao, pressed && { opacity: 0.85 }]}
             accessibilityRole="button"
@@ -88,7 +89,7 @@ export default function SalvosTela() {
               </Text>
             </View>
             <Icone nome="heart" tamanho={22} cor={cores.favorito} />
-          </Pressable>
+          </Pressionavel>
         ))}
       </ScrollView>
     </View>
@@ -103,12 +104,13 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 28,
     borderRadius: raio.cartao,
+    ...curva,
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: cores.borda,
   },
-  tituloVazio: { fontFamily: fonte.subtitulo, fontSize: 20, color: cores.texto },
-  textoVazio: { fontSize: 15, color: cores.textoSecundario, textAlign: 'center' },
+  tituloVazio: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.texto },
+  textoVazio: { fontSize: tamanho.corpo, color: cores.textoSecundario, textAlign: 'center' },
   cartao: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -118,6 +120,6 @@ const styles = StyleSheet.create({
     ...cartaoPlano,
   },
   info: { flex: 1, gap: 2 },
-  nome: { fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
-  secundario: { fontSize: 13, color: cores.textoSecundario },
+  nome: { fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
+  secundario: { fontSize: tamanho.apoio, color: cores.textoSecundario },
 });

@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { cores } from '../../theme/cores';
 import { raio } from '../../theme/estilo';
+import { tamanho } from '../../theme/fontes';
 import { Icone } from './Icone';
 
 type Tipo = 'erro' | 'sucesso' | 'alerta';
@@ -30,5 +31,5 @@ export function Aviso({ texto, tipo = 'erro' }: Props) {
 
 const styles = StyleSheet.create({
   aviso: { flexDirection: 'row', gap: 10, padding: 14, borderRadius: raio.campo },
-  texto: { flex: 1, fontSize: 15, lineHeight: 21 },
+  texto: { flex: 1, fontSize: tamanho.corpo, lineHeight: 21 },
 });

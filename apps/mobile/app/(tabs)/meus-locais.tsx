@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { listarMeus } from '../../src/api/gestao';
 import type { MeuEstabelecimento } from '../../src/api/gestao';
@@ -9,9 +9,10 @@ import { Miniatura } from '../../src/components/Miniatura';
 import { Botao } from '../../src/components/ui/Botao';
 import { Cabecalho } from '../../src/components/ui/Cabecalho';
 import { Icone } from '../../src/components/ui/Icone';
+import { Pressionavel } from '../../src/components/ui/Pressionavel';
 import { cores } from '../../src/theme/cores';
 import { cartaoPlano, raio } from '../../src/theme/estilo';
-import { fonte } from '../../src/theme/fontes';
+import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 
 function Situacao({ local }: { local: MeuEstabelecimento }) {
@@ -40,7 +41,7 @@ export default function MeusLocaisTela() {
       setLocais(await listarMeus());
       setErro(null);
     } catch {
-      setErro('Não foi possível carregar seus locais.');
+      setErro('Não foi possível carregar seus locais. Puxe a tela para baixo para tentar de novo.');
     } finally {
       setCarregando(false);
     }
@@ -75,7 +76,7 @@ export default function MeusLocaisTela() {
           </Text>
         ) : null}
         {locais?.map((local) => (
-          <Pressable
+          <Pressionavel
             key={local.id_estab}
             style={({ pressed }) => [styles.cartao, pressed && { opacity: 0.85 }]}
             accessibilityRole="button"
@@ -94,7 +95,7 @@ export default function MeusLocaisTela() {
               <Situacao local={local} />
             </View>
             <Icone nome="chevron-forward" tamanho={18} cor={cores.textoSecundario} />
-          </Pressable>
+          </Pressionavel>
         ))}
       </ScrollView>
     </View>
@@ -104,7 +105,12 @@ export default function MeusLocaisTela() {
 const styles = StyleSheet.create({
   tela: { flex: 1, backgroundColor: cores.fundo },
   conteudo: { padding: 20, paddingTop: 8, gap: 12 },
-  vazio: { fontSize: 15, lineHeight: 21, color: cores.textoSecundario, textAlign: 'center' },
+  vazio: {
+    fontSize: tamanho.corpo,
+    lineHeight: 21,
+    color: cores.textoSecundario,
+    textAlign: 'center',
+  },
   cartao: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -114,8 +120,8 @@ const styles = StyleSheet.create({
     ...cartaoPlano,
   },
   info: { flex: 1, gap: 4 },
-  nome: { fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
-  secundario: { fontSize: 13, color: cores.textoSecundario },
+  nome: { fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
+  secundario: { fontSize: tamanho.apoio, color: cores.textoSecundario },
   selo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -125,6 +131,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: raio.pilula,
   },
-  ponto: { width: 6, height: 6, borderRadius: 3 },
-  textoSelo: { fontSize: 12, fontWeight: '700' },
+  ponto: { width: 6, height: 6, borderRadius: raio.pilula },
+  textoSelo: { fontSize: tamanho.legenda, fontWeight: '700' },
 });

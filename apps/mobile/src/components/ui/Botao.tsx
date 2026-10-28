@@ -1,9 +1,11 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 
 import { cores } from '../../theme/cores';
-import { raio, sombraForte } from '../../theme/estilo';
+import { curva, raio, sombraForte } from '../../theme/estilo';
+import { tamanho } from '../../theme/fontes';
 import { Icone } from './Icone';
 import type { NomeIcone } from './Icone';
+import { Pressionavel } from './Pressionavel';
 
 type Variante = 'primario' | 'secundario' | 'perigo' | 'link';
 
@@ -34,7 +36,7 @@ export function Botao({
 }: Props) {
   const cor = corTexto[variante];
   return (
-    <Pressable
+    <Pressionavel
       accessibilityRole="button"
       accessibilityState={{ disabled: carregando, busy: carregando }}
       disabled={carregando}
@@ -43,7 +45,7 @@ export function Botao({
         styles.base,
         styles[variante],
         flexivel && styles.flexivel,
-        pressed && { opacity: 0.75, transform: [{ scale: 0.98 }] },
+        pressed && { opacity: 0.85 },
       ]}
     >
       {carregando ? (
@@ -56,7 +58,7 @@ export function Botao({
           </Text>
         </>
       )}
-    </Pressable>
+    </Pressionavel>
   );
 }
 
@@ -69,12 +71,13 @@ const styles = StyleSheet.create({
     minHeight: 52,
     paddingHorizontal: 18,
     borderRadius: raio.campo,
+    ...curva,
   },
   flexivel: { flex: 1 },
   primario: { backgroundColor: cores.primaria, ...sombraForte },
   secundario: { borderWidth: 1.5, borderColor: cores.primaria, backgroundColor: cores.superficie },
   perigo: { borderWidth: 1.5, borderColor: cores.erro, backgroundColor: cores.superficie },
   link: { minHeight: 44, paddingHorizontal: 8 },
-  texto: { fontSize: 16, fontWeight: '700' },
+  texto: { fontSize: tamanho.campo, fontWeight: '700' },
   textoLink: { fontWeight: '600' },
 });

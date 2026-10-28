@@ -1,18 +1,24 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import { cores } from '../../theme/cores';
 import { raio } from '../../theme/estilo';
+import { tamanho } from '../../theme/fontes';
+import { Pressionavel } from './Pressionavel';
+import { vibrar } from '../../util/vibracao';
 
 type Props = { rotulo: string; selecionada: boolean; onPress: () => void };
 
 /** Botão de escolha (chip) usado em listas de opções. */
 export function Opcao({ rotulo, selecionada, onPress }: Props) {
   return (
-    <Pressable
+    <Pressionavel
       accessibilityRole="checkbox"
       accessibilityState={{ checked: selecionada }}
       accessibilityLabel={rotulo}
-      onPress={onPress}
+      onPress={() => {
+        vibrar.selecao();
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.chip,
         selecionada && styles.chipSelecionado,
@@ -20,7 +26,7 @@ export function Opcao({ rotulo, selecionada, onPress }: Props) {
       ]}
     >
       <Text style={[styles.texto, selecionada && styles.textoSelecionado]}>{rotulo}</Text>
-    </Pressable>
+    </Pressionavel>
   );
 }
 
@@ -36,6 +42,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chipSelecionado: { backgroundColor: cores.primaria, borderColor: cores.primaria },
-  texto: { fontSize: 15, fontWeight: '500', color: cores.texto },
+  texto: { fontSize: tamanho.corpo, fontWeight: '500', color: cores.texto },
   textoSelecionado: { color: cores.primariaTexto, fontWeight: '700' },
 });

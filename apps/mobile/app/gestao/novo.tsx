@@ -6,6 +6,7 @@ import { Aviso } from '../../src/components/ui/Aviso';
 import { FormularioEstabelecimento } from '../../src/components/gestao/FormularioEstabelecimento';
 import { cores } from '../../src/theme/cores';
 import { estilosLargura } from '../../src/theme/layout';
+import { vibrar } from '../../src/util/vibracao';
 
 // Cadastro de estabelecimento (UC10, RF15). Depois de salvar, abre a edição para as fotos.
 export default function NovoLocalTela() {
@@ -19,6 +20,7 @@ export default function NovoLocalTela() {
         tituloBotao="Enviar para verificação"
         onSalvar={async (dados) => {
           const { id_estab } = await cadastrar(dados);
+          vibrar.sucesso();
           router.replace(`/gestao/${id_estab}`);
         }}
       />

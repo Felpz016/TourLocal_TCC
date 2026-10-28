@@ -2,6 +2,7 @@ import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { cores } from '../theme/cores';
+import { tamanho } from '../theme/fontes';
 import { Icone } from './ui/Icone';
 import type { NomeIcone } from './ui/Icone';
 
@@ -63,6 +64,8 @@ export function BarraAbas({
             <Text
               style={[styles.rotulo, { color: cor }, ativa && styles.rotuloAtivo]}
               numberOfLines={1}
+              // Com o texto ampliado nos Ajustes, o rótulo cresce até caber na barra.
+              maxFontSizeMultiplier={1.3}
             >
               {titulo}
             </Text>
@@ -82,6 +85,6 @@ const styles = StyleSheet.create({
     backgroundColor: cores.superficie,
   },
   aba: { flex: 1, alignItems: 'center', gap: 3, minHeight: 44 },
-  rotulo: { fontSize: 11, fontWeight: '500' },
+  rotulo: { fontSize: tamanho.mini, fontWeight: '500' },
   rotuloAtivo: { fontWeight: '700' },
 });

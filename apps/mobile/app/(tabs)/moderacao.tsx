@@ -18,9 +18,10 @@ import { Botao } from '../../src/components/ui/Botao';
 import { Cabecalho } from '../../src/components/ui/Cabecalho';
 import { Icone } from '../../src/components/ui/Icone';
 import { cores } from '../../src/theme/cores';
-import { cartaoPlano, raio, sombra } from '../../src/theme/estilo';
-import { fonte } from '../../src/theme/fontes';
+import { cartaoPlano, curva, raio, sombra } from '../../src/theme/estilo';
+import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
+import { vibrar } from '../../src/util/vibracao';
 
 // Moderação (UC12, RF18): verificar cadastros (RN01) e decidir denúncias (RN06).
 export default function ModeracaoTela() {
@@ -37,7 +38,10 @@ export default function ModeracaoTela() {
       setPendentes(p);
       setDenuncias(d);
     } catch {
-      setAviso({ texto: 'Não foi possível carregar a moderação.', tipo: 'erro' });
+      setAviso({
+        texto: 'Não foi possível carregar a moderação. Puxe a tela para baixo para tentar de novo.',
+        tipo: 'erro',
+      });
     } finally {
       setCarregando(false);
     }
@@ -52,11 +56,14 @@ export default function ModeracaoTela() {
   async function executar(acao: () => Promise<void>, sucesso: string) {
     try {
       await acao();
+      vibrar.sucesso();
       setAviso({ texto: sucesso, tipo: 'sucesso' });
       await carregar();
     } catch (e) {
+      vibrar.erro();
       setAviso({
-        texto: e instanceof ApiError ? e.message : 'Não foi possível concluir.',
+        texto:
+          e instanceof ApiError ? e.message : 'Não deu certo agora. Tente de novo em instantes.',
         tipo: 'erro',
       });
     }
@@ -75,7 +82,10 @@ export default function ModeracaoTela() {
           ).map(([valor, rotulo]) => (
             <Pressable
               key={valor}
-              onPress={() => setAba(valor)}
+              onPress={() => {
+                if (aba !== valor) vibrar.selecao();
+                setAba(valor);
+              }}
               accessibilityRole="tab"
               accessibilityState={{ selected: aba === valor }}
               style={[styles.segmento, aba === valor && styles.segmentoAtivo]}
@@ -186,20 +196,27 @@ const styles = StyleSheet.create({
     padding: 4,
     marginTop: 12,
     borderRadius: raio.campo,
+    ...curva,
     backgroundColor: cores.divisoria,
   },
   segmento: {
     flex: 1,
-    minHeight: 40,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 11,
+    borderRadius: raio.icone,
+    ...curva,
   },
   segmentoAtivo: { backgroundColor: cores.superficie, ...sombra },
-  textoSegmento: { fontSize: 14, fontWeight: '600', color: cores.textoSecundario },
+  textoSegmento: { fontSize: tamanho.rotulo, fontWeight: '600', color: cores.textoSecundario },
   textoSegmentoAtivo: { color: cores.texto, fontWeight: '700' },
   conteudo: { padding: 20, paddingTop: 8, gap: 12 },
-  vazio: { fontSize: 15, color: cores.textoSecundario, textAlign: 'center', paddingVertical: 24 },
+  vazio: {
+    fontSize: tamanho.corpo,
+    color: cores.textoSecundario,
+    textAlign: 'center',
+    paddingVertical: 24,
+  },
   cartao: {
     gap: 12,
     padding: 16,
@@ -209,15 +226,16 @@ const styles = StyleSheet.create({
   topo: { flexDirection: 'row', gap: 12 },
   info: { flex: 1, gap: 3 },
   topoDenuncia: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  nome: { fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
-  secundario: { fontSize: 13, color: cores.textoSecundario },
+  nome: { fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
+  secundario: { fontSize: tamanho.apoio, color: cores.textoSecundario },
   linha: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   citacao: {
-    fontSize: 15,
+    fontSize: tamanho.corpo,
     lineHeight: 21,
     color: cores.texto,
     padding: 12,
     borderRadius: raio.campo,
+    ...curva,
     backgroundColor: cores.fundo,
     overflow: 'hidden',
   },
@@ -230,6 +248,6 @@ const styles = StyleSheet.create({
     borderRadius: raio.pilula,
     backgroundColor: cores.fundoErro,
   },
-  textoSelo: { fontSize: 12, fontWeight: '700', color: cores.erro },
+  textoSelo: { fontSize: tamanho.legenda, fontWeight: '700', color: cores.erro },
   acoes: { flexDirection: 'row', gap: 10 },
 });

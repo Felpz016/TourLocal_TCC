@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cores } from '../../theme/cores';
-import { fonte } from '../../theme/fontes';
+import { fonte, tamanho } from '../../theme/fontes';
 import { estilosLargura } from '../../theme/layout';
 
 type Props = {
@@ -54,12 +54,17 @@ const styles = StyleSheet.create({
   conteudo: { padding: 20, gap: 16, flexGrow: 1 },
   titulo: {
     fontFamily: fonte.titulo,
-    fontSize: 30,
+    fontSize: tamanho.tela,
     lineHeight: 34,
     color: cores.texto,
     letterSpacing: -0.6,
   },
-  subtitulo: { fontSize: 15, lineHeight: 21, color: cores.textoSecundario, marginTop: -8 },
+  subtitulo: {
+    fontSize: tamanho.corpo,
+    lineHeight: 21,
+    color: cores.textoSecundario,
+    marginTop: -8,
+  },
   rodape: {
     paddingHorizontal: 20,
     paddingTop: 12,

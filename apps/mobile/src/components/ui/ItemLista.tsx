@@ -1,6 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { cores } from '../../theme/cores';
+import { curva, raio } from '../../theme/estilo';
+import { tamanho } from '../../theme/fontes';
 import { Icone } from './Icone';
 import type { NomeIcone } from './Icone';
 
@@ -59,11 +61,12 @@ const styles = StyleSheet.create({
   icone: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: raio.icone,
+    ...curva,
     alignItems: 'center',
     justifyContent: 'center',
   },
   textos: { flex: 1, gap: 2 },
-  titulo: { fontSize: 16, fontWeight: '600', color: cores.texto },
-  detalhe: { fontSize: 13, color: cores.textoSecundario },
+  titulo: { fontSize: tamanho.campo, fontWeight: '600', color: cores.texto },
+  detalhe: { fontSize: tamanho.apoio, color: cores.textoSecundario },
 });

@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { cores } from '../../theme/cores';
-import { raio } from '../../theme/estilo';
-import { fonte } from '../../theme/fontes';
+import { curva, raio } from '../../theme/estilo';
+import { fonte, tamanho } from '../../theme/fontes';
 import { Icone } from './Icone';
 import type { NomeIcone } from './Icone';
 
@@ -42,6 +42,7 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 16,
     borderRadius: raio.cartao,
+    ...curva,
     borderWidth: 1,
     borderColor: cores.divisoria,
     backgroundColor: cores.superficie,
@@ -50,14 +51,15 @@ const styles = StyleSheet.create({
   icone: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: raio.icone,
+    ...curva,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: cores.fundoDestaque,
   },
   textos: { flex: 1, gap: 2 },
-  titulo: { fontFamily: fonte.subtitulo, fontSize: 18, color: cores.texto },
-  dica: { fontSize: 13, color: cores.textoSecundario },
+  titulo: { fontFamily: fonte.subtitulo, fontSize: tamanho.cabecalho, color: cores.texto },
+  dica: { fontSize: tamanho.apoio, color: cores.textoSecundario },
   linha: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   coluna: { gap: 12 },
 });

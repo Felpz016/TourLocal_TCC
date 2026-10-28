@@ -24,7 +24,11 @@ export default function RecuperarSenhaScreen() {
       await authApi.recuperarSenha(email.trim());
       setEnviado(true);
     } catch (e) {
-      setErro(e instanceof ApiError ? e.message : 'Não foi possível enviar.');
+      setErro(
+        e instanceof ApiError
+          ? e.message
+          : 'Não foi possível enviar o e-mail. Tente de novo em instantes.',
+      );
     } finally {
       setEnviando(false);
     }

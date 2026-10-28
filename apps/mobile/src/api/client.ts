@@ -46,8 +46,8 @@ function mensagemDeErro(status: number, corpo: unknown): string {
   if (typeof detail === 'string') return detail;
   // Erros de validação do FastAPI (422) vêm como lista.
   if (Array.isArray(detail) && detail[0]?.msg) return 'Confira os dados informados.';
-  if (status >= 500) return 'O servidor teve um problema. Tente novamente.';
-  return 'Não foi possível concluir a operação.';
+  if (status >= 500) return 'O servidor teve um problema. Tente de novo em instantes.';
+  return 'Não deu certo agora. Tente de novo em instantes.';
 }
 
 // Sem resposta nesse tempo, a requisição é cancelada e o app mostra o erro em vez de ficar

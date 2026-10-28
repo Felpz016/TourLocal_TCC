@@ -13,8 +13,8 @@ import { Opcao } from '../src/components/ui/Opcao';
 import { Secao } from '../src/components/ui/Secao';
 import { Tela } from '../src/components/ui/Tela';
 import { cores } from '../src/theme/cores';
-import { raio } from '../src/theme/estilo';
-import { fonte } from '../src/theme/fontes';
+import { curva, raio } from '../src/theme/estilo';
+import { fonte, tamanho } from '../src/theme/fontes';
 
 const ORCAMENTOS: { valor: FaixaPreco; rotulo: string }[] = [
   { valor: 'economico', rotulo: '$ Econômico' },
@@ -49,7 +49,13 @@ export default function PreferenciasScreen() {
     authApi
       .buscarPerfil()
       .then(setPerfil)
-      .catch((e) => setErro(e instanceof ApiError ? e.message : 'Erro ao carregar.'));
+      .catch((e) =>
+        setErro(
+          e instanceof ApiError
+            ? e.message
+            : 'Não foi possível carregar suas preferências. Volte e abra de novo.',
+        ),
+      );
   }, []);
 
   if (!perfil) {
@@ -78,7 +84,11 @@ export default function PreferenciasScreen() {
       if (router.canGoBack()) router.back();
       else router.replace('/');
     } catch (e) {
-      setErro(e instanceof ApiError ? e.message : 'Não foi possível salvar.');
+      setErro(
+        e instanceof ApiError
+          ? e.message
+          : 'Não foi possível salvar. Confira a conexão e tente de novo.',
+      );
     } finally {
       setSalvando(false);
     }
@@ -174,14 +184,15 @@ export default function PreferenciasScreen() {
 }
 
 const styles = StyleSheet.create({
-  tituloSecao: { fontFamily: fonte.subtitulo, fontSize: 17, color: cores.texto },
-  dica: { fontSize: 13, color: cores.textoSecundario },
+  tituloSecao: { fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
+  dica: { fontSize: tamanho.apoio, color: cores.textoSecundario },
   acessibilidade: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     padding: 16,
     borderRadius: raio.cartao,
+    ...curva,
     borderWidth: 1,
     borderColor: cores.divisoria,
     backgroundColor: cores.superficie,
@@ -189,7 +200,8 @@ const styles = StyleSheet.create({
   iconeAcesso: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: raio.icone,
+    ...curva,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: cores.fundoDestaque,

@@ -11,9 +11,10 @@ import { Botao } from '../../src/components/ui/Botao';
 import { Campo } from '../../src/components/ui/Campo';
 import { Icone } from '../../src/components/ui/Icone';
 import { cores } from '../../src/theme/cores';
-import { sombra } from '../../src/theme/estilo';
-import { fonte } from '../../src/theme/fontes';
+import { curva, raio, sombra } from '../../src/theme/estilo';
+import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
+import { vibrar } from '../../src/util/vibracao';
 
 export default function LoginScreen() {
   const { entrar } = useAuth();
@@ -34,6 +35,7 @@ export default function LoginScreen() {
       await entrar(email.trim(), senha);
       // Com o usuário logado, o layout raiz troca automaticamente para as abas.
     } catch (e) {
+      vibrar.erro();
       setErro(e instanceof ApiError ? e.message : 'Não foi possível entrar.');
     } finally {
       setEnviando(false);
@@ -143,7 +145,7 @@ const styles = StyleSheet.create({
   ponto: {
     width: 18,
     height: 18,
-    borderRadius: 9,
+    borderRadius: raio.pilula,
     backgroundColor: cores.sol,
     borderWidth: 4,
     borderColor: 'rgba(255, 200, 61, 0.35)',
@@ -152,36 +154,44 @@ const styles = StyleSheet.create({
   logo: {
     width: 34,
     height: 34,
-    borderRadius: 10,
+    borderRadius: raio.icone,
+    ...curva,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: cores.sol,
   },
-  marca: { fontFamily: fonte.subtitulo, fontSize: 20, color: cores.primariaTexto },
+  marca: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.primariaTexto },
   manchete: {
     fontFamily: fonte.titulo,
+    // Manchete da tela de entrada: o único texto em tamanho de cartaz, fora da escala.
     fontSize: 40,
     lineHeight: 44,
     color: cores.primariaTexto,
     letterSpacing: -1,
   },
   mancheteDestaque: { color: cores.sol },
-  slogan: { fontSize: 16, color: 'rgba(255, 255, 255, 0.75)' },
+  slogan: { fontSize: tamanho.campo, color: 'rgba(255, 255, 255, 0.75)' },
   corpo: { gap: 12, paddingHorizontal: 20, marginTop: -40 },
   cartao: {
     gap: 14,
     padding: 20,
-    borderRadius: 26,
+    borderRadius: raio.folha,
+    ...curva,
     backgroundColor: cores.superficie,
     ...sombra,
   },
-  titulo: { fontFamily: fonte.subtitulo, fontSize: 24, color: cores.texto },
+  titulo: { fontFamily: fonte.subtitulo, fontSize: tamanho.titulo, color: cores.texto },
   esqueci: {
     alignSelf: 'flex-end',
     color: cores.primaria,
-    fontSize: 14,
+    fontSize: tamanho.rotulo,
     fontWeight: '700',
     paddingVertical: 6,
   },
-  semConta: { textAlign: 'center', fontSize: 14, color: cores.textoSecundario, marginTop: 8 },
+  semConta: {
+    textAlign: 'center',
+    fontSize: tamanho.rotulo,
+    color: cores.textoSecundario,
+    marginTop: 8,
+  },
 });
