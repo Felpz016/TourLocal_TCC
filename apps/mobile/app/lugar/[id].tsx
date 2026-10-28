@@ -7,6 +7,7 @@ import {
   Linking,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -21,14 +22,13 @@ import { urlFoto } from '../../src/api/gestao';
 import { useAuth } from '../../src/auth/AuthContext';
 import { SecaoAvaliacoes } from '../../src/components/detalhe/SecaoAvaliacoes';
 import { Aviso } from '../../src/components/ui/Aviso';
-import { inicial } from '../../src/components/Miniatura';
-import { Botao } from '../../src/components/ui/Botao';
+import { Mapa } from '../../src/components/Mapa';
 import { Icone } from '../../src/components/ui/Icone';
 import type { NomeIcone } from '../../src/components/ui/Icone';
 import { useLocalizacao } from '../../src/localizacao/LocalizacaoContext';
-import { corDoLugar, cores } from '../../src/theme/cores';
+import { cores } from '../../src/theme/cores';
 import { fonte } from '../../src/theme/fontes';
-import { raio } from '../../src/theme/estilo';
+import { sombraForte } from '../../src/theme/estilo';
 import { LARGURA_MAXIMA, estilosLargura } from '../../src/theme/layout';
 import { PRECO, formatarDistancia, formatarNota } from '../../src/util/formato';
 import { abrirRota } from '../../src/util/rota';
@@ -53,6 +53,25 @@ function linhasDeHorario(horarios: Horario[]) {
       : 'Fechado';
     return { dia, texto, fechado: !doDia.length, hoje: indice === hoje() };
   });
+}
+
+const minutos = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
+
+/** Complemento do "Aberto"/"Fechado", como no Google Maps: quando fecha ou quando abre. */
+function proximaMudanca(horarios: Horario[], aberto: boolean | null) {
+  const agora = new Date();
+  const atual = agora.getHours() * 60 + agora.getMinutes();
+  const deHoje = horarios
+    .filter((h) => h.dia_semana === hoje())
+    .sort((a, b) => minutos(a.hora_abertura) - minutos(b.hora_abertura));
+  if (aberto) {
+    const turno = deHoje.find(
+      (h) => minutos(h.hora_abertura) <= atual && atual < minutos(h.hora_fechamento),
+    );
+    return turno ? `Fecha às ${hora(turno.hora_fechamento)}` : null;
+  }
+  const proximo = deHoje.find((h) => minutos(h.hora_abertura) > atual);
+  return proximo ? `Abre às ${hora(proximo.hora_abertura)}` : null;
 }
 
 function BotaoRedondo({
@@ -91,13 +110,14 @@ function Selo({
   icone?: NomeIcone;
   tipo?: 'normal' | 'alerta' | 'erro';
 }) {
-  const cor =
-    tipo === 'erro' ? cores.erro : tipo === 'alerta' ? cores.alerta : cores.primariaEscura;
+  const cor = tipo === 'erro' ? cores.erro : tipo === 'alerta' ? cores.alerta : cores.texto;
   const fundo =
-    tipo === 'erro' ? cores.fundoErro : tipo === 'alerta' ? cores.fundoAlerta : cores.fundoDestaque;
+    tipo === 'erro' ? cores.fundoErro : tipo === 'alerta' ? cores.fundoAlerta : cores.fundo;
   return (
     <View style={[styles.selo, { backgroundColor: fundo }]}>
-      {icone ? <Icone nome={icone} tamanho={13} cor={cor} /> : null}
+      {icone ? (
+        <Icone nome={icone} tamanho={14} cor={tipo === 'normal' ? cores.textoSecundario : cor} />
+      ) : null}
       <Text style={[styles.textoSelo, { color: cor }]}>{texto}</Text>
     </View>
   );
@@ -156,15 +176,22 @@ export default function LugarTela() {
     );
   }
 
-  const hojeTexto = linhasDeHorario(lugar.horarios).find((h) => h.hoje);
+  const temFotos = lugar.fotos.length > 0;
+  const mudanca = proximaMudanca(lugar.horarios, lugar.aberto_agora);
+  const subtitulo = [
+    lugar.categorias.join(', ') || 'Local',
+    lugar.faixa_preco ? PRECO[lugar.faixa_preco] : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <View style={styles.tela}>
-      <StatusBar style="light" />
+      <StatusBar style={temFotos ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={{ paddingBottom: bottom + 32 }}>
-        {/* Fotos em tela cheia; sem fotos, um degradê azul com o ícone do eixo. */}
+        {/* Fotos em tela cheia; sem fotos, o mapa do lugar como capa (igual ao Apple Maps). */}
         <View style={[styles.capa, estilosLargura.conteudo]}>
-          {lugar.fotos.length > 0 ? (
+          {temFotos ? (
             <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
               {lugar.fotos.map((foto) => (
                 <Image
@@ -176,11 +203,12 @@ export default function LugarTela() {
               ))}
             </ScrollView>
           ) : (
-            <View style={[styles.semFoto, { backgroundColor: corDoLugar(lugar.nome) }]}>
-              <Text style={styles.letraCapa}>{inicial(lugar.nome)}</Text>
-            </View>
+            <Mapa
+              altura={ALTURA_CAPA}
+              destaque={{ latitude: lugar.latitude, longitude: lugar.longitude, nome: lugar.nome }}
+            />
           )}
-          <View style={[styles.botoesCapa, { top: top + 8 }]}>
+          <View style={[styles.botoesCapa, { top: top + 8 }]} pointerEvents="box-none">
             <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={() => router.back()} />
             {turista ? (
               <BotaoRedondo
@@ -201,61 +229,39 @@ export default function LugarTela() {
         </View>
 
         <View style={[styles.folha, estilosLargura.conteudo]}>
-          <View style={styles.bloco}>
-            <Text style={styles.sobretitulo}>{lugar.categorias.join(' · ') || 'Local'}</Text>
+          <View style={styles.cabecalho}>
             <Text style={styles.nome} accessibilityRole="header">
               {lugar.nome}
             </Text>
-            <View style={styles.selos}>
-              {lugar.aberto_agora === true ? (
-                <Selo texto="Aberto agora" icone="time-outline" />
-              ) : null}
-              {!lugar.verificado ? <Selo texto="Aguardando verificação" tipo="alerta" /> : null}
-              {lugar.fechado_temporariamente ? (
-                <Selo texto="Fechado temporariamente" tipo="erro" />
-              ) : null}
-              {lugar.aberto_agora === false && !lugar.fechado_temporariamente ? (
-                <Selo texto="Fechado agora" tipo="erro" />
-              ) : null}
-              {lugar.acessibilidade ? <Selo texto="Acessível" icone="accessibility" /> : null}
-              {lugar.opcoes_alimentares.map((o) => (
-                <Selo key={o} texto={DIETAS[o] ?? o} icone="leaf-outline" />
-              ))}
-            </View>
+            <Text style={styles.subtitulo}>{subtitulo}</Text>
+            {lugar.fechado_temporariamente ? (
+              <Text style={[styles.situacao, { color: cores.erro }]}>Fechado temporariamente</Text>
+            ) : lugar.aberto_agora !== null ? (
+              <Text style={styles.subtitulo}>
+                <Text
+                  style={[
+                    styles.situacao,
+                    { color: lugar.aberto_agora ? cores.sucesso : cores.erro },
+                  ]}
+                >
+                  {lugar.aberto_agora ? 'Aberto' : 'Fechado'}
+                </Text>
+                {mudanca ? ` · ${mudanca}` : ''}
+              </Text>
+            ) : null}
+            {!lugar.verificado ? (
+              <View style={styles.selos}>
+                <Selo texto="Aguardando verificação" icone="time-outline" tipo="alerta" />
+              </View>
+            ) : null}
           </View>
 
-          {/* Resumo em formato de bilhete: nota, distância e preço. */}
-          <View style={styles.bilhete}>
-            <View style={[styles.recorte, { left: -10 }]} />
-            <View style={[styles.recorte, { right: -10 }]} />
-            <ColunaBilhete
-              valor={lugar.nota_media !== null ? `★ ${formatarNota(lugar.nota_media)}` : '—'}
-              rotulo={
-                lugar.total_avaliacoes === 1
-                  ? '1 avaliação'
-                  : `${lugar.total_avaliacoes} avaliações`
-              }
-            />
-            <View style={styles.picote} />
-            <ColunaBilhete
-              valor={lugar.distancia_km !== null ? formatarDistancia(lugar.distancia_km) : '—'}
-              rotulo="de você"
-            />
-            <View style={styles.picote} />
-            <ColunaBilhete
-              valor={lugar.faixa_preco ? PRECO[lugar.faixa_preco] : '—'}
-              rotulo="preço"
-            />
-          </View>
-
-          <Aviso texto={erro} />
-
-          {/* RF12: a rota abre no app de mapas; ligar e site ficam ao lado. */}
+          {/* RF12: a rota abre no app de mapas; ligar, site e compartilhar ficam ao lado. */}
           <View style={styles.acoes}>
-            <Botao
-              titulo="Como chegar"
+            <BotaoAcao
               icone="navigate"
-              flexivel
+              titulo="Rotas"
+              principal
               onPress={() =>
                 abrirRota({
                   latitude: lugar.latitude,
@@ -266,35 +272,54 @@ export default function LugarTela() {
             />
             {lugar.telefone ? (
               <BotaoAcao
-                icone="call-outline"
-                rotulo={`Ligar para ${lugar.telefone}`}
+                icone="call"
+                titulo="Ligar"
                 onPress={() => Linking.openURL(`tel:${lugar.telefone!.replace(/[^\d+]/g, '')}`)}
               />
             ) : null}
             {lugar.site ? (
-              <BotaoAcao
-                icone="globe-outline"
-                rotulo="Abrir site"
-                onPress={() => Linking.openURL(lugar.site!)}
-              />
+              <BotaoAcao icone="globe" titulo="Site" onPress={() => Linking.openURL(lugar.site!)} />
             ) : null}
+            <BotaoAcao
+              icone="share-outline"
+              titulo="Enviar"
+              onPress={() => Share.share({ message: `${lugar.nome} · ${lugar.endereco}` })}
+            />
           </View>
 
-          <View style={styles.info}>
-            <LinhaInfo
-              icone="location-outline"
-              titulo={lugar.endereco}
-              detalhe={
-                lugar.distancia_km !== null
-                  ? `${formatarDistancia(lugar.distancia_km)} de você`
-                  : undefined
+          {/* Resumo em colunas, como o cabeçalho de lugar do Apple Maps. */}
+          <View style={styles.resumo}>
+            <ColunaResumo
+              rotulo={
+                lugar.total_avaliacoes === 1
+                  ? '1 avaliação'
+                  : `${lugar.total_avaliacoes} avaliações`
               }
+              valor={lugar.nota_media !== null ? formatarNota(lugar.nota_media) : '—'}
+              icone={lugar.nota_media !== null ? 'star' : undefined}
             />
-            {lugar.telefone ? <LinhaInfo icone="call-outline" titulo={lugar.telefone} /> : null}
-            {hojeTexto && lugar.horarios.length > 0 ? (
-              <LinhaInfo icone="time-outline" titulo={`Hoje: ${hojeTexto.texto}`} />
-            ) : null}
+            <View style={styles.separador} />
+            <ColunaResumo
+              rotulo="Distância"
+              valor={lugar.distancia_km !== null ? formatarDistancia(lugar.distancia_km) : '—'}
+            />
+            <View style={styles.separador} />
+            <ColunaResumo
+              rotulo="Preço"
+              valor={lugar.faixa_preco ? PRECO[lugar.faixa_preco] : '—'}
+            />
           </View>
+
+          <Aviso texto={erro} />
+
+          {lugar.acessibilidade || lugar.opcoes_alimentares.length > 0 ? (
+            <View style={styles.selos}>
+              {lugar.acessibilidade ? <Selo texto="Acessível" icone="accessibility" /> : null}
+              {lugar.opcoes_alimentares.map((o) => (
+                <Selo key={o} texto={DIETAS[o] ?? o} icone="leaf-outline" />
+              ))}
+            </View>
+          ) : null}
 
           {lugar.descricao ? (
             <View style={styles.bloco}>
@@ -305,12 +330,68 @@ export default function LugarTela() {
             </View>
           ) : null}
 
+          <View style={styles.bloco}>
+            <Text style={styles.titulo} accessibilityRole="header">
+              Informações
+            </Text>
+            <View style={styles.lista}>
+              <LinhaInfo
+                icone="location-outline"
+                titulo="Endereço"
+                valor={lugar.endereco}
+                onPress={() =>
+                  abrirRota({
+                    latitude: lugar.latitude,
+                    longitude: lugar.longitude,
+                    nome: lugar.nome,
+                  })
+                }
+              />
+              {lugar.telefone ? (
+                <LinhaInfo
+                  icone="call-outline"
+                  separada
+                  titulo="Telefone"
+                  valor={lugar.telefone}
+                  onPress={() => Linking.openURL(`tel:${lugar.telefone!.replace(/[^\d+]/g, '')}`)}
+                />
+              ) : null}
+              {lugar.site ? (
+                <LinhaInfo
+                  icone="globe-outline"
+                  separada
+                  titulo="Site"
+                  valor={lugar.site.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
+                  onPress={() => Linking.openURL(lugar.site!)}
+                />
+              ) : null}
+            </View>
+          </View>
+
           {lugar.horarios.length > 0 ? (
             <View style={styles.bloco}>
               <Text style={styles.titulo} accessibilityRole="header">
                 Horários
               </Text>
-              <SemanaHorarios horarios={lugar.horarios} />
+              <View style={styles.lista}>
+                {linhasDeHorario(lugar.horarios).map((l, i) => (
+                  <View key={l.dia} style={[styles.linhaHorario, i > 0 && styles.divisoria]}>
+                    <Text style={[styles.dia, l.hoje && styles.hoje]}>
+                      {l.dia}
+                      {l.hoje ? ' (hoje)' : ''}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.dia,
+                        l.hoje && styles.hoje,
+                        l.fechado && { color: cores.textoSecundario },
+                      ]}
+                    >
+                      {l.texto}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </View>
           ) : null}
 
@@ -326,55 +407,21 @@ export default function LugarTela() {
   );
 }
 
-function ColunaBilhete({ valor, rotulo }: { valor: string; rotulo: string }) {
+function ColunaResumo({
+  rotulo,
+  valor,
+  icone,
+}: {
+  rotulo: string;
+  valor: string;
+  icone?: NomeIcone;
+}) {
   return (
-    <View style={styles.coluna} accessible accessibilityLabel={`${valor} ${rotulo}`}>
-      <Text style={styles.valorBilhete}>{valor}</Text>
-      <Text style={styles.rotuloBilhete}>{rotulo}</Text>
-    </View>
-  );
-}
-
-/** Semana em pílulas (hoje já marcado); tocar num dia mostra o horário dele. */
-function SemanaHorarios({ horarios }: { horarios: Horario[] }) {
-  const linhas = linhasDeHorario(horarios);
-  const [dia, setDia] = useState(hoje());
-  const escolhido = linhas[dia]!;
-  return (
-    <View style={styles.semana}>
-      <View style={styles.dias} accessibilityRole="tablist">
-        {linhas.map((l, i) => {
-          const ativo = i === dia;
-          return (
-            <Pressable
-              key={l.dia}
-              onPress={() => setDia(i)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: ativo }}
-              accessibilityLabel={l.dia}
-              style={[
-                styles.diaBolha,
-                ativo && styles.diaAtivo,
-                l.fechado && !ativo && styles.diaFechado,
-              ]}
-            >
-              <Text style={[styles.letraDia, ativo && { color: cores.primariaTexto }]}>
-                {l.dia[0]}
-              </Text>
-              {l.hoje ? (
-                <View style={[styles.marcaHoje, ativo && { backgroundColor: cores.sol }]} />
-              ) : null}
-            </Pressable>
-          );
-        })}
-      </View>
-      <View style={styles.horarioEscolhido}>
-        <Text style={styles.nomeDia}>
-          {escolhido.hoje ? `${escolhido.dia} (hoje)` : escolhido.dia}
-        </Text>
-        <Text style={[styles.horaDia, escolhido.fechado && { color: cores.erro }]}>
-          {escolhido.texto}
-        </Text>
+    <View style={styles.coluna} accessible accessibilityLabel={`${rotulo}: ${valor}`}>
+      <Text style={styles.rotuloResumo}>{rotulo}</Text>
+      <View style={styles.valorLinha}>
+        {icone ? <Icone nome={icone} tamanho={15} cor={cores.estrela} /> : null}
+        <Text style={styles.valorResumo}>{valor}</Text>
       </View>
     </View>
   );
@@ -382,21 +429,29 @@ function SemanaHorarios({ horarios }: { horarios: Horario[] }) {
 
 function BotaoAcao({
   icone,
-  rotulo,
+  titulo,
+  principal,
   onPress,
 }: {
   icone: NomeIcone;
-  rotulo: string;
+  titulo: string;
+  principal?: boolean;
   onPress: () => void;
 }) {
+  const cor = principal ? cores.primariaTexto : cores.primaria;
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={rotulo}
-      style={({ pressed }) => [styles.botaoAcao, pressed && { opacity: 0.7 }]}
+      accessibilityLabel={titulo}
+      style={({ pressed }) => [
+        styles.botaoAcao,
+        principal && styles.botaoPrincipal,
+        pressed && { opacity: 0.75 },
+      ]}
     >
-      <Icone nome={icone} tamanho={22} cor={cores.primaria} />
+      <Icone nome={icone} tamanho={20} cor={cor} />
+      <Text style={[styles.textoAcao, { color: cor }]}>{titulo}</Text>
     </Pressable>
   );
 }
@@ -404,24 +459,37 @@ function BotaoAcao({
 function LinhaInfo({
   icone,
   titulo,
-  detalhe,
+  valor,
+  separada,
+  onPress,
 }: {
   icone: NomeIcone;
   titulo: string;
-  detalhe?: string;
+  valor: string;
+  separada?: boolean;
+  onPress?: () => void;
 }) {
   return (
-    <View style={styles.linhaInfo}>
-      <View style={styles.iconeInfo}>
-        <Icone nome={icone} tamanho={18} cor={cores.primaria} />
-      </View>
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      style={({ pressed }) => [
+        styles.linhaInfo,
+        separada && styles.divisoria,
+        pressed && { opacity: 0.6 },
+      ]}
+    >
       <View style={styles.textosInfo}>
-        <Text style={styles.tituloInfo}>{titulo}</Text>
-        {detalhe ? <Text style={styles.secundario}>{detalhe}</Text> : null}
+        <Text style={styles.rotuloInfo}>{titulo}</Text>
+        <Text style={[styles.valorInfo, onPress && { color: cores.primaria }]}>{valor}</Text>
       </View>
-    </View>
+      <Icone nome={icone} tamanho={20} cor={cores.primaria} />
+    </Pressable>
   );
 }
+
+const ALTURA_CAPA = 280;
 
 const styles = StyleSheet.create({
   tela: { flex: 1, backgroundColor: cores.superficie },
@@ -433,9 +501,8 @@ const styles = StyleSheet.create({
     backgroundColor: cores.fundo,
   },
   voltarSolto: { position: 'absolute', left: 16 },
-  capa: { height: 300, backgroundColor: cores.fundoDestaque },
-  foto: { height: 300 },
-  semFoto: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  capa: { height: ALTURA_CAPA, backgroundColor: cores.fundoDestaque },
+  foto: { height: ALTURA_CAPA },
   botoesCapa: {
     position: 'absolute',
     left: 16,
@@ -444,130 +511,83 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   redondo: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.18)',
+    backgroundColor: cores.superficie,
+    ...sombraForte,
   },
   folha: {
-    marginTop: -28,
-    padding: 20,
-    paddingTop: 24,
-    gap: 22,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    marginTop: -20,
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    gap: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     backgroundColor: cores.superficie,
   },
+  cabecalho: { gap: 4 },
   bloco: { gap: 10 },
-  sobretitulo: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    color: cores.primaria,
-  },
   nome: {
     fontFamily: fonte.titulo,
-    fontSize: 32,
-    lineHeight: 36,
+    fontSize: 28,
+    lineHeight: 32,
     color: cores.texto,
-    letterSpacing: -0.8,
+    letterSpacing: -0.5,
   },
-  letraCapa: { fontFamily: fonte.titulo, fontSize: 180, color: 'rgba(255, 255, 255, 0.18)' },
-  resumo: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-  nota: { fontSize: 15, fontWeight: '800', color: cores.texto },
-  titulo: { fontFamily: fonte.subtitulo, fontSize: 21, color: cores.texto },
-  secundario: { fontSize: 14, color: cores.textoSecundario },
+  subtitulo: { fontSize: 15, color: cores.textoSecundario },
+  situacao: { fontSize: 15, fontWeight: '600' },
+  titulo: { fontFamily: fonte.subtitulo, fontSize: 20, color: cores.texto },
   texto: { fontSize: 15, lineHeight: 22, color: cores.texto },
-  selos: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  selos: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
   selo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    borderRadius: raio.pilula,
+    gap: 5,
+    borderRadius: 8,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 6,
   },
-  textoSelo: { fontSize: 13, fontWeight: '600' },
-  acoes: { flexDirection: 'row', gap: 10 },
+  textoSelo: { fontSize: 13, fontWeight: '500' },
+  acoes: { flexDirection: 'row', gap: 8 },
   botaoAcao: {
-    width: 52,
-    height: 52,
-    borderRadius: raio.campo,
+    flex: 1,
+    height: 60,
+    gap: 4,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: cores.primaria,
+    backgroundColor: cores.fundoDestaque,
   },
-  info: { gap: 14, padding: 16, borderRadius: raio.cartao, backgroundColor: cores.fundo },
-  linhaInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  iconeInfo: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: cores.superficie,
+  botaoPrincipal: { backgroundColor: cores.primaria },
+  textoAcao: { fontSize: 12, fontWeight: '600' },
+  resumo: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: cores.borda,
   },
+  coluna: { flex: 1, gap: 4, paddingHorizontal: 4 },
+  separador: { width: StyleSheet.hairlineWidth, backgroundColor: cores.borda, marginRight: 12 },
+  rotuloResumo: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: cores.textoSecundario,
+  },
+  valorLinha: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  valorResumo: { fontSize: 18, fontWeight: '700', color: cores.texto },
+  lista: { borderRadius: 14, paddingHorizontal: 14, backgroundColor: cores.fundo },
+  linhaInfo: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   textosInfo: { flex: 1, gap: 2 },
-  tituloInfo: { fontSize: 15, fontWeight: '600', color: cores.texto },
-  bilhete: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderRadius: raio.cartao,
-    backgroundColor: cores.fundo,
-  },
-  recorte: {
-    position: 'absolute',
-    top: '50%',
-    marginTop: -10,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: cores.superficie,
-  },
-  coluna: { flex: 1, alignItems: 'center', gap: 2 },
-  picote: {
-    width: 0,
-    alignSelf: 'stretch',
-    borderLeftWidth: 1.5,
-    borderLeftColor: cores.borda,
-    borderStyle: 'dashed',
-  },
-  valorBilhete: { fontFamily: fonte.subtitulo, fontSize: 20, color: cores.texto },
-  rotuloBilhete: { fontSize: 12, color: cores.textoSecundario },
-  semana: { gap: 12 },
-  dias: { flexDirection: 'row', justifyContent: 'space-between' },
-  diaBolha: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: cores.fundo,
-  },
-  diaAtivo: { backgroundColor: cores.tinta },
-  diaFechado: { opacity: 0.45 },
-  letraDia: { fontSize: 15, fontWeight: '700', color: cores.texto },
-  marcaHoje: {
-    position: 'absolute',
-    bottom: 5,
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: cores.primaria,
-  },
-  horarioEscolhido: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 14,
-    borderRadius: raio.campo,
-    backgroundColor: cores.fundo,
-  },
-  nomeDia: { fontSize: 15, fontWeight: '600', color: cores.texto },
-  horaDia: { fontSize: 15, fontWeight: '700', color: cores.texto },
+  rotuloInfo: { fontSize: 13, color: cores.textoSecundario },
+  valorInfo: { fontSize: 15, color: cores.texto },
+  linhaHorario: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 11 },
+  divisoria: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: cores.borda },
+  dia: { fontSize: 15, color: cores.texto },
+  hoje: { fontWeight: '700' },
 });

@@ -18,7 +18,7 @@ import { Botao } from '../../src/components/ui/Botao';
 import { Cabecalho } from '../../src/components/ui/Cabecalho';
 import { Icone } from '../../src/components/ui/Icone';
 import { cores } from '../../src/theme/cores';
-import { raio, sombra } from '../../src/theme/estilo';
+import { cartaoPlano, raio, sombra } from '../../src/theme/estilo';
 import { fonte } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 
@@ -204,8 +204,7 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 16,
     borderRadius: raio.cartao,
-    backgroundColor: cores.superficie,
-    ...sombra,
+    ...cartaoPlano,
   },
   topo: { flexDirection: 'row', gap: 12 },
   info: { flex: 1, gap: 3 },

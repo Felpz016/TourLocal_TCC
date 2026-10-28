@@ -27,10 +27,18 @@ export const cores = {
   fundoDestaque: '#E8EEFF',
 };
 
-// Cores dos selos com a inicial dos lugares sem foto; a mesma loja sempre ganha a mesma.
-const SELOS = ['#245BFF', '#0B1B3A', '#163B9C', '#0E6E8C', '#4B4FD6', '#1C7C5C'];
+// Tons dos selos com a inicial dos lugares sem foto: fundo claro e letra escura, como os
+// avatares de contato do iOS. A mesma loja sempre ganha o mesmo tom.
+const SELOS = [
+  { fundo: '#E8EEFF', letra: '#1D4ED8' },
+  { fundo: '#E2F1F6', letra: '#0E6E8C' },
+  { fundo: '#E4F3EC', letra: '#1C7C5C' },
+  { fundo: '#ECEBFF', letra: '#4B4FD6' },
+  { fundo: '#FFF1D6', letra: '#8A4B00' },
+  { fundo: '#E7EAF0', letra: '#0B1B3A' },
+];
 
-export function corDoLugar(nome: string) {
+export function tomDoLugar(nome: string) {
   let soma = 0;
   for (const letra of nome) soma = (soma * 31 + letra.charCodeAt(0)) % 997;
   return SELOS[soma % SELOS.length]!;

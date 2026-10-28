@@ -147,7 +147,7 @@ export function FolhaFiltros({ visivel, filtros, total, onChange, onFechar }: Pr
               accessibilityLabel="Mostrar também os fechados agora"
               value={!!filtros.incluirFechados}
               onValueChange={(v) => onChange({ ...filtros, incluirFechados: v })}
-              trackColor={{ true: cores.primaria }}
+              trackColor={{ true: cores.primaria, false: cores.borda }}
             />
           </View>
 
