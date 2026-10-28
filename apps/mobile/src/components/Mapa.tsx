@@ -4,10 +4,10 @@ import MapView, { Marker } from 'react-native-maps';
 import type { Recomendacao } from '../api/recomendacoes';
 import type { Posicao } from '../localizacao/LocalizacaoContext';
 
-type Props = { posicao: Posicao; lugares?: Recomendacao[] };
+type Props = { posicao: Posicao; lugares?: Recomendacao[]; altura?: number };
 
 // Mapa nativo: Apple Maps no iOS e Google Maps no Android (funciona no Expo Go).
-export function Mapa({ posicao, lugares = [] }: Props) {
+export function Mapa({ posicao, lugares = [], altura = 180 }: Props) {
   const regiao = {
     latitude: posicao.latitude,
     longitude: posicao.longitude,
@@ -16,7 +16,7 @@ export function Mapa({ posicao, lugares = [] }: Props) {
   };
   return (
     <MapView
-      style={styles.mapa}
+      style={[styles.mapa, { height: altura }]}
       region={regiao}
       showsUserLocation={posicao.origem === 'gps'}
       accessibilityLabel="Mapa com a sua posição e os lugares recomendados"
@@ -37,5 +37,5 @@ export function Mapa({ posicao, lugares = [] }: Props) {
 }
 
 const styles = StyleSheet.create({
-  mapa: { width: '100%', height: 220, borderRadius: 12 },
+  mapa: { width: '100%' },
 });

@@ -1,17 +1,24 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { cores } from '../../theme/cores';
+import { Icone } from '../ui/Icone';
 
 type Props = { nota: number; onChange?: (nota: number) => void; tamanho?: number };
 
 /** Mostra a nota em estrelas; com onChange, cada estrela vira um botão de 1 a 5 (RF13). */
-export function Estrelas({ nota, onChange, tamanho = 18 }: Props) {
+export function Estrelas({ nota, onChange, tamanho = 16 }: Props) {
   if (!onChange) {
     return (
-      <Text style={{ fontSize: tamanho, color: cores.estrela }} accessibilityLabel={`Nota ${nota}`}>
-        {'★'.repeat(nota)}
-        <Text style={{ color: cores.borda }}>{'★'.repeat(5 - nota)}</Text>
-      </Text>
+      <View style={styles.linha} accessible accessibilityLabel={`Nota ${nota} de 5`}>
+        {[1, 2, 3, 4, 5].map((valor) => (
+          <Icone
+            key={valor}
+            nome="star"
+            tamanho={tamanho}
+            cor={valor <= nota ? cores.estrela : cores.divisoria}
+          />
+        ))}
+      </View>
     );
   }
   return (
@@ -26,9 +33,11 @@ export function Estrelas({ nota, onChange, tamanho = 18 }: Props) {
           hitSlop={4}
           style={styles.botao}
         >
-          <Text style={{ fontSize: 32, color: valor <= nota ? cores.estrela : cores.borda }}>
-            ★
-          </Text>
+          <Icone
+            nome={valor <= nota ? 'star' : 'star-outline'}
+            tamanho={32}
+            cor={valor <= nota ? cores.estrela : cores.borda}
+          />
         </Pressable>
       ))}
     </View>
@@ -36,6 +45,6 @@ export function Estrelas({ nota, onChange, tamanho = 18 }: Props) {
 }
 
 const styles = StyleSheet.create({
-  linha: { flexDirection: 'row', gap: 4 },
+  linha: { flexDirection: 'row', gap: 2, alignItems: 'center' },
   botao: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
 });

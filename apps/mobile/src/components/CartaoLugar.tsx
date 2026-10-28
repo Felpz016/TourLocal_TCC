@@ -3,88 +3,112 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Recomendacao } from '../api/recomendacoes';
 import { cores } from '../theme/cores';
+import { raio, sombra } from '../theme/estilo';
+import { fonte } from '../theme/fontes';
 import { PRECO, formatarDistancia, formatarNota } from '../util/formato';
-
-function Selo({ texto, cor }: { texto: string; cor: string }) {
-  return <Text style={[styles.selo, { color: cor, borderColor: cor }]}>{texto}</Text>;
-}
+import { Miniatura } from './Miniatura';
+import { Icone } from './ui/Icone';
 
 export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
   const detalhes = [
     lugar.categorias.join(', '),
     lugar.faixa_preco ? PRECO[lugar.faixa_preco] : null,
-    lugar.nota_media !== null ? `★ ${formatarNota(lugar.nota_media)}` : null,
   ].filter(Boolean);
+  const aberto = lugar.aberto_agora;
 
   return (
     // Um toque no cartão abre os detalhes, de onde sai a rota (RNF03: até 3 toques).
     <Pressable
-      style={({ pressed }) => [styles.cartao, pressed && { opacity: 0.7 }]}
+      style={({ pressed }) => [styles.cartao, pressed && styles.pressionado]}
       accessibilityRole="button"
-      accessibilityLabel={`${lugar.nome}, ${detalhes.join(', ')}`}
+      accessibilityLabel={`${lugar.nome}, ${detalhes.join(', ')}, ${lugar.minutos_a_pe} minutos a pé`}
       accessibilityHint="Abre os detalhes do local"
       onPress={() => router.push(`/lugar/${lugar.id_estab}`)}
     >
-      <View style={styles.topo}>
-        <Text style={styles.nome} numberOfLines={2}>
-          {lugar.nome}
-        </Text>
-        {lugar.aberto_agora === true ? <Selo texto="Aberto" cor={cores.primaria} /> : null}
-        {lugar.aberto_agora === false ? <Selo texto="Fechado" cor={cores.erro} /> : null}
-      </View>
-      <Text style={styles.detalhes}>{detalhes.join(' · ')}</Text>
-      {/* RF08: distância e tempo estimado de deslocamento. */}
-      <Text style={styles.distancia}>
-        {formatarDistancia(lugar.distancia_km)} · {lugar.minutos_a_pe} min a pé ·{' '}
-        {lugar.minutos_de_carro} min de carro
-      </Text>
-      {/* RF11: por que este lugar foi recomendado. */}
-      <View style={styles.motivos}>
-        {lugar.motivos.map((motivo) => (
-          <Text key={motivo} style={styles.motivo}>
-            {motivo}
+      <View style={styles.corpo}>
+        <Miniatura nome={lugar.nome} foto={lugar.foto_url} />
+        <View style={styles.info}>
+          <Text style={styles.nome} numberOfLines={2}>
+            {lugar.nome}
           </Text>
-        ))}
+          <View style={styles.linha}>
+            {lugar.nota_media !== null ? (
+              <>
+                <Icone nome="star" tamanho={12} cor={cores.estrela} />
+                <Text style={styles.nota}>{formatarNota(lugar.nota_media)}</Text>
+                <Text style={styles.detalhes}> · </Text>
+              </>
+            ) : null}
+            <Text style={styles.detalhes} numberOfLines={1}>
+              {detalhes.join(' · ')}
+              {lugar.acessibilidade ? '  ♿' : ''}
+            </Text>
+          </View>
+          {aberto !== null ? (
+            <Text style={[styles.situacao, { color: aberto ? cores.sucesso : cores.erro }]}>
+              {aberto ? 'Aberto agora' : 'Fechado agora'}
+            </Text>
+          ) : null}
+          {/* RF11: o motivo mais forte da recomendação. */}
+          {lugar.motivos[0] ? (
+            <View style={styles.motivo}>
+              <Icone nome="sparkles" tamanho={12} cor={cores.primaria} />
+              <Text style={styles.textoMotivo} numberOfLines={1}>
+                {lugar.motivos[0]}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       </View>
-      <Text style={styles.endereco} numberOfLines={1}>
-        {lugar.endereco}
-        {lugar.acessibilidade ? '  ♿' : ''}
-      </Text>
+
+      {/* RF08: o tempo a pé em destaque, como num canhoto de bilhete. */}
+      <View style={styles.canhoto}>
+        {/* Recortes de bilhete no papel de fundo, em cima e embaixo do picote. */}
+        <View style={[styles.recorte, { top: -9 }]} />
+        <View style={[styles.recorte, { bottom: -9 }]} />
+        <Text style={styles.minutos}>{lugar.minutos_a_pe}</Text>
+        <Text style={styles.unidade}>min a pé</Text>
+        <Text style={styles.metros}>{formatarDistancia(lugar.distancia_km)}</Text>
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   cartao: {
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E2E2',
+    flexDirection: 'row',
+    borderRadius: raio.cartao,
+    backgroundColor: cores.superficie,
+    ...sombra,
+  },
+  pressionado: { opacity: 0.9, transform: [{ scale: 0.985 }] },
+  corpo: { flex: 1, flexDirection: 'row', gap: 12, padding: 12 },
+  info: { flex: 1, gap: 3, justifyContent: 'center' },
+  nome: { fontFamily: fonte.subtitulo, fontSize: 17, lineHeight: 21, color: cores.texto },
+  linha: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  nota: { fontSize: 13, fontWeight: '700', color: cores.texto },
+  detalhes: { flexShrink: 1, fontSize: 13, color: cores.textoSecundario },
+  situacao: { fontSize: 13, fontWeight: '600' },
+  motivo: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  textoMotivo: { flexShrink: 1, fontSize: 12, fontWeight: '600', color: cores.primaria },
+  canhoto: {
+    width: 74,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderLeftWidth: 1.5,
+    borderLeftColor: cores.divisoria,
+    borderStyle: 'dashed',
+  },
+  recorte: {
+    position: 'absolute',
+    left: -9,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: cores.fundo,
-    gap: 4,
   },
-  topo: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  nome: { flex: 1, fontSize: 17, fontWeight: '700', color: cores.texto },
-  selo: {
-    fontSize: 12,
-    fontWeight: '700',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    overflow: 'hidden',
-  },
-  detalhes: { fontSize: 14, color: cores.textoSecundario },
-  distancia: { fontSize: 14, color: cores.texto, fontWeight: '600' },
-  endereco: { fontSize: 13, color: cores.textoSecundario },
-  motivos: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginVertical: 2 },
-  motivo: {
-    fontSize: 12,
-    color: cores.primaria,
-    backgroundColor: '#E6F4EA',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    overflow: 'hidden',
-  },
+  minutos: { fontFamily: fonte.titulo, fontSize: 28, lineHeight: 30, color: cores.primaria },
+  unidade: { fontSize: 11, fontWeight: '700', color: cores.texto, textTransform: 'uppercase' },
+  metros: { fontSize: 11, color: cores.textoSecundario, marginTop: 4 },
 });
