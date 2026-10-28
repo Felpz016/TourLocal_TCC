@@ -8,11 +8,13 @@ type Props = {
   altura?: number;
   /** Centraliza o mapa num lugar só (capa da tela de detalhes). */
   destaque?: Ponto & { nome: string };
+  margemInferior?: number;
 };
 
 // Na web, o react-native-maps não funciona; usa o mapa embutido do OpenStreetMap,
-// que marca só um ponto: o lugar em destaque ou a posição do usuário.
-export function Mapa({ posicao, destaque, altura = 180 }: Props) {
+// que marca só um ponto: o lugar em destaque ou a posição do usuário. Como o iframe não
+// aceita margem interna, ele encolhe até a parte que a lista não cobre.
+export function Mapa({ posicao, destaque, altura = 180, margemInferior = 0 }: Props) {
   const centro: Ponto | null | undefined = destaque ?? posicao;
   if (!centro) return null;
   const d = destaque ? 0.004 : 0.01;
@@ -23,7 +25,7 @@ export function Mapa({ posicao, destaque, altura = 180 }: Props) {
     <iframe
       title={destaque ? `Mapa de ${destaque.nome}` : 'Mapa com a sua posição'}
       src={url}
-      style={{ width: '100%', height: altura, border: 0, display: 'block' }}
+      style={{ width: '100%', height: altura - margemInferior, border: 0, display: 'block' }}
     />
   );
 }
