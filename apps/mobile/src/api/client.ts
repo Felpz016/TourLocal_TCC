@@ -44,8 +44,12 @@ export function definirAoExpirarSessao(callback: (() => void) | null) {
 function mensagemDeErro(status: number, corpo: unknown): string {
   const detail = (corpo as { detail?: unknown } | null)?.detail;
   if (typeof detail === 'string') return detail;
-  // Erros de validação do FastAPI (422) vêm como lista.
-  if (Array.isArray(detail) && detail[0]?.msg) return 'Confira os dados informados.';
+  // Erros de validação do FastAPI (422) vêm como lista. Os que a própria API escreveu (como a
+  // regra de senha forte) chegam com o prefixo "Value error, " e são mostrados ao usuário.
+  if (Array.isArray(detail) && detail[0]?.msg) {
+    const msg = String(detail[0].msg);
+    return msg.startsWith('Value error, ') ? msg.slice(13) : 'Confira os dados informados.';
+  }
   if (status >= 500) return 'O servidor teve um problema. Tente de novo em instantes.';
   return 'Não deu certo agora. Tente de novo em instantes.';
 }

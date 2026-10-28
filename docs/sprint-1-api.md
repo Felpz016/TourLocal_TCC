@@ -7,11 +7,11 @@ Com a API rodando, a documentação interativa em http://localhost:8000/docs per
 
 | Método e rota | Para que serve | Corpo (JSON) | Respostas |
 |---|---|---|---|
-| `POST /auth/cadastro` | Criar conta (RF01) | `nome`, `email`, `senha` (mín. 8), `tipo` (`turista` ou `comerciante`) | 201 com o usuário · 409 e-mail já existe · 422 dados inválidos |
+| `POST /auth/cadastro` | Criar conta (RF01) | `nome`, `email`, `senha` (forte, ver abaixo), `tipo` (`turista` ou `comerciante`) | 201 com o usuário · 409 e-mail já existe · 422 dados inválidos |
 | `POST /auth/login` | Entrar (RF02) | `email`, `senha` | 200 com `access_token` · 401 credenciais erradas |
 | `GET /auth/me` | Dados do usuário logado | (nenhum) | 200 · 401 sem token |
 | `POST /auth/recuperar-senha` | Pedir link de nova senha (RF02) | `email` | 202 sempre, exista ou não o e-mail |
-| `POST /auth/redefinir-senha` | Gravar a nova senha | `token`, `nova_senha` | 204 · 400 link inválido, expirado ou já usado |
+| `POST /auth/redefinir-senha` | Gravar a nova senha | `token`, `nova_senha` (forte) | 204 · 400 link inválido, expirado ou já usado |
 | `GET /perfil` | Ler preferências (RF03) | (nenhum) | 200 · 403 se não for turista |
 | `PUT /perfil` | Salvar preferências (RF03) | ver abaixo | 200 · 422 dados inválidos |
 
@@ -37,6 +37,7 @@ Rotas que exigem login recebem o cabeçalho `Authorization: Bearer <access_token
 
 - **Senhas (RNF06):** nunca são gravadas. O banco guarda só um hash Argon2 com sal aleatório (`app/core/security.py`).
 - **Token de acesso:** um JWT assinado com `SECRET_KEY`, que guarda o id do usuário e vale 24 horas. A API não guarda sessão; ela confere a assinatura a cada requisição (`app/core/deps.py`).
+- **Senha forte:** no cadastro e na troca de senha, a API exige 8 caracteres ou mais, com letra maiúscula, letra minúscula e um caractere especial (`app/core/senha.py`). Se faltar algo, responde 422 dizendo o que falta, e o app mostra a mesma lista de requisitos enquanto a pessoa digita (`src/util/senha.ts`). Contas antigas continuam entrando com a senha que já têm.
 - **Recuperação de senha:** o link leva um JWT que vale 30 minutos e carrega um pedaço do hash da senha atual. Quando a senha muda, esse pedaço deixa de bater, então o link só funciona uma vez, sem precisar de tabela extra.
 - **E-mail:** sem `SMTP_HOST` configurado, o link aparece no log da API (`docker compose logs api`), o que basta para testar.
 - **Camadas:** a rota (`routers/`) só traduz HTTP; a regra fica no serviço (`services/`); o acesso ao banco fica no repositório (`repositories/`).

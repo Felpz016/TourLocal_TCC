@@ -6,7 +6,9 @@ import { ApiError } from '../src/api/client';
 import { Aviso } from '../src/components/ui/Aviso';
 import { Botao } from '../src/components/ui/Botao';
 import { Campo } from '../src/components/ui/Campo';
+import { RequisitosSenha } from '../src/components/ui/RequisitosSenha';
 import { Tela } from '../src/components/ui/Tela';
+import { senhaForte } from '../src/util/senha';
 
 // Aberta pelo link do e-mail: tourlocal://redefinir-senha?token=...
 export default function RedefinirSenhaScreen() {
@@ -18,7 +20,7 @@ export default function RedefinirSenhaScreen() {
   const [enviando, setEnviando] = useState(false);
 
   async function aoSalvar() {
-    if (senha.length < 8) return setErro('A senha precisa de pelo menos 8 caracteres.');
+    if (!senhaForte(senha)) return setErro('A senha ainda não atende a todos os requisitos.');
     if (senha !== confirmacao) return setErro('As senhas não são iguais.');
     if (!token) return setErro('Link inválido. Peça um novo na tela de login.');
 
@@ -45,7 +47,14 @@ export default function RedefinirSenhaScreen() {
 
   return (
     <Tela titulo="Criar nova senha">
-      <Campo rotulo="Nova senha" value={senha} onChangeText={setSenha} secureTextEntry />
+      <Campo
+        rotulo="Nova senha"
+        value={senha}
+        onChangeText={setSenha}
+        secureTextEntry
+        autoComplete="new-password"
+      />
+      <RequisitosSenha senha={senha} />
       <Campo
         rotulo="Confirme a nova senha"
         value={confirmacao}
