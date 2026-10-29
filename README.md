@@ -16,6 +16,15 @@ A versão web (RF20) entra na Sprint 6, consumindo a mesma API.
 
 ## Como rodar
 
+### Tudo no PC, com simulador de celular (Windows)
+
+Com o Docker Desktop aberto, dê dois cliques em `iniciar.cmd` na raiz do projeto (ou rode `.\iniciar.cmd` no PowerShell). Ele sobe o banco e a API, instala as dependências do app na primeira vez e abre no navegador o **simulador**: o app rodando dentro de uma moldura de iPhone, sem precisar do celular nem do Expo Go.
+
+- Endereço: http://localhost:8081/simulador.html (dá para trocar o aparelho no topo: iPhone 17 Pro, Pro Max, SE ou Android).
+- Salvou um arquivo? O app no simulador atualiza sozinho.
+- O simulador mostra a versão web do app. O mapa é o do OpenStreetMap em vez do nativo, e a vibração não existe; o resto funciona igual. Para conferir esses detalhes, o QR code continua no terminal para abrir no Expo Go.
+- Localização: o navegador pede permissão. Para simular outro lugar, F12 › ⋮ › More tools › Sensors › Location.
+
 ### Banco de dados e API (Docker)
 
 ```bash

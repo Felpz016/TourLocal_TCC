@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TourLocal · Simulador</title>
+    <style>
+      /* Ferramenta de desenvolvimento: mostra o app (versão web do Expo) dentro de uma moldura de
+     celular, para testar no PC sem o Expo Go. Abra em http://localhost:8081/simulador.html */
+      :root {
+        --fundo: #e9e7e1;
+        --texto: #0b1b3a;
+        --texto2: #5b6478;
+        --linha: #d6d2c8;
+        --azul: #245bff;
+        --corpo: #1b1d22;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        background: var(--fundo);
+        color: var(--texto);
+        font:
+          14px/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--linha);
+        flex-wrap: wrap;
+      }
+      header strong {
+        margin-right: auto;
+        font-size: 15px;
+      }
+      select,
+      button,
+      a.botao {
+        font: inherit;
+        color: var(--texto);
+        background: #fff;
+        border: 1px solid var(--linha);
+        border-radius: 8px;
+        padding: 6px 10px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      button:hover,
+      a.botao:hover,
+      select:hover {
+        border-color: var(--azul);
+      }
+      main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 0;
+      }
+      /* A moldura tem o tamanho real do aparelho e é reduzida por escala para caber na janela. */
+      .aparelho {
+        position: relative;
+        background: var(--corpo);
+        padding: 12px;
+        border-radius: 64px;
+        box-shadow:
+          0 0 0 2px #3a3d44,
+          0 24px 60px rgba(11, 27, 58, 0.25);
+        transform-origin: center center;
+        flex: none;
+      }
+      .tela {
+        position: relative;
+        overflow: hidden;
+        background: #f5f3ee;
+        border-radius: 52px;
+        display: flex;
+        flex-direction: column;
+      }
+      .status {
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 30px 0 36px;
+        font-weight: 600;
+        font-size: 15px;
+        position: relative;
+      }
+      .ilha {
+        position: absolute;
+        left: 50%;
+        top: 11px;
+        width: 124px;
+        height: 36px;
+        margin-left: -62px;
+        background: #000;
+        border-radius: 20px;
+      }
+      .icones {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+      }
+      .icones span {
+        display: block;
+        background: currentColor;
+        border-radius: 2px;
+      }
+      iframe {
+        flex: 1;
+        width: 100%;
+        border: 0;
+        display: block;
+        background: #f5f3ee;
+      }
+      .home {
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .home span {
+        width: 134px;
+        height: 5px;
+        border-radius: 3px;
+        background: #0b1b3a;
+      }
+      .sem-ilha .ilha {
+        display: none;
+      }
+      .sem-home .home span {
+        display: none;
+      }
+      .quadrado.aparelho {
+        border-radius: 36px;
+        padding: 60px 12px;
+      }
+      .quadrado .tela {
+        border-radius: 4px;
+      }
+      footer {
+        padding: 8px 16px 12px;
+        color: var(--texto2);
+        font-size: 12px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>TourLocal</strong>
+      <select id="modelo" aria-label="Aparelho"></select>
+      <button id="recarregar" type="button">Recarregar app</button>
+      <a class="botao" href="/" target="_blank" rel="noopener">Abrir sem moldura</a>
+    </header>
+    <main>
+      <div class="aparelho" id="aparelho">
+        <div class="tela" id="tela">
+          <div class="status" id="status">
+            <span id="hora">9:41</span>
+            <div class="ilha"></div>
+            <div class="icones" aria-hidden="true">
+              <span style="width: 3px; height: 5px"></span
+              ><span style="width: 3px; height: 7px"></span>
+              <span style="width: 3px; height: 9px"></span
+              ><span style="width: 3px; height: 11px"></span>
+              <span style="width: 24px; height: 11px; border-radius: 3px; margin-left: 4px"></span>
+            </div>
+          </div>
+          <iframe id="app" src="/" title="App TourLocal"></iframe>
+          <div class="home" id="home"><span></span></div>
+        </div>
+      </div>
+    </main>
+    <footer>
+      Salvou um arquivo no VS Code? O app atualiza sozinho. Localização: F12 › ⋮ › More tools ›
+      Sensors.
+    </footer>
+    <script>
+      // Tamanhos em pontos (como o app enxerga a tela); "topo" e "base" são as áreas seguras.
+      const MODELOS = {
+        'iphone-17-pro': { nome: 'iPhone 17 Pro', largura: 402, altura: 874, topo: 54, base: 34 },
+        'iphone-17-pro-max': {
+          nome: 'iPhone 17 Pro Max',
+          largura: 440,
+          altura: 956,
+          topo: 54,
+          base: 34,
+        },
+        'iphone-se': {
+          nome: 'iPhone SE',
+          largura: 375,
+          altura: 667,
+          topo: 20,
+          base: 0,
+          quadrado: true,
+        },
+        android: { nome: 'Android (Pixel)', largura: 412, altura: 915, topo: 32, base: 24 },
+      };
+      const $ = (id) => document.getElementById(id);
+      const select = $('modelo');
+      for (const [id, m] of Object.entries(MODELOS)) select.add(new Option(m.nome, id));
+      let salvo = null;
+      try {
+        salvo = localStorage.getItem('simulador.modelo');
+      } catch {}
+      select.value = MODELOS[salvo] ? salvo : 'iphone-17-pro';
+
+      function aplicar() {
+        const m = MODELOS[select.value];
+        const aparelho = $('aparelho');
+        aparelho.classList.toggle('quadrado', !!m.quadrado);
+        aparelho.classList.toggle('sem-ilha', m.topo < 50);
+        aparelho.classList.toggle('sem-home', m.base === 0);
+        $('tela').style.width = m.largura + 'px';
+        $('tela').style.height = m.altura + 'px';
+        $('status').style.height = m.topo + 'px';
+        $('status').style.fontSize = m.topo < 40 ? '12px' : '15px';
+        $('home').style.height = m.base + 'px';
+        try {
+          localStorage.setItem('simulador.modelo', select.value);
+        } catch {}
+        ajustarEscala();
+      }
+
+      function ajustarEscala() {
+        const aparelho = $('aparelho');
+        aparelho.style.transform = 'none';
+        const area = document.querySelector('main').getBoundingClientRect();
+        const escala = Math.min(
+          1,
+          (area.height - 24) / aparelho.offsetHeight,
+          (area.width - 24) / aparelho.offsetWidth,
+        );
+        aparelho.style.transform = `scale(${escala})`;
+      }
+
+      function relogio() {
+        const d = new Date();
+        $('hora').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+      }
+
+      // A barra de status assume a cor do topo do app, como no aparelho de verdade. O app está na
+      // mesma origem, então dá para ler a cor do elemento que aparece logo abaixo dela.
+      function corDoTopo() {
+        try {
+          const doc = $('app').contentDocument;
+          let el = doc && doc.elementFromPoint(doc.documentElement.clientWidth / 2, 2);
+          let cor = null;
+          while (el && !cor) {
+            const c = getComputedStyle(el).backgroundColor;
+            if (c && c !== 'transparent' && !c.endsWith(', 0)')) cor = c;
+            el = el.parentElement;
+          }
+          if (!cor) return;
+          const [r, g, b] = cor.match(/\d+/g).map(Number);
+          const escuro = 0.299 * r + 0.587 * g + 0.114 * b < 140;
+          $('status').style.background = cor;
+          $('status').style.color = escuro ? '#fff' : '#0B1B3A';
+        } catch {}
+      }
+
+      select.addEventListener('change', aplicar);
+      window.addEventListener('resize', ajustarEscala);
+      $('recarregar').addEventListener('click', () => $('app').contentWindow.location.reload());
+      relogio();
+      setInterval(relogio, 15000);
+      setInterval(corDoTopo, 400);
+      aplicar();
+    </script>
+  </body>
+</html>
