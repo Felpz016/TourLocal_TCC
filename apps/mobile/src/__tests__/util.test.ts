@@ -1,3 +1,4 @@
+import { describe, expect, test } from '@jest/globals';
 import { textoParaCompartilhar, linkDoMapa } from '../util/compartilhar';
 import { formatarDistancia, formatarNota } from '../util/formato';
 import { senhaForte } from '../util/senha';

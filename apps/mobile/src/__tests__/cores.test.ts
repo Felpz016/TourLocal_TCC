@@ -1,3 +1,4 @@
+import { afterAll, beforeEach, describe, expect, test } from '@jest/globals';
 import { cores, definirEsquema, tomDoLugar } from '../theme/cores';
 import type { Esquema } from '../theme/cores';
 
