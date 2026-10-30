@@ -1,18 +1,26 @@
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import { cores } from '../../theme/cores';
 import { raio } from '../../theme/estilo';
 import { tamanho } from '../../theme/fontes';
 import { Pressionavel } from './Pressionavel';
 import { vibrar } from '../../util/vibracao';
+import { criarEstilos } from '../../theme/tema';
 
-type Props = { rotulo: string; selecionada: boolean; onPress: () => void };
+type Props = {
+  rotulo: string;
+  selecionada: boolean;
+  onPress: () => void;
+  /** Escolha única (uma opção exclui as outras): o leitor de tela anuncia como "botão de opção". */
+  unica?: boolean;
+};
 
 /** Botão de escolha (chip) usado em listas de opções. */
-export function Opcao({ rotulo, selecionada, onPress }: Props) {
+export function Opcao({ rotulo, selecionada, onPress, unica }: Props) {
+  const styles = useEstilos();
   return (
     <Pressionavel
-      accessibilityRole="checkbox"
+      accessibilityRole={unica ? 'radio' : 'checkbox'}
       accessibilityState={{ checked: selecionada }}
       accessibilityLabel={rotulo}
       onPress={() => {
@@ -30,7 +38,7 @@ export function Opcao({ rotulo, selecionada, onPress }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   chip: {
     borderWidth: 1,
     borderColor: cores.borda,
@@ -44,4 +52,4 @@ const styles = StyleSheet.create({
   chipSelecionado: { backgroundColor: cores.primaria, borderColor: cores.primaria },
   texto: { fontSize: tamanho.corpo, fontWeight: '500', color: cores.texto },
   textoSelecionado: { color: cores.primariaTexto, fontWeight: '700' },
-});
+}));

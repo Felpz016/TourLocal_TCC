@@ -39,6 +39,12 @@ Para povoar a base com lugares reais da cidade-piloto (dados do OpenStreetMap):
 docker compose exec api python -m app.importacao.osm --cidade Araraquara
 ```
 
+Para apresentar o app (ou testar sem importar nada), crie lugares e contas de demonstração no centro de Araraquara. O passo a passo da apresentação está em [docs/roteiro-demonstracao.md](docs/roteiro-demonstracao.md).
+
+```bash
+docker compose exec api python -m app.demo
+```
+
 Administradores não se cadastram pelo app. Para criar o primeiro (a senha é pedida no terminal e segue a mesma regra do app: 8 caracteres ou mais, com letra maiúscula, letra minúscula e um caractere especial):
 
 ```bash
@@ -66,6 +72,8 @@ npm install
 npx expo start
 ```
 
+Testes do app: `npm test` (Jest) e `npm run typecheck`.
+
 Abra no celular com o Expo Go, com o celular e o computador na mesma rede Wi-Fi. O app usa sozinho o IP do computador onde o Expo está rodando, na porta 8000; não é preciso configurar nada. Para usar outro servidor, defina `EXPO_PUBLIC_API_URL` num arquivo `.env` (veja `.env.example`).
 
 Se o celular não abrir `http://IP-DO-COMPUTADOR:8000/health`, libere a porta no firewall do Windows (PowerShell como administrador) e marque a rede Wi-Fi como privada:
@@ -82,6 +90,8 @@ Se o computador tiver várias placas de rede (VirtualBox, WSL), force o IP certo
 - [Sprint 2: localização, mapa e importação de lugares](docs/sprint-2-localizacao.md)
 - [Sprint 3: listagem dos três eixos](docs/sprint-3-listagem.md)
 - [Sprint 4: motor de recomendação e filtros](docs/sprint-4-motor.md)
+- [Melhorias depois do backlog: busca, modo escuro, offline, acessibilidade](docs/melhorias-finais.md)
+- [Roteiro de demonstração para a banca](docs/roteiro-demonstracao.md)
 
 ## Backlog
 

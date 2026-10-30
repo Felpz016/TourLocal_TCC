@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 
 import { buscarDetalhe } from '../../src/api/estabelecimentos';
 import type { Detalhe } from '../../src/api/estabelecimentos';
@@ -13,9 +13,11 @@ import { Secao } from '../../src/components/ui/Secao';
 import { cores } from '../../src/theme/cores';
 import { estilosLargura } from '../../src/theme/layout';
 import { vibrar } from '../../src/util/vibracao';
+import { criarEstilos } from '../../src/theme/tema';
 
 // Edição pelo dono ou pelo administrador (UC11, RF16, RN07) e envio de fotos (RF17).
 export default function EditarLocalTela() {
+  const styles = useEstilos();
   const { id } = useLocalSearchParams<{ id: string }>();
   const idEstab = Number(id);
   const [lugar, setLugar] = useState<Detalhe | null>(null);
@@ -89,7 +91,7 @@ export default function EditarLocalTela() {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   centro: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   conteudo: { padding: 20, gap: 16, paddingBottom: 48 },
-});
+}));

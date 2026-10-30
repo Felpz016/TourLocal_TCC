@@ -25,16 +25,19 @@ def listar(
     faixa_preco: Annotated[list[FaixaPreco] | None, Query()] = None,
     nota_minima: Annotated[float | None, Query(ge=1, le=5)] = None,
     incluir_fechados: bool = False,
+    busca: Annotated[str | None, Query(max_length=60)] = None,
 ):
     """Estabelecimentos recomendados de um eixo, da maior para a menor pontuação.
 
-    As coordenadas chegam pela consulta e não são gravadas (RN10).
+    As coordenadas chegam pela consulta e não são gravadas (RN10). Com `busca`, só ficam os
+    lugares cujo nome, categoria ou endereço contém as palavras digitadas.
     """
     filtros = recomendacao.Filtros(
         categoria=categoria,
         faixas_preco=faixa_preco or [],
         nota_minima=nota_minima,
         incluir_fechados=incluir_fechados,
+        busca=(busca or "").strip() or None,
     )
     raio, candidatos = recomendacao.recomendar(
         db, usuario.id_usuario, eixo, lat, lng, raio_km, filtros

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import { useLocalizacao } from '../localizacao/LocalizacaoContext';
 import { cores } from '../theme/cores';
@@ -9,9 +9,11 @@ import { fonte, tamanho } from '../theme/fontes';
 import { Botao } from './ui/Botao';
 import { Icone } from './ui/Icone';
 import { Pressionavel } from './ui/Pressionavel';
+import { criarEstilos } from '../theme/tema';
 
 /** Pílula no topo azul que mostra de onde vem a posição e abre a troca de local. */
 export function PilulaLocalizacao() {
+  const styles = useEstilos();
   const { posicao, status, usarGps } = useLocalizacao();
 
   // Na primeira vez, pede a localização assim que a tela abre.
@@ -46,6 +48,7 @@ export function PilulaLocalizacao() {
 
 /** Cartão mostrado no lugar da lista enquanto não há posição (GPS negado ou buscando). */
 export function BarraLocalizacao() {
+  const styles = useEstilos();
   const { posicao, status, usarGps } = useLocalizacao();
 
   if (posicao) return null;
@@ -76,7 +79,7 @@ export function BarraLocalizacao() {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   pilula: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -111,4 +114,4 @@ const styles = StyleSheet.create({
   },
   titulo: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.texto },
   texto: { flexShrink: 1, fontSize: tamanho.corpo, lineHeight: 21, color: cores.textoSecundario },
-});
+}));

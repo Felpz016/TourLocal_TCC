@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cores } from '../../theme/cores';
 import { fonte, tamanho } from '../../theme/fontes';
 import { estilosLargura } from '../../theme/layout';
+import { criarEstilos } from '../../theme/tema';
 
 type Props = { titulo: string; subtitulo?: string; acao?: ReactNode; children?: ReactNode };
 
@@ -13,6 +14,7 @@ type Props = { titulo: string; subtitulo?: string; acao?: ReactNode; children?: 
  * segura, então nada fica atrás da Dynamic Island do iPhone 17 Pro.
  */
 export function Cabecalho({ titulo, subtitulo, acao, children }: Props) {
+  const styles = useEstilos();
   const { top } = useSafeAreaInsets();
   return (
     <View style={[styles.cabecalho, { paddingTop: top + 16 }]}>
@@ -30,7 +32,7 @@ export function Cabecalho({ titulo, subtitulo, acao, children }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   cabecalho: { paddingHorizontal: 20, paddingBottom: 8, backgroundColor: cores.fundo },
   interno: { gap: 4 },
   linha: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -41,4 +43,4 @@ const styles = StyleSheet.create({
     letterSpacing: -0.6,
   },
   subtitulo: { fontSize: tamanho.corpo, color: cores.textoSecundario },
-});
+}));

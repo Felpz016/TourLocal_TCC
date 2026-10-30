@@ -1,13 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, {
   ReduceMotion,
@@ -22,26 +15,42 @@ import { ApiError } from '../api/client';
 import { buscarRecomendacoes } from '../api/recomendacoes';
 import type { Eixo, Filtros, Recomendacoes } from '../api/recomendacoes';
 import { useLocalizacao } from '../localizacao/LocalizacaoContext';
+import { avisoOffline, guardar, lembrarRecomendacoes, ler } from '../offline/cache';
 import { cores } from '../theme/cores';
 import { curva, raio, sombraForte } from '../theme/estilo';
 import { fonte, tamanho } from '../theme/fontes';
 import { estilosLargura } from '../theme/layout';
 import { vibrar } from '../util/vibracao';
 import { BarraLocalizacao, PilulaLocalizacao } from './BarraLocalizacao';
+import { CampoBusca } from './CampoBusca';
 import { CartaoLugar } from './CartaoLugar';
 import { Mapa } from './Mapa';
 import { Categorias, FolhaFiltros, contarFiltros, temFiltroAtivo } from './PainelFiltros';
 import { Aviso } from './ui/Aviso';
 import { Botao } from './ui/Botao';
+import { ListaEsqueleto } from './ui/Esqueleto';
 import { Icone } from './ui/Icone';
 import { Pressionavel } from './ui/Pressionavel';
+import { criarEstilos, useTema } from '../theme/tema';
 
 type Props = { eixo: Eixo; vazio: string };
 
-const TOPO: Record<Eixo, { titulo: string; subtitulo: string }> = {
-  comer: { titulo: 'Onde comer', subtitulo: 'Restaurantes, cafés e bares perto de você' },
-  ficar: { titulo: 'Onde ficar', subtitulo: 'Hotéis, pousadas e hostels por perto' },
-  fazer: { titulo: 'O que fazer', subtitulo: 'Passeios, museus e parques perto de você' },
+const TOPO: Record<Eixo, { titulo: string; subtitulo: string; busca: string }> = {
+  comer: {
+    titulo: 'Onde comer',
+    subtitulo: 'Restaurantes, cafés e bares perto de você',
+    busca: 'Buscar restaurante, café, pizza…',
+  },
+  ficar: {
+    titulo: 'Onde ficar',
+    subtitulo: 'Hotéis, pousadas e hostels por perto',
+    busca: 'Buscar hotel, pousada…',
+  },
+  fazer: {
+    titulo: 'O que fazer',
+    subtitulo: 'Passeios, museus e parques perto de você',
+    busca: 'Buscar museu, parque, teatro…',
+  },
 };
 
 const km = (valor: number) => `${String(valor).replace('.', ',')} km`;
@@ -61,6 +70,8 @@ const MOLA = { duration: 300, dampingRatio: 0.8, reduceMotion: ReduceMotion.Syst
 
 // Tela de cada eixo (UC04): posição, mapa, filtros e a lista ordenada pela pontuação.
 export function EixoTela({ eixo, vazio }: Props) {
+  const styles = useEstilos();
+  const { esquema } = useTema();
   const { posicao } = useLocalizacao();
   const [dados, setDados] = useState<Recomendacoes | null>(null);
   const [filtros, setFiltros] = useState<Filtros>({});
@@ -68,32 +79,51 @@ export function EixoTela({ eixo, vazio }: Props) {
   const [raioKm, setRaioKm] = useState<number | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  // Preenchido quando a rede falhou e a lista é a cópia guardada no aparelho.
+  const [offline, setOffline] = useState<string | null>(null);
+  const [busca, setBusca] = useState('');
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
 
   const carregar = useCallback(async () => {
     if (!posicao) return;
     setCarregando(true);
     setErro(null);
+    // Só a lista "padrão" (sem busca nem filtros) fica guardada para o modo offline.
+    const padrao = !busca && !raioKm && !temFiltroAtivo(filtros);
     try {
-      setDados(
-        await buscarRecomendacoes({
-          eixo,
-          lat: posicao.latitude,
-          lng: posicao.longitude,
-          raioKm,
-          filtros,
-        }),
-      );
+      const resposta = await buscarRecomendacoes({
+        eixo,
+        lat: posicao.latitude,
+        lng: posicao.longitude,
+        raioKm,
+        filtros,
+        busca,
+      });
+      setDados(resposta);
+      setOffline(null);
+      lembrarRecomendacoes(resposta.resultados);
+      if (padrao) guardar(`recomendacoes.${eixo}`, resposta);
     } catch (e) {
-      setErro(
-        e instanceof ApiError
-          ? e.message
-          : 'Não foi possível carregar as recomendações. Puxe a tela para baixo para tentar de novo.',
-      );
+      // Sem rede (status 0): mostra a última lista guardada, se houver, com um aviso.
+      const guardada =
+        e instanceof ApiError && e.status === 0
+          ? await ler<Recomendacoes>(`recomendacoes.${eixo}`)
+          : null;
+      if (guardada) {
+        setDados(guardada.dados);
+        setOffline(avisoOffline(guardada.salvoEm));
+        lembrarRecomendacoes(guardada.dados.resultados);
+      } else {
+        setErro(
+          e instanceof ApiError
+            ? e.message
+            : 'Não foi possível carregar as recomendações. Puxe a tela para baixo para tentar de novo.',
+        );
+      }
     } finally {
       setCarregando(false);
     }
-  }, [eixo, posicao, raioKm, filtros]);
+  }, [eixo, posicao, raioKm, filtros, busca]);
 
   useEffect(() => {
     carregar();
@@ -171,7 +201,7 @@ export function EixoTela({ eixo, vazio }: Props) {
 
   return (
     <View style={styles.tela} onLayout={(e) => setAltura(e.nativeEvent.layout.height)}>
-      <StatusBar style="dark" />
+      <StatusBar style={esquema === 'escuro' ? 'light' : 'dark'} />
       {/* O mapa ocupa a tela toda por trás; a lista desliza por cima e decide quanto dele aparece. */}
       <View style={StyleSheet.absoluteFill}>
         {posicao && altura ? (
@@ -265,13 +295,26 @@ export function EixoTela({ eixo, vazio }: Props) {
           ]}
           refreshControl={<RefreshControl refreshing={carregando} onRefresh={carregar} />}
         >
+          <CampoBusca valor={busca} onBuscar={setBusca} placeholder={TOPO[eixo].busca} />
           <Categorias eixo={eixo} filtros={filtros} onChange={setFiltros} />
 
           <BarraLocalizacao />
           <Aviso texto={erro} />
-          {carregando && !dados ? <ActivityIndicator color={cores.primaria} /> : null}
+          <Aviso texto={offline} tipo="alerta" />
+          {carregando && !dados ? <ListaEsqueleto /> : null}
 
-          {dados && resultados.length === 0 ? (
+          {dados && resultados.length === 0 && busca ? (
+            <View style={styles.vazio}>
+              <Text style={styles.tituloVazio}>Nada encontrado para “{busca}”</Text>
+              <Text style={styles.textoVazio}>
+                Procuramos no nome, na categoria e no endereço dos lugares num raio de{' '}
+                {km(dados.raio_km)}. Confira a grafia ou tente uma palavra só.
+              </Text>
+              <Botao titulo="Limpar busca" variante="link" onPress={() => setBusca('')} />
+            </View>
+          ) : null}
+
+          {dados && resultados.length === 0 && !busca ? (
             // Exceção E1 do UC04: nada encontrado, sugere ampliar o raio ou limpar os filtros.
             <View style={styles.vazio}>
               <Text style={styles.tituloVazio}>Nenhum lugar por perto</Text>
@@ -294,7 +337,9 @@ export function EixoTela({ eixo, vazio }: Props) {
           {resultados.length > 0 ? (
             <View style={styles.cabecalhoLista}>
               <Text style={styles.contagem} accessibilityRole="header">
-                {resultados.length} {resultados.length === 1 ? 'sugestão' : 'sugestões'} para você
+                {busca
+                  ? `${resultados.length} ${resultados.length === 1 ? 'resultado' : 'resultados'} para “${busca}”`
+                  : `${resultados.length} ${resultados.length === 1 ? 'sugestão' : 'sugestões'} para você`}
               </Text>
               <Text style={styles.raio}>até {km(dados!.raio_km)}</Text>
             </View>
@@ -318,7 +363,7 @@ export function EixoTela({ eixo, vazio }: Props) {
 
 const ALTURA_MAPA = 230;
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   tela: { flex: 1, backgroundColor: cores.tinta },
   semMapa: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   flutuantes: {
@@ -400,4 +445,4 @@ const styles = StyleSheet.create({
   },
   tituloVazio: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.texto },
   textoVazio: { fontSize: tamanho.corpo, lineHeight: 21, color: cores.textoSecundario },
-});
+}));

@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { Switch, Text, View } from 'react-native';
 
 import { ApiError } from '../../api/client';
 import type { Detalhe } from '../../api/estabelecimentos';
@@ -20,6 +20,7 @@ import { Opcao } from '../ui/Opcao';
 import { Secao } from '../ui/Secao';
 import { EditorHorarios, horariosIniciais, paraApi } from './EditorHorarios';
 import { vibrar } from '../../util/vibracao';
+import { criarEstilos } from '../../theme/tema';
 
 const EIXOS: { valor: Eixo; rotulo: string }[] = [
   { valor: 'comer', rotulo: 'Onde comer' },
@@ -49,6 +50,7 @@ const alternar = <T,>(lista: T[], valor: T) =>
 
 // Cadastro e edição do estabelecimento pelo comerciante (UC10 e UC11, RF15 e RF16).
 export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Props) {
+  const styles = useEstilos();
   const [nome, setNome] = useState(inicial?.nome ?? '');
   const [descricao, setDescricao] = useState(inicial?.descricao ?? '');
   const [endereco, setEndereco] = useState(inicial?.endereco ?? '');
@@ -205,6 +207,7 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
             key={e.valor}
             rotulo={e.rotulo}
             selecionada={eixo === e.valor}
+            unica
             onPress={() => trocarEixo(e.valor)}
           />
         ))}
@@ -230,6 +233,7 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
             key={p.valor}
             rotulo={p.rotulo}
             selecionada={faixa === p.valor}
+            unica
             onPress={() => setFaixa(faixa === p.valor ? null : p.valor)}
           />
         ))}
@@ -299,7 +303,7 @@ export function FormularioEstabelecimento({ inicial, tituloBotao, onSalvar }: Pr
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   formulario: { gap: 20 },
   botoesLinha: { flexDirection: 'row', gap: 10 },
   mapa: { borderRadius: raio.bloco, ...curva, overflow: 'hidden' },
@@ -311,4 +315,4 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
-});
+}));

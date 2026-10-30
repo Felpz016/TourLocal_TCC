@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { ApiError } from '../../api/client';
 import { avaliar, buscarAvaliacoes, denunciar, excluirAvaliacao } from '../../api/estabelecimentos';
@@ -13,6 +13,7 @@ import { Botao } from '../ui/Botao';
 import { Campo } from '../ui/Campo';
 import { Estrelas } from './Estrelas';
 import { vibrar } from '../../util/vibracao';
+import { criarEstilos } from '../../theme/tema';
 
 type Props = {
   lugar: Detalhe;
@@ -30,6 +31,7 @@ function ItemAvaliacao({
   avaliacao: Avaliacao;
   aoDenunciar: () => void;
 }) {
+  const styles = useEstilos();
   const [confirmando, setConfirmando] = useState(false);
   return (
     <View style={styles.item}>
@@ -50,7 +52,12 @@ function ItemAvaliacao({
       {avaliacao.comentario ? <Text style={styles.comentario}>{avaliacao.comentario}</Text> : null}
       {/* RN06: a denúncia esconde a avaliação até a moderação decidir. */}
       {!avaliacao.minha && !confirmando ? (
-        <Pressable onPress={() => setConfirmando(true)} accessibilityRole="button" hitSlop={8}>
+        <Pressable
+          onPress={() => setConfirmando(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`Denunciar a avaliação de ${avaliacao.autor}`}
+          hitSlop={8}
+        >
           <Text style={styles.denunciar}>Denunciar</Text>
         </Pressable>
       ) : null}
@@ -72,6 +79,7 @@ function ItemAvaliacao({
 }
 
 export function SecaoAvaliacoes({ lugar, podeAvaliar, aoMudar }: Props) {
+  const styles = useEstilos();
   const minha = lugar.minha_avaliacao;
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [nota, setNota] = useState(minha?.nota ?? 0);
@@ -205,7 +213,7 @@ export function SecaoAvaliacoes({ lugar, podeAvaliar, aoMudar }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   secao: { gap: 12 },
   titulo: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.texto },
   subtitulo: { fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
@@ -244,4 +252,4 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   confirmacao: { gap: 4 },
-});
+}));

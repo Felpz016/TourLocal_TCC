@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 
 import { listarMeus } from '../../src/api/gestao';
 import type { MeuEstabelecimento } from '../../src/api/gestao';
@@ -14,8 +14,10 @@ import { cores } from '../../src/theme/cores';
 import { cartaoPlano, raio } from '../../src/theme/estilo';
 import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
+import { criarEstilos } from '../../src/theme/tema';
 
 function Situacao({ local }: { local: MeuEstabelecimento }) {
+  const styles = useEstilos();
   const [texto, cor, fundo] = local.fechado_temporariamente
     ? ['Fechado temporariamente', cores.erro, cores.fundoErro]
     : local.verificado
@@ -31,6 +33,7 @@ function Situacao({ local }: { local: MeuEstabelecimento }) {
 
 // Painel do comerciante (UC10, UC11): os locais dele e a situação de cada um.
 export default function MeusLocaisTela() {
+  const styles = useEstilos();
   const [locais, setLocais] = useState<MeuEstabelecimento[] | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -102,7 +105,7 @@ export default function MeusLocaisTela() {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   tela: { flex: 1, backgroundColor: cores.fundo },
   conteudo: { padding: 20, paddingTop: 8, gap: 12 },
   vazio: {
@@ -133,4 +136,4 @@ const styles = StyleSheet.create({
   },
   ponto: { width: 6, height: 6, borderRadius: raio.pilula },
   textoSelo: { fontSize: tamanho.legenda, fontWeight: '700' },
-});
+}));

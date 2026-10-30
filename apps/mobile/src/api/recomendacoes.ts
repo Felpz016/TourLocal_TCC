@@ -47,6 +47,8 @@ export function buscarRecomendacoes(params: {
   lng: number;
   raioKm?: number | null;
   filtros?: Filtros;
+  /** Busca por nome, categoria ou endereço; sem raio, a API procura na cidade toda. */
+  busca?: string;
 }) {
   const { filtros = {} } = params;
   const query = new URLSearchParams({
@@ -56,6 +58,7 @@ export function buscarRecomendacoes(params: {
     incluir_fechados: String(!!filtros.incluirFechados),
   });
   if (params.raioKm) query.set('raio_km', String(params.raioKm));
+  if (params.busca) query.set('busca', params.busca);
   if (filtros.categoria) query.set('categoria', filtros.categoria);
   if (filtros.notaMinima) query.set('nota_minima', String(filtros.notaMinima));
   for (const faixa of filtros.faixasPreco ?? []) query.append('faixa_preco', faixa);

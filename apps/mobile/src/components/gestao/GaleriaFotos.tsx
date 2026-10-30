@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Text, View } from 'react-native';
 
 import { ApiError } from '../../api/client';
 import { enviarFoto, removerFoto, urlFoto } from '../../api/gestao';
@@ -10,12 +10,14 @@ import { tamanho } from '../../theme/fontes';
 import { Aviso } from '../ui/Aviso';
 import { Icone } from '../ui/Icone';
 import { Pressionavel } from '../ui/Pressionavel';
+import { criarEstilos } from '../../theme/tema';
 
 type Foto = { id_foto: number; url: string };
 type Props = { idEstab: number; fotos: Foto[]; aoMudar: () => void };
 
 // Envio de imagens (RF17). A API recusa arquivos acima de 5 MB ou fora de JPG/PNG/WebP.
 export function GaleriaFotos({ idEstab, fotos, aoMudar }: Props) {
+  const styles = useEstilos();
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -63,7 +65,7 @@ export function GaleriaFotos({ idEstab, fotos, aoMudar }: Props) {
               hitSlop={10}
               style={styles.remover}
             >
-              <Icone nome="close" tamanho={14} cor={cores.primariaTexto} />
+              <Icone nome="close" tamanho={14} cor={cores.textoSobreTinta} />
             </Pressionavel>
           </View>
         ))}
@@ -94,7 +96,7 @@ export function GaleriaFotos({ idEstab, fotos, aoMudar }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   galeria: { gap: 10 },
   grade: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   foto: {
@@ -130,4 +132,4 @@ const styles = StyleSheet.create({
   },
   textoAdicionar: { fontSize: tamanho.apoio, fontWeight: '700', color: cores.primaria },
   dica: { fontSize: tamanho.rotulo, color: cores.textoSecundario },
-});
+}));

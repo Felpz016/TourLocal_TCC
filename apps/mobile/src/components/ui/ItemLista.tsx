@@ -5,6 +5,7 @@ import { curva, raio } from '../../theme/estilo';
 import { tamanho } from '../../theme/fontes';
 import { Icone } from './Icone';
 import type { NomeIcone } from './Icone';
+import { criarEstilos } from '../../theme/tema';
 
 type Props = {
   icone: NomeIcone;
@@ -24,6 +25,7 @@ export function ItemLista({
   perigo = false,
   ultimo = false,
 }: Props) {
+  const styles = useEstilos();
   const cor = perigo ? cores.erro : cores.primaria;
   return (
     <Pressable
@@ -54,7 +56,7 @@ export function ItemLista({
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   item: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, minHeight: 64 },
   divisoria: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: cores.borda },
   pressionado: { backgroundColor: cores.fundo },
@@ -69,4 +71,4 @@ const styles = StyleSheet.create({
   textos: { flex: 1, gap: 2 },
   titulo: { fontSize: tamanho.campo, fontWeight: '600', color: cores.texto },
   detalhe: { fontSize: tamanho.apoio, color: cores.textoSecundario },
-});
+}));

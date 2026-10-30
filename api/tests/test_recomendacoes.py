@@ -199,3 +199,30 @@ def test_lista_categorias_do_eixo(client, lugares):
     headers = cadastrar_e_logar(client)
     nomes = [c["nome"] for c in client.get("/categorias?eixo=ficar", headers=headers).json()]
     assert nomes == ["Hostel", "Hotel", "Motel", "Pousada"]
+
+
+def test_busca_por_nome_ignora_acentos_e_maiusculas(client, db, lugares, meio_dia):
+    from sqlalchemy import select
+
+    db.scalars(
+        select(Estabelecimento).where(Estabelecimento.nome == "Perto")
+    ).one().nome = "Café São Bento"
+    db.commit()
+    headers = cadastrar_e_logar(client)
+    nomes = lambda **p: [r["nome"] for r in _consultar(client, headers, **p).json()["resultados"]]  # noqa: E731
+    assert nomes(busca="cafe sao") == ["Café São Bento"]
+    assert nomes(busca="  BENTO ") == ["Café São Bento"]
+    # Também procura na categoria.
+    assert nomes(busca="lanchonete") == ["Mais longe"]
+    assert nomes(busca="pizzaria") == []
+
+
+def test_busca_inclui_fechados_e_usa_o_raio_maximo(client, lugares, meio_dia):
+    headers = cadastrar_e_logar(client)
+    corpo = _consultar(client, headers, busca="fechado").json()
+    assert corpo["raio_km"] == 20.0
+    assert [r["nome"] for r in corpo["resultados"]] == ["Fechado agora"]
+    # "Fora do raio" fica a 10 km: fora dos 3 km do perfil, mas dentro da cidade.
+    assert [r["nome"] for r in _consultar(client, headers, busca="fora").json()["resultados"]] == [
+        "Fora do raio"
+    ]

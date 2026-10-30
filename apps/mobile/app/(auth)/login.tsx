@@ -1,7 +1,7 @@
 import { Link, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '../../src/api/client';
@@ -15,8 +15,10 @@ import { curva, raio, sombra } from '../../src/theme/estilo';
 import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 import { vibrar } from '../../src/util/vibracao';
+import { criarEstilos } from '../../src/theme/tema';
 
 export default function LoginScreen() {
+  const styles = useEstilos();
   const { entrar } = useAuth();
   const { top, bottom } = useSafeAreaInsets();
   const [email, setEmail] = useState('');
@@ -117,7 +119,7 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   tela: { flex: 1, backgroundColor: cores.fundo },
   rolagem: { flexGrow: 1 },
   topo: {
@@ -160,13 +162,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: cores.sol,
   },
-  marca: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.primariaTexto },
+  marca: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.textoSobreTinta },
   manchete: {
     fontFamily: fonte.titulo,
     // Manchete da tela de entrada: o único texto em tamanho de cartaz, fora da escala.
     fontSize: 40,
     lineHeight: 44,
-    color: cores.primariaTexto,
+    color: cores.textoSobreTinta,
     letterSpacing: -1,
   },
   mancheteDestaque: { color: cores.sol },
@@ -194,4 +196,4 @@ const styles = StyleSheet.create({
     color: cores.textoSecundario,
     marginTop: 8,
   },
-});
+}));

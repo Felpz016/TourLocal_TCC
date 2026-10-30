@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import type { TextInputProps } from 'react-native';
 
 import { cores } from '../../theme/cores';
@@ -7,6 +7,7 @@ import { curva, raio } from '../../theme/estilo';
 import { tamanho } from '../../theme/fontes';
 import { Icone } from './Icone';
 import type { NomeIcone } from './Icone';
+import { criarEstilos } from '../../theme/tema';
 
 type Props = TextInputProps & {
   rotulo: string;
@@ -27,6 +28,7 @@ export function Campo({
   onBlur,
   ...props
 }: Props) {
+  const styles = useEstilos();
   const [focado, setFocado] = useState(false);
   // Campos de senha ganham o botão de mostrar/ocultar, como no iOS.
   const [oculto, setOculto] = useState(!!secureTextEntry);
@@ -78,7 +80,7 @@ export function Campo({
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   container: { gap: 6 },
   rotulo: { fontSize: tamanho.rotulo, fontWeight: '600', color: cores.texto },
   caixa: {
@@ -99,4 +101,4 @@ const styles = StyleSheet.create({
   input: { flex: 1, minWidth: 0, fontSize: tamanho.campo, color: cores.texto, paddingVertical: 12 },
   erro: { color: cores.erro, fontSize: tamanho.rotulo },
   dica: { color: cores.textoSecundario, fontSize: tamanho.apoio },
-});
+}));

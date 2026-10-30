@@ -19,15 +19,26 @@ export const curva = { borderCurve: 'continuous' } as const satisfies ViewStyle;
 export const movimento = { toque: 120, estado: 180 } as const;
 
 // Uma única sombra, só para o que flutua (botões sobre o mapa, folhas); cartões ficam
-// planos com uma linha fina, como no Airbnb e no Google Maps.
+// planos com uma linha fina, como no Airbnb e no Google Maps. São "getters" para pegar as
+// cores do esquema atual (claro ou escuro) quando os estilos da tela são criados.
 export const sombra: ViewStyle = {
-  boxShadow: '0 1px 2px rgba(11, 27, 58, 0.06), 0 8px 20px rgba(11, 27, 58, 0.06)',
+  get boxShadow() {
+    return `0 1px 2px ${cores.sombra}, 0 8px 20px ${cores.sombra}`;
+  },
 };
-export const sombraForte: ViewStyle = { boxShadow: '0 6px 16px rgba(11, 27, 58, 0.16)' };
+export const sombraForte: ViewStyle = {
+  get boxShadow() {
+    return `0 6px 16px ${cores.sombra}`;
+  },
+};
 
 export const cartaoPlano: ViewStyle = {
   ...curva,
   borderWidth: 1,
-  borderColor: cores.divisoria,
-  backgroundColor: cores.superficie,
+  get borderColor() {
+    return cores.divisoria;
+  },
+  get backgroundColor() {
+    return cores.superficie;
+  },
 };

@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { cores } from '../../theme/cores';
 import { curva, raio } from '../../theme/estilo';
 import { fonte, tamanho } from '../../theme/fontes';
 import { Icone } from './Icone';
 import type { NomeIcone } from './Icone';
+import { criarEstilos } from '../../theme/tema';
 
 type Props = {
   titulo: string;
@@ -17,6 +18,7 @@ type Props = {
 
 /** Cartão de formulário com título; com `linha`, os filhos ficam lado a lado e quebram. */
 export function Secao({ titulo, dica, icone, children, linha = false }: Props) {
+  const styles = useEstilos();
   return (
     <View style={styles.secao}>
       <View style={styles.topo}>
@@ -37,7 +39,7 @@ export function Secao({ titulo, dica, icone, children, linha = false }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   secao: {
     gap: 14,
     padding: 16,
@@ -62,4 +64,4 @@ const styles = StyleSheet.create({
   dica: { fontSize: tamanho.apoio, color: cores.textoSecundario },
   linha: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   coluna: { gap: 12 },
-});
+}));

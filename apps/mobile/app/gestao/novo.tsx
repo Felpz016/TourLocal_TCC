@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView } from 'react-native';
 
 import { cadastrar } from '../../src/api/gestao';
 import { Aviso } from '../../src/components/ui/Aviso';
@@ -7,9 +7,11 @@ import { FormularioEstabelecimento } from '../../src/components/gestao/Formulari
 import { cores } from '../../src/theme/cores';
 import { estilosLargura } from '../../src/theme/layout';
 import { vibrar } from '../../src/util/vibracao';
+import { criarEstilos } from '../../src/theme/tema';
 
 // Cadastro de estabelecimento (UC10, RF15). Depois de salvar, abre a edição para as fotos.
 export default function NovoLocalTela() {
+  const styles = useEstilos();
   return (
     <ScrollView contentContainerStyle={[styles.conteudo, estilosLargura.conteudo]}>
       <Aviso
@@ -28,6 +30,6 @@ export default function NovoLocalTela() {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   conteudo: { padding: 20, gap: 16, paddingBottom: 48, backgroundColor: cores.fundo },
-});
+}));

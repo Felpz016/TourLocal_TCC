@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import type { Recomendacao } from '../api/recomendacoes';
 import { cores } from '../theme/cores';
@@ -10,11 +10,13 @@ import { Estrelas } from './detalhe/Estrelas';
 import { Miniatura } from './Miniatura';
 import { Icone } from './ui/Icone';
 import { Pressionavel } from './ui/Pressionavel';
+import { criarEstilos } from '../theme/tema';
 
 // Distância e nota já aparecem no cartão; o motivo mostrado é o próximo da lista.
 const repetido = (motivo: string) => / a pé | km de você|^Bem avaliado/.test(motivo);
 
 export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
+  const styles = useEstilos();
   const detalhes = [
     lugar.categorias.join(', '),
     lugar.faixa_preco ? PRECO[lugar.faixa_preco] : null,
@@ -28,7 +30,17 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
     <Pressionavel
       style={({ pressed }) => [styles.cartao, pressed && styles.pressionado]}
       accessibilityRole="button"
-      accessibilityLabel={`${lugar.nome}, ${detalhes.join(', ')}, ${lugar.minutos_a_pe} minutos a pé`}
+      accessibilityLabel={[
+        lugar.nome,
+        lugar.nota_media !== null ? `nota ${formatarNota(lugar.nota_media)}` : 'sem avaliações',
+        ...detalhes,
+        `${lugar.minutos_a_pe} minutos a pé`,
+        aberto === null ? null : aberto ? 'aberto agora' : 'fechado agora',
+        lugar.acessibilidade ? 'acessível' : null,
+        motivo ? `recomendado porque: ${motivo}` : null,
+      ]
+        .filter(Boolean)
+        .join(', ')}
       accessibilityHint="Abre os detalhes do local"
       onPress={() => router.push(`/lugar/${lugar.id_estab}`)}
     >
@@ -76,16 +88,19 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
 
         {/* RF11: o motivo mais forte da recomendação que o cartão ainda não mostra. */}
         {motivo ? (
-          <Text style={styles.motivo} numberOfLines={1}>
-            {motivo}
-          </Text>
+          <View style={styles.motivo}>
+            <Icone nome="sparkles" tamanho={12} cor={cores.primariaEscura} />
+            <Text style={styles.textoMotivo} numberOfLines={1}>
+              {motivo}
+            </Text>
+          </View>
         ) : null}
       </View>
     </Pressionavel>
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   cartao: {
     flexDirection: 'row',
     gap: 14,
@@ -112,16 +127,22 @@ const styles = StyleSheet.create({
   detalhes: { flexShrink: 1, fontSize: tamanho.apoio, color: cores.textoSecundario },
   situacao: { fontSize: tamanho.apoio, fontWeight: '600' },
   motivo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     alignSelf: 'flex-start',
+    maxWidth: '100%',
     marginTop: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: raio.selo,
     ...curva,
-    overflow: 'hidden',
+    backgroundColor: cores.fundoDestaque,
+  },
+  textoMotivo: {
+    flexShrink: 1,
     fontSize: tamanho.legenda,
     fontWeight: '600',
-    color: cores.texto,
-    backgroundColor: cores.fundo,
+    color: cores.primariaEscura,
   },
-});
+}));

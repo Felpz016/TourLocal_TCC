@@ -2,12 +2,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   Linking,
   Pressable,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   View,
@@ -20,20 +18,25 @@ import { buscarDetalhe, definirFavorito } from '../../src/api/estabelecimentos';
 import type { Detalhe, Horario } from '../../src/api/estabelecimentos';
 import { urlFoto } from '../../src/api/gestao';
 import { useAuth } from '../../src/auth/AuthContext';
+import { PorQueRecomendamos } from '../../src/components/detalhe/PorQueRecomendamos';
 import { SecaoAvaliacoes } from '../../src/components/detalhe/SecaoAvaliacoes';
+import { Bloco, Pulsando } from '../../src/components/ui/Esqueleto';
 import { Aviso } from '../../src/components/ui/Aviso';
 import { Mapa } from '../../src/components/Mapa';
 import { Icone } from '../../src/components/ui/Icone';
 import type { NomeIcone } from '../../src/components/ui/Icone';
 import { Pressionavel } from '../../src/components/ui/Pressionavel';
 import { useLocalizacao } from '../../src/localizacao/LocalizacaoContext';
+import { avisoOffline, guardar, ler, recomendacaoVista } from '../../src/offline/cache';
 import { cores } from '../../src/theme/cores';
 import { curva, raio, sombraForte } from '../../src/theme/estilo';
 import { fonte, tamanho } from '../../src/theme/fontes';
 import { LARGURA_MAXIMA, estilosLargura } from '../../src/theme/layout';
 import { PRECO, formatarDistancia, formatarNota } from '../../src/util/formato';
+import { compartilharLugar } from '../../src/util/compartilhar';
 import { abrirRota } from '../../src/util/rota';
 import { vibrar } from '../../src/util/vibracao';
+import { criarEstilos, useTema } from '../../src/theme/tema';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 // getDay() conta a partir do domingo; a API, a partir da segunda.
@@ -89,6 +92,7 @@ function BotaoRedondo({
   onPress: () => void;
   selecionado?: boolean;
 }) {
+  const styles = useEstilos();
   return (
     <Pressionavel
       onPress={onPress}
@@ -112,6 +116,7 @@ function Selo({
   icone?: NomeIcone;
   tipo?: 'normal' | 'alerta' | 'erro';
 }) {
+  const styles = useEstilos();
   const cor = tipo === 'erro' ? cores.erro : tipo === 'alerta' ? cores.alerta : cores.texto;
   const fundo =
     tipo === 'erro' ? cores.fundoErro : tipo === 'alerta' ? cores.fundoAlerta : cores.fundo;
@@ -127,12 +132,15 @@ function Selo({
 
 // Detalhes do local (UC06, RF10): fotos, contato, horários, rota (RF12) e avaliações (RF13).
 export default function LugarTela() {
+  const styles = useEstilos();
+  const { esquema } = useTema();
   const { id } = useLocalSearchParams<{ id: string }>();
   const idEstab = Number(id);
   const { usuario } = useAuth();
   const { posicao } = useLocalizacao();
   const [lugar, setLugar] = useState<Detalhe | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [offline, setOffline] = useState<string | null>(null);
   const turista = usuario?.tipo === 'turista';
   const { top, bottom } = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -140,9 +148,20 @@ export default function LugarTela() {
 
   const carregar = useCallback(async () => {
     try {
-      setLugar(await buscarDetalhe(idEstab, posicao ?? undefined));
+      const detalhe = await buscarDetalhe(idEstab, posicao ?? undefined);
+      setLugar(detalhe);
       setErro(null);
+      setOffline(null);
+      guardar(`lugar.${idEstab}`, detalhe);
     } catch (e) {
+      // Sem rede: abre a última versão vista deste lugar, se houver.
+      const guardado =
+        e instanceof ApiError && e.status === 0 ? await ler<Detalhe>(`lugar.${idEstab}`) : null;
+      if (guardado) {
+        setLugar(guardado.dados);
+        setOffline(avisoOffline(guardado.salvoEm));
+        return;
+      }
       setErro(
         e instanceof ApiError && e.status === 404
           ? 'Este local não está disponível.'
@@ -174,7 +193,26 @@ export default function LugarTela() {
         <View style={[styles.voltarSolto, { top: top + 8 }]}>
           <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={() => router.back()} />
         </View>
-        {erro ? <Aviso texto={erro} /> : <ActivityIndicator color={cores.primaria} />}
+        {erro ? (
+          <Aviso texto={erro} />
+        ) : (
+          // Esqueleto no formato da tela: capa, nome, subtítulo e a linha de ações.
+          <View style={[styles.esqueleto, { top: 0 }]}>
+            <Pulsando>
+              <Bloco altura={ALTURA_CAPA} style={styles.capaEsqueleto} />
+              <View style={styles.linhasEsqueleto}>
+                <Bloco largura="65%" altura={26} />
+                <Bloco largura="45%" />
+                <View style={styles.acoes}>
+                  <Bloco largura="auto" altura={60} style={styles.acaoEsqueleto} />
+                  <Bloco largura="auto" altura={60} style={styles.acaoEsqueleto} />
+                  <Bloco largura="auto" altura={60} style={styles.acaoEsqueleto} />
+                </View>
+                <Bloco altura={64} />
+              </View>
+            </Pulsando>
+          </View>
+        )}
       </View>
     );
   }
@@ -190,7 +228,7 @@ export default function LugarTela() {
 
   return (
     <View style={styles.tela}>
-      <StatusBar style={temFotos ? 'light' : 'dark'} />
+      <StatusBar style={temFotos || esquema === 'escuro' ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={{ paddingBottom: bottom + 32 }}>
         {/* Fotos em tela cheia; sem fotos, o mapa do lugar como capa (igual ao Apple Maps). */}
         <View style={[styles.capa, estilosLargura.conteudo]}>
@@ -213,21 +251,28 @@ export default function LugarTela() {
           )}
           <View style={[styles.botoesCapa, { top: top + 8 }]} pointerEvents="box-none">
             <BotaoRedondo icone="chevron-back" rotulo="Voltar" onPress={() => router.back()} />
-            {turista ? (
+            <View style={styles.botoesDireita}>
               <BotaoRedondo
-                icone={lugar.favorito ? 'heart' : 'heart-outline'}
-                cor={lugar.favorito ? cores.favorito : cores.texto}
-                rotulo={lugar.favorito ? 'Remover dos salvos' : 'Salvar local'}
-                selecionado={lugar.favorito}
-                onPress={alternarFavorito}
+                icone="share-outline"
+                rotulo="Compartilhar"
+                onPress={() => compartilharLugar(lugar)}
               />
-            ) : lugar.pode_editar ? (
-              <BotaoRedondo
-                icone="create-outline"
-                rotulo="Editar local"
-                onPress={() => router.push(`/gestao/${lugar.id_estab}`)}
-              />
-            ) : null}
+              {turista ? (
+                <BotaoRedondo
+                  icone={lugar.favorito ? 'heart' : 'heart-outline'}
+                  cor={lugar.favorito ? cores.favorito : cores.texto}
+                  rotulo={lugar.favorito ? 'Remover dos salvos' : 'Salvar local'}
+                  selecionado={lugar.favorito}
+                  onPress={alternarFavorito}
+                />
+              ) : lugar.pode_editar ? (
+                <BotaoRedondo
+                  icone="create-outline"
+                  rotulo="Editar local"
+                  onPress={() => router.push(`/gestao/${lugar.id_estab}`)}
+                />
+              ) : null}
+            </View>
           </View>
         </View>
 
@@ -286,7 +331,8 @@ export default function LugarTela() {
             <BotaoAcao
               icone="share-outline"
               titulo="Enviar"
-              onPress={() => Share.share({ message: `${lugar.nome} · ${lugar.endereco}` })}
+              rotulo="Enviar para alguém"
+              onPress={() => compartilharLugar(lugar)}
             />
           </View>
 
@@ -314,6 +360,7 @@ export default function LugarTela() {
           </View>
 
           <Aviso texto={erro} />
+          <Aviso texto={offline} tipo="alerta" />
 
           {lugar.acessibilidade || lugar.opcoes_alimentares.length > 0 ? (
             <View style={styles.selos}>
@@ -322,6 +369,11 @@ export default function LugarTela() {
                 <Selo key={o} texto={DIETAS[o] ?? o} icone="leaf-outline" />
               ))}
             </View>
+          ) : null}
+
+          {/* RF11: aparece quando o turista chegou aqui pela lista de recomendações. */}
+          {recomendacaoVista(lugar.id_estab) ? (
+            <PorQueRecomendamos recomendacao={recomendacaoVista(lugar.id_estab)!} />
           ) : null}
 
           {lugar.descricao ? (
@@ -419,6 +471,7 @@ function ColunaResumo({
   valor: string;
   icone?: NomeIcone;
 }) {
+  const styles = useEstilos();
   return (
     <View style={styles.coluna} accessible accessibilityLabel={`${rotulo}: ${valor}`}>
       <Text style={styles.rotuloResumo}>{rotulo}</Text>
@@ -433,20 +486,24 @@ function ColunaResumo({
 function BotaoAcao({
   icone,
   titulo,
+  rotulo,
   principal,
   onPress,
 }: {
   icone: NomeIcone;
   titulo: string;
+  /** Nome lido pelo leitor de tela, quando o título curto não basta. */
+  rotulo?: string;
   principal?: boolean;
   onPress: () => void;
 }) {
+  const styles = useEstilos();
   const cor = principal ? cores.primariaTexto : cores.primaria;
   return (
     <Pressionavel
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={titulo}
+      accessibilityLabel={rotulo ?? titulo}
       style={({ pressed }) => [
         styles.botaoAcao,
         principal && styles.botaoPrincipal,
@@ -472,6 +529,7 @@ function LinhaInfo({
   separada?: boolean;
   onPress?: () => void;
 }) {
+  const styles = useEstilos();
   return (
     <Pressable
       onPress={onPress}
@@ -494,7 +552,7 @@ function LinhaInfo({
 
 const ALTURA_CAPA = 280;
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   tela: { flex: 1, backgroundColor: cores.superficie },
   centro: {
     flex: 1,
@@ -503,7 +561,12 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: cores.fundo,
   },
-  voltarSolto: { position: 'absolute', left: 16 },
+  voltarSolto: { position: 'absolute', left: 16, zIndex: 1 },
+  esqueleto: { position: 'absolute', left: 0, right: 0 },
+  capaEsqueleto: { borderRadius: 0 },
+  linhasEsqueleto: { gap: 12, padding: 20 },
+  acaoEsqueleto: { flex: 1, borderRadius: raio.bloco },
+  botoesDireita: { flexDirection: 'row', gap: 10 },
   capa: { height: ALTURA_CAPA, backgroundColor: cores.fundoDestaque },
   foto: { height: ALTURA_CAPA },
   botoesCapa: {
@@ -601,4 +664,4 @@ const styles = StyleSheet.create({
   divisoria: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: cores.borda },
   dia: { fontSize: tamanho.corpo, color: cores.texto },
   hoje: { fontWeight: '700' },
-});
+}));

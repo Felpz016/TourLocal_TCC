@@ -12,6 +12,7 @@ import { Botao } from './ui/Botao';
 import { Opcao } from './ui/Opcao';
 import { Pressionavel } from './ui/Pressionavel';
 import { vibrar } from '../util/vibracao';
+import { criarEstilos } from '../theme/tema';
 
 const PRECOS: { valor: FaixaPreco; rotulo: string }[] = [
   { valor: 'economico', rotulo: '$' },
@@ -28,6 +29,7 @@ type Props = { eixo: Eixo; filtros: Filtros; onChange: (filtros: Filtros) => voi
 
 /** Chips de categoria (RF09) sobre o topo azul; "Todos" limpa a categoria. */
 export function Categorias({ eixo, filtros, onChange }: Props) {
+  const styles = useEstilos();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
 
   useEffect(() => {
@@ -87,6 +89,7 @@ type PropsFolha = {
 
 /** Folha que sobe de baixo com os filtros de preço, nota e horário (RF09). */
 export function FolhaFiltros({ visivel, filtros, total, onChange, onFechar }: PropsFolha) {
+  const styles = useEstilos();
   const { bottom } = useSafeAreaInsets();
   const faixas = filtros.faixasPreco ?? [];
   const alternarPreco = (valor: FaixaPreco) =>
@@ -113,6 +116,7 @@ export function FolhaFiltros({ visivel, filtros, total, onChange, onFechar }: Pr
             <Pressable
               hitSlop={10}
               accessibilityRole="button"
+              accessibilityLabel="Limpar filtros"
               onPress={() => onChange({ categoria: filtros.categoria })}
             >
               <Text style={styles.limpar}>Limpar</Text>
@@ -170,7 +174,7 @@ export function FolhaFiltros({ visivel, filtros, total, onChange, onFechar }: Pr
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   rolagem: { marginHorizontal: -20, flexGrow: 0 },
   categorias: { gap: 8, paddingHorizontal: 20 },
   chipTopo: {
@@ -185,7 +189,7 @@ const styles = StyleSheet.create({
   },
   chipTopoAtivo: { backgroundColor: cores.tinta, borderColor: cores.tinta },
   textoTopo: { fontSize: tamanho.rotulo, fontWeight: '600', color: cores.texto },
-  textoTopoAtivo: { color: cores.primariaTexto, fontWeight: '700' },
+  textoTopoAtivo: { color: cores.textoSobreTinta, fontWeight: '700' },
   fundoModal: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15, 23, 42, 0.45)' },
   folha: {
     gap: 12,
@@ -218,4 +222,4 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   textos: { flex: 1, gap: 2 },
-});
+}));

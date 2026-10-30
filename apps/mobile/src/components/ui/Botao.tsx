@@ -1,4 +1,4 @@
-import { ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native';
 
 import { cores } from '../../theme/cores';
 import { curva, raio, sombraForte } from '../../theme/estilo';
@@ -6,6 +6,7 @@ import { tamanho } from '../../theme/fontes';
 import { Icone } from './Icone';
 import type { NomeIcone } from './Icone';
 import { Pressionavel } from './Pressionavel';
+import { criarEstilos } from '../../theme/tema';
 
 type Variante = 'primario' | 'secundario' | 'perigo' | 'link';
 
@@ -19,12 +20,13 @@ type Props = {
   flexivel?: boolean;
 };
 
-const corTexto: Record<Variante, string> = {
-  primario: cores.primariaTexto,
-  secundario: cores.primaria,
-  perigo: cores.erro,
-  link: cores.primaria,
-};
+const corTexto = (variante: Variante) =>
+  ({
+    primario: cores.primariaTexto,
+    secundario: cores.primaria,
+    perigo: cores.erro,
+    link: cores.primaria,
+  })[variante];
 
 export function Botao({
   titulo,
@@ -34,7 +36,8 @@ export function Botao({
   icone,
   flexivel = false,
 }: Props) {
-  const cor = corTexto[variante];
+  const styles = useEstilos();
+  const cor = corTexto(variante);
   return (
     <Pressionavel
       accessibilityRole="button"
@@ -62,7 +65,7 @@ export function Botao({
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   base: {
     flexDirection: 'row',
     gap: 8,
@@ -80,4 +83,4 @@ const styles = StyleSheet.create({
   link: { minHeight: 44, paddingHorizontal: 8 },
   texto: { fontSize: tamanho.campo, fontWeight: '700' },
   textoLink: { fontWeight: '600' },
-});
+}));
