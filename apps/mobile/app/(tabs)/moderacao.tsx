@@ -1,6 +1,6 @@
 import { Link, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 
 import { ApiError } from '../../src/api/client';
 import {
@@ -17,8 +17,9 @@ import { Aviso } from '../../src/components/ui/Aviso';
 import { Botao } from '../../src/components/ui/Botao';
 import { Cabecalho } from '../../src/components/ui/Cabecalho';
 import { Icone } from '../../src/components/ui/Icone';
+import { Segmentado } from '../../src/components/ui/Segmentado';
 import { cores } from '../../src/theme/cores';
-import { cartaoPlano, curva, raio, sombra } from '../../src/theme/estilo';
+import { cartaoPlano, curva, raio } from '../../src/theme/estilo';
 import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 import { vibrar } from '../../src/util/vibracao';
@@ -75,28 +76,16 @@ export default function ModeracaoTela() {
     <View style={styles.tela}>
       <Cabecalho titulo="Moderação">
         {/* Abas no estilo do controle segmentado do iOS. */}
-        <View style={styles.segmentos} accessibilityRole="tablist">
-          {(
-            [
-              ['cadastros', `Cadastros · ${pendentes.length}`],
-              ['denuncias', `Denúncias · ${denuncias.length}`],
-            ] as const
-          ).map(([valor, rotulo]) => (
-            <Pressable
-              key={valor}
-              onPress={() => {
-                if (aba !== valor) vibrar.selecao();
-                setAba(valor);
-              }}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: aba === valor }}
-              style={[styles.segmento, aba === valor && styles.segmentoAtivo]}
-            >
-              <Text style={[styles.textoSegmento, aba === valor && styles.textoSegmentoAtivo]}>
-                {rotulo}
-              </Text>
-            </Pressable>
-          ))}
+        <View style={styles.segmentos}>
+          <Segmentado
+            papel="abas"
+            valor={aba}
+            onChange={setAba}
+            opcoes={[
+              { valor: 'cadastros', rotulo: `Cadastros · ${pendentes.length}` },
+              { valor: 'denuncias', rotulo: `Denúncias · ${denuncias.length}` },
+            ]}
+          />
         </View>
       </Cabecalho>
       <ScrollView
@@ -193,25 +182,7 @@ export default function ModeracaoTela() {
 
 const useEstilos = criarEstilos(() => ({
   tela: { flex: 1, backgroundColor: cores.fundo },
-  segmentos: {
-    flexDirection: 'row',
-    padding: 4,
-    marginTop: 12,
-    borderRadius: raio.campo,
-    ...curva,
-    backgroundColor: cores.divisoria,
-  },
-  segmento: {
-    flex: 1,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: raio.icone,
-    ...curva,
-  },
-  segmentoAtivo: { backgroundColor: cores.superficie, ...sombra },
-  textoSegmento: { fontSize: tamanho.rotulo, fontWeight: '600', color: cores.textoSecundario },
-  textoSegmentoAtivo: { color: cores.texto, fontWeight: '700' },
+  segmentos: { marginTop: 12 },
   conteudo: { padding: 20, paddingTop: 8, gap: 12 },
   vazio: {
     fontSize: tamanho.corpo,

@@ -58,7 +58,7 @@ export function ItemLista({
 
 const useEstilos = criarEstilos(() => ({
   item: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, minHeight: 64 },
-  divisoria: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: cores.borda },
+  divisoria: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: cores.linha },
   pressionado: { backgroundColor: cores.fundo },
   icone: {
     width: 36,

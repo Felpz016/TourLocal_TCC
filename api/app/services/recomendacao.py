@@ -23,7 +23,7 @@ from app.models import Categoria, Estabelecimento, Perfil
 from app.models.enums import Eixo, FaixaPreco
 from app.repositories import avaliacao_repository, usuario_repository
 from app.services import geo
-from app.services.horario import esta_aberto
+from app.services.horario import esta_aberto, proxima_mudanca
 from app.services.pontuacao import Pontuacao, pontuar
 
 LIMITE_RESULTADOS = 50
@@ -46,6 +46,8 @@ class Candidato:
     estabelecimento: Estabelecimento
     distancia_km: float
     aberto_agora: bool | None
+    # "Fecha às 23:00", "Abre às 18:00"... (None sem horário informado).
+    muda_as: str | None = None
     nota_media: float | None = None
     total_avaliacoes: int = 0
     pontuacao: Pontuacao | None = None
@@ -129,7 +131,9 @@ def aplicar_regras(
         aberto = esta_aberto(estab.horarios, agora)
         if aberto is False and not incluir_fechados:
             continue
-        resultado.append(Candidato(estab, distancia, aberto))
+        resultado.append(
+            Candidato(estab, distancia, aberto, proxima_mudanca(estab.horarios, agora, aberto))
+        )
     return resultado
 
 

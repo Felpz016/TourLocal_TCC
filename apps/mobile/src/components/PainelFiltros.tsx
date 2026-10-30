@@ -205,7 +205,7 @@ const useEstilos = criarEstilos(() => ({
     width: 40,
     height: 5,
     borderRadius: raio.pilula,
-    backgroundColor: cores.borda,
+    backgroundColor: cores.linha,
     marginBottom: 4,
   },
   cabecalho: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

@@ -17,7 +17,7 @@ import type { Eixo, Filtros, Recomendacoes } from '../api/recomendacoes';
 import { useLocalizacao } from '../localizacao/LocalizacaoContext';
 import { avisoOffline, guardar, lembrarRecomendacoes, ler } from '../offline/cache';
 import { cores } from '../theme/cores';
-import { curva, raio, sombraForte } from '../theme/estilo';
+import { cartaoPlano, curva, raio, sombraForte } from '../theme/estilo';
 import { fonte, tamanho } from '../theme/fontes';
 import { estilosLargura } from '../theme/layout';
 import { vibrar } from '../util/vibracao';
@@ -416,7 +416,7 @@ const useEstilos = criarEstilos(() => ({
     width: 40,
     height: 5,
     borderRadius: raio.pilula,
-    backgroundColor: cores.borda,
+    backgroundColor: cores.linha,
     marginBottom: 6,
   },
   titulo: {
@@ -438,10 +438,7 @@ const useEstilos = criarEstilos(() => ({
     gap: 10,
     padding: 20,
     borderRadius: raio.cartao,
-    ...curva,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: cores.borda,
+    ...cartaoPlano,
   },
   tituloVazio: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.texto },
   textoVazio: { fontSize: tamanho.corpo, lineHeight: 21, color: cores.textoSecundario },

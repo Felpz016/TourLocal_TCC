@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { TextInput, View } from 'react-native';
 
 import { cores } from '../theme/cores';
-import { curva, raio } from '../theme/estilo';
+import { curva, raio, semContornoWeb } from '../theme/estilo';
 import { tamanho } from '../theme/fontes';
 import { criarEstilos } from '../theme/tema';
 import { Icone } from './ui/Icone';
@@ -21,6 +21,7 @@ const ESPERA_MS = 350;
 export function CampoBusca({ valor, onBuscar, placeholder }: Props) {
   const styles = useEstilos();
   const [texto, setTexto] = useState(valor);
+  const [focado, setFocado] = useState(false);
 
   // Se a busca for limpa de fora (ex.: "Limpar busca"), o campo acompanha.
   useEffect(() => setTexto(valor), [valor]);
@@ -32,12 +33,14 @@ export function CampoBusca({ valor, onBuscar, placeholder }: Props) {
   }, [texto, valor, onBuscar]);
 
   return (
-    <View style={styles.caixa}>
-      <Icone nome="search" tamanho={18} cor={cores.textoSecundario} />
+    <View style={[styles.caixa, focado && styles.caixaFocada]}>
+      <Icone nome="search" tamanho={18} cor={focado ? cores.primaria : cores.textoSecundario} />
       <TextInput
         value={texto}
         onChangeText={setTexto}
         onSubmitEditing={() => onBuscar(texto.trim())}
+        onFocus={() => setFocado(true)}
+        onBlur={() => setFocado(false)}
         placeholder={placeholder}
         placeholderTextColor={cores.textoSecundario}
         accessibilityLabel="Buscar por nome"
@@ -78,5 +81,13 @@ const useEstilos = criarEstilos(() => ({
     borderWidth: 1,
     borderColor: cores.divisoria,
   },
-  entrada: { flex: 1, height: '100%', fontSize: tamanho.corpo, color: cores.texto },
+  // Foco como nos campos do app: borda azul (na web, sem o contorno padrão do navegador).
+  caixaFocada: { borderColor: cores.primaria, backgroundColor: cores.superficie },
+  entrada: {
+    flex: 1,
+    height: '100%',
+    fontSize: tamanho.corpo,
+    color: cores.texto,
+    ...semContornoWeb,
+  },
 }));

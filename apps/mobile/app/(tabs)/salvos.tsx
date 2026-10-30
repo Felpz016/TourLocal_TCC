@@ -7,12 +7,13 @@ import { listarFavoritos } from '../../src/api/estabelecimentos';
 import type { Favorito } from '../../src/api/estabelecimentos';
 import { Miniatura } from '../../src/components/Miniatura';
 import { Aviso } from '../../src/components/ui/Aviso';
+import { Botao } from '../../src/components/ui/Botao';
 import { Cabecalho } from '../../src/components/ui/Cabecalho';
 import { ListaEsqueleto } from '../../src/components/ui/Esqueleto';
 import { Icone } from '../../src/components/ui/Icone';
 import { Pressionavel } from '../../src/components/ui/Pressionavel';
 import { cores } from '../../src/theme/cores';
-import { cartaoPlano, curva, raio } from '../../src/theme/estilo';
+import { cartaoPlano, curva, raio, sombra } from '../../src/theme/estilo';
 import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 import { avisoOffline, guardar, ler } from '../../src/offline/cache';
@@ -78,11 +79,20 @@ export default function SalvosTela() {
         {favoritos === null && carregando ? <ListaEsqueleto quantidade={3} /> : null}
         {favoritos?.length === 0 ? (
           <View style={styles.vazio}>
-            <Icone nome="heart-outline" tamanho={32} cor={cores.favorito} />
-            <Text style={styles.tituloVazio}>Sua lista está vazia</Text>
+            <View style={styles.circuloVazio}>
+              <Icone nome="heart" tamanho={30} cor={cores.favorito} />
+            </View>
+            <Text style={styles.tituloVazio}>Nada salvo ainda</Text>
             <Text style={styles.textoVazio}>
-              Toque no coração nos detalhes de um lugar para guardá-lo aqui.
+              Toque no coração nos detalhes de um lugar para guardá-lo aqui. Seus salvos abrem mesmo
+              sem internet.
             </Text>
+            <Botao
+              titulo="Explorar lugares por perto"
+              icone="compass-outline"
+              variante="secundario"
+              onPress={() => router.navigate('/')}
+            />
           </View>
         ) : null}
         {favoritos?.map((f) => (
@@ -129,18 +139,25 @@ export default function SalvosTela() {
 const useEstilos = criarEstilos(() => ({
   tela: { flex: 1, backgroundColor: cores.fundo },
   conteudo: { padding: 20, paddingTop: 8, gap: 12 },
-  vazio: {
+  vazio: { alignItems: 'center', gap: 10, paddingHorizontal: 24, paddingTop: 48 },
+  circuloVazio: {
+    width: 72,
+    height: 72,
+    marginBottom: 6,
+    borderRadius: raio.pilula,
     alignItems: 'center',
-    gap: 8,
-    padding: 28,
-    borderRadius: raio.cartao,
-    ...curva,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: cores.borda,
+    justifyContent: 'center',
+    backgroundColor: cores.superficie,
+    ...sombra,
   },
   tituloVazio: { fontFamily: fonte.subtitulo, fontSize: tamanho.secao, color: cores.texto },
-  textoVazio: { fontSize: tamanho.corpo, color: cores.textoSecundario, textAlign: 'center' },
+  textoVazio: {
+    marginBottom: 6,
+    fontSize: tamanho.corpo,
+    lineHeight: 21,
+    color: cores.textoSecundario,
+    textAlign: 'center',
+  },
   cartao: {
     flexDirection: 'row',
     alignItems: 'center',

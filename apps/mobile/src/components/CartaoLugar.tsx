@@ -36,6 +36,7 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
         ...detalhes,
         `${lugar.minutos_a_pe} minutos a pé`,
         aberto === null ? null : aberto ? 'aberto agora' : 'fechado agora',
+        lugar.muda_as,
         lugar.acessibilidade ? 'acessível' : null,
         motivo ? `recomendado porque: ${motivo}` : null,
       ]
@@ -73,8 +74,17 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
 
         <View style={styles.linha}>
           {aberto !== null ? (
-            <Text style={[styles.situacao, { color: aberto ? cores.sucesso : cores.erro }]}>
-              {aberto ? 'Aberto' : 'Fechado'}
+            <Text style={styles.detalhes} numberOfLines={1}>
+              {/* Como no Google Maps: quando fecha, ou quando volta a abrir. "Aberto 24 horas"
+                  já diz tudo sozinho. */}
+              <Text style={[styles.situacao, { color: aberto ? cores.sucesso : cores.erro }]}>
+                {lugar.muda_as?.startsWith('Aberto')
+                  ? lugar.muda_as
+                  : aberto
+                    ? 'Aberto'
+                    : 'Fechado'}
+              </Text>
+              {lugar.muda_as && !lugar.muda_as.startsWith('Aberto') ? ` · ${lugar.muda_as}` : ''}
             </Text>
           ) : null}
           {lugar.acessibilidade ? (

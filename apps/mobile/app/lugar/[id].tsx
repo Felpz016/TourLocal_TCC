@@ -637,10 +637,10 @@ const useEstilos = criarEstilos(() => ({
     paddingVertical: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: cores.borda,
+    borderColor: cores.linha,
   },
   coluna: { flex: 1, gap: 4, paddingHorizontal: 4 },
-  separador: { width: StyleSheet.hairlineWidth, backgroundColor: cores.borda, marginRight: 12 },
+  separador: { width: StyleSheet.hairlineWidth, backgroundColor: cores.linha, marginRight: 12 },
   rotuloResumo: {
     fontSize: tamanho.mini,
     fontWeight: '600',
@@ -661,7 +661,7 @@ const useEstilos = criarEstilos(() => ({
   rotuloInfo: { fontSize: tamanho.apoio, color: cores.textoSecundario },
   valorInfo: { fontSize: tamanho.corpo, color: cores.texto },
   linhaHorario: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 11 },
-  divisoria: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: cores.borda },
+  divisoria: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: cores.linha },
   dia: { fontSize: tamanho.corpo, color: cores.texto },
-  hoje: { fontWeight: '700' },
+  hoje: { fontWeight: '700', color: cores.primaria },
 }));

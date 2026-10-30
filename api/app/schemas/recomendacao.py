@@ -23,6 +23,8 @@ class RecomendacaoOut(BaseModel):
     minutos_de_carro: int
     # None quando o estabelecimento não informou horários.
     aberto_agora: bool | None
+    # Complemento do aberto/fechado: "Fecha às 23:00", "Abre às 18:00" (None sem horário).
+    muda_as: str | None = None
     # RN08 e RF11: pontuação de 0 a 1, nota de cada critério e os motivos em texto.
     pontuacao: float
     criterios: dict[str, float]

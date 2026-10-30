@@ -20,6 +20,8 @@ export type Recomendacao = {
   minutos_a_pe: number;
   minutos_de_carro: number;
   aberto_agora: boolean | null;
+  /** "Fecha às 23:00", "Abre às 18:00"... (null sem horário informado). */
+  muda_as: string | null;
   opcoes_alimentares: string[];
   pontuacao: number;
   criterios: Record<'proximidade' | 'avaliacao' | 'orcamento' | 'perfil', number>;

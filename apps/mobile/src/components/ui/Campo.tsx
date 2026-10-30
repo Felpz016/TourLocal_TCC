@@ -3,7 +3,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import type { TextInputProps } from 'react-native';
 
 import { cores } from '../../theme/cores';
-import { curva, raio } from '../../theme/estilo';
+import { curva, raio, semContornoWeb } from '../../theme/estilo';
 import { tamanho } from '../../theme/fontes';
 import { Icone } from './Icone';
 import type { NomeIcone } from './Icone';
@@ -98,7 +98,14 @@ const useEstilos = criarEstilos(() => ({
   caixaMultilinha: { alignItems: 'flex-start', paddingVertical: 12 },
   caixaFocada: { borderColor: cores.primaria, borderWidth: 2, paddingHorizontal: 13 },
   caixaErro: { borderColor: cores.erro },
-  input: { flex: 1, minWidth: 0, fontSize: tamanho.campo, color: cores.texto, paddingVertical: 12 },
+  input: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: tamanho.campo,
+    color: cores.texto,
+    paddingVertical: 12,
+    ...semContornoWeb,
+  },
   erro: { color: cores.erro, fontSize: tamanho.rotulo },
   dica: { color: cores.textoSecundario, fontSize: tamanho.apoio },
 }));
