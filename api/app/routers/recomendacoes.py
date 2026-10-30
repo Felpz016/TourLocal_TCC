@@ -74,6 +74,7 @@ def _saida(c: recomendacao.Candidato, eixo: Eixo) -> RecomendacaoOut:
         minutos_a_pe=recomendacao.minutos(c.distancia_km, settings.velocidade_a_pe_kmh),
         minutos_de_carro=recomendacao.minutos(c.distancia_km, settings.velocidade_carro_kmh),
         aberto_agora=c.aberto_agora,
+        muda_as=c.muda_as,
         pontuacao=c.pontuacao.total,
         criterios={k: round(v, 3) for k, v in c.pontuacao.criterios.items()},
         motivos=c.pontuacao.motivos,

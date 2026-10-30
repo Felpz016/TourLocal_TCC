@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { StyleSheet, useColorScheme } from 'react-native';
+import { Appearance, Platform, StyleSheet, useColorScheme } from 'react-native';
 
-import { definirEsquema } from './cores';
+import { cores, definirEsquema } from './cores';
 import type { Esquema } from './cores';
 
 // Modo escuro: segue o sistema por padrão, mas o usuário pode fixar claro ou escuro no Perfil.
@@ -46,6 +46,24 @@ export function TemaProvider({ children }: { children: ReactNode }) {
         : 'claro';
   // Troca a paleta antes de desenhar os filhos: assim `cores.*` já sai no esquema certo.
   definirEsquema(esquema);
+
+  // O que não é desenhado pelo app também precisa seguir o tema: no celular, a barra de
+  // rolagem, o teclado e os alertas do sistema; na web, as barras de rolagem e o fundo da
+  // página (que aparece atrás da barra de abas e ao puxar a tela além do fim).
+  useEffect(() => {
+    if (aparencia === null) return;
+    if (Platform.OS === 'web') {
+      const raiz = globalThis.document?.documentElement;
+      if (!raiz) return;
+      raiz.style.colorScheme = esquema === 'escuro' ? 'dark' : 'light';
+      raiz.style.backgroundColor = cores.fundo;
+      if (globalThis.document.body) globalThis.document.body.style.backgroundColor = cores.fundo;
+      return;
+    }
+    Appearance.setColorScheme(
+      aparencia === 'sistema' ? 'auto' : aparencia === 'escuro' ? 'dark' : 'light',
+    );
+  }, [aparencia, esquema]);
 
   // Espera ler a preferência salva, para o app não abrir claro e piscar para o escuro.
   if (aparencia === null) return null;

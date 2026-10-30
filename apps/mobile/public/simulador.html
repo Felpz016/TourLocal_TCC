@@ -14,6 +14,18 @@
         --linha: #d6d2c8;
         --azul: #245bff;
         --corpo: #1b1d22;
+        --botao: #fff;
+      }
+      /* A página acompanha o tema escuro do computador. */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fundo: #0b1220;
+          --texto: #eef1f7;
+          --texto2: #a3acbf;
+          --linha: #253049;
+          --azul: #7fa2ff;
+          --botao: #141d31;
+        }
       }
       * {
         box-sizing: border-box;
@@ -52,7 +64,7 @@
       a.botao {
         font: inherit;
         color: var(--texto);
-        background: #fff;
+        background: var(--botao);
         border: 1px solid var(--linha);
         border-radius: 8px;
         padding: 6px 10px;
@@ -138,7 +150,7 @@
         width: 134px;
         height: 5px;
         border-radius: 3px;
-        background: #0b1b3a;
+        background: currentColor;
       }
       .sem-ilha .ilha {
         display: none;
@@ -255,23 +267,45 @@
         $('hora').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
       }
 
-      // A barra de status assume a cor do topo do app, como no aparelho de verdade. O app está na
-      // mesma origem, então dá para ler a cor do elemento que aparece logo abaixo dela.
+      // A barra de status e a faixa do indicador de início assumem a cor do app logo ao lado
+      // delas (no topo e no rodapé), como no aparelho de verdade; assim acompanham também o tema
+      // escuro. O app está na mesma origem, então dá para ler a cor do elemento naquele ponto.
+      function corEm(doc, y) {
+        let el = doc.elementFromPoint(doc.documentElement.clientWidth / 2, y);
+        while (el) {
+          const c = getComputedStyle(el).backgroundColor;
+          if (c && c !== 'transparent' && !c.endsWith(', 0)')) return c;
+          el = el.parentElement;
+        }
+        return null;
+      }
+
+      function pintar(id, cor) {
+        if (!cor) return;
+        const [r, g, b] = cor.match(/\d+/g).map(Number);
+        const escuro = 0.299 * r + 0.587 * g + 0.114 * b < 140;
+        $(id).style.background = cor;
+        $(id).style.color = escuro ? '#fff' : '#0B1B3A';
+      }
+
+      // No celular a barra de rolagem só aparece enquanto se rola, por cima do conteúdo. No PC
+      // ela ocuparia espaço e ficaria clara no tema escuro, então some dentro da moldura.
+      function esconderRolagem(doc) {
+        if (doc.getElementById('simulador-rolagem')) return;
+        const estilo = doc.createElement('style');
+        estilo.id = 'simulador-rolagem';
+        estilo.textContent =
+          '*{scrollbar-width:none}*::-webkit-scrollbar{display:none;width:0;height:0}';
+        doc.head.appendChild(estilo);
+      }
+
       function corDoTopo() {
         try {
           const doc = $('app').contentDocument;
-          let el = doc && doc.elementFromPoint(doc.documentElement.clientWidth / 2, 2);
-          let cor = null;
-          while (el && !cor) {
-            const c = getComputedStyle(el).backgroundColor;
-            if (c && c !== 'transparent' && !c.endsWith(', 0)')) cor = c;
-            el = el.parentElement;
-          }
-          if (!cor) return;
-          const [r, g, b] = cor.match(/\d+/g).map(Number);
-          const escuro = 0.299 * r + 0.587 * g + 0.114 * b < 140;
-          $('status').style.background = cor;
-          $('status').style.color = escuro ? '#fff' : '#0B1B3A';
+          if (!doc || !doc.body) return;
+          esconderRolagem(doc);
+          pintar('status', corEm(doc, 2));
+          pintar('home', corEm(doc, doc.documentElement.clientHeight - 2));
         } catch {}
       }
 

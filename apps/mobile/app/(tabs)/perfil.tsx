@@ -3,7 +3,7 @@ import { ScrollView, Text, View } from 'react-native';
 
 import { useAuth } from '../../src/auth/AuthContext';
 import { ItemLista } from '../../src/components/ui/ItemLista';
-import { Opcao } from '../../src/components/ui/Opcao';
+import { Segmentado } from '../../src/components/ui/Segmentado';
 import { Cabecalho } from '../../src/components/ui/Cabecalho';
 import { useLocalizacao } from '../../src/localizacao/LocalizacaoContext';
 import { cores } from '../../src/theme/cores';
@@ -13,11 +13,11 @@ import { estilosLargura } from '../../src/theme/layout';
 import { criarEstilos, useTema } from '../../src/theme/tema';
 import type { Aparencia } from '../../src/theme/tema';
 
-const APARENCIAS: { valor: Aparencia; rotulo: string }[] = [
-  { valor: 'sistema', rotulo: 'Automático' },
-  { valor: 'claro', rotulo: 'Claro' },
-  { valor: 'escuro', rotulo: 'Escuro' },
-];
+const APARENCIAS = [
+  { valor: 'sistema', rotulo: 'Automático', icone: 'phone-portrait-outline' },
+  { valor: 'claro', rotulo: 'Claro', icone: 'sunny-outline' },
+  { valor: 'escuro', rotulo: 'Escuro', icone: 'moon-outline' },
+] as const satisfies readonly { valor: Aparencia; rotulo: string; icone: string }[];
 
 const TIPOS = { turista: 'Turista', comerciante: 'Comerciante', administrador: 'Administrador' };
 
@@ -63,6 +63,9 @@ export default function PerfilTela() {
           </View>
         </View>
 
+        <Text style={styles.rotuloGrupo} accessibilityRole="header">
+          Conta
+        </Text>
         <View style={styles.grupo}>
           {usuario.tipo === 'turista' ? (
             <ItemLista
@@ -81,25 +84,22 @@ export default function PerfilTela() {
           />
         </View>
         {/* Modo escuro: segue o iPhone (Automático) ou fica sempre claro ou escuro. */}
-        <View style={styles.aparencia}>
-          <Text style={styles.rotuloGrupo} accessibilityRole="header">
-            Aparência
+        <Text style={styles.rotuloGrupo} accessibilityRole="header">
+          Aparência
+        </Text>
+        <View style={[styles.grupo, styles.caixaAparencia]}>
+          <Segmentado opcoes={APARENCIAS} valor={aparencia} onChange={escolherAparencia} />
+          <Text style={styles.dica}>
+            {aparencia === 'sistema'
+              ? 'Segue o modo claro ou escuro do celular.'
+              : `Sempre ${aparencia === 'claro' ? 'claro' : 'escuro'}, mesmo que o celular mude.`}
           </Text>
-          <View style={styles.opcoes} accessibilityRole="radiogroup">
-            {APARENCIAS.map((a) => (
-              <Opcao
-                key={a.valor}
-                rotulo={a.rotulo}
-                selecionada={aparencia === a.valor}
-                unica
-                onPress={() => escolherAparencia(a.valor)}
-              />
-            ))}
-          </View>
         </View>
+
         <View style={styles.grupo}>
           <ItemLista icone="log-out-outline" titulo="Sair da conta" onPress={sair} perigo ultimo />
         </View>
+        <Text style={styles.rodape}>TourLocal 1.0 · TCC de ADS, Fatec Araraquara</Text>
       </ScrollView>
     </View>
   );
@@ -143,16 +143,23 @@ const useEstilos = criarEstilos(() => ({
     backgroundColor: 'rgba(255, 255, 255, 0.14)',
   },
   conteudo: { padding: 20, paddingTop: 8, gap: 16 },
-  aparencia: { gap: 8 },
   rotuloGrupo: {
     marginLeft: 4,
+    marginBottom: -8,
     fontSize: tamanho.mini,
     fontWeight: '600',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
     color: cores.textoSecundario,
   },
-  opcoes: { flexDirection: 'row', gap: 8 },
+  caixaAparencia: { gap: 10, padding: 12 },
+  dica: { marginHorizontal: 4, fontSize: tamanho.apoio, color: cores.textoSecundario },
+  rodape: {
+    marginTop: 8,
+    textAlign: 'center',
+    fontSize: tamanho.legenda,
+    color: cores.textoSecundario,
+  },
   grupo: {
     borderRadius: raio.cartao,
     ...curva,

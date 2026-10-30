@@ -15,6 +15,8 @@ const claro = {
   // src/__tests__/cores.test.ts); `divisoria` é só para separar cartões.
   borda: '#928C7E',
   divisoria: '#E8E3D9',
+  // Linhas finas decorativas (separadores, alças das folhas): não precisam de 3:1.
+  linha: '#C9C3B6',
   erro: '#C8261A',
   fundoErro: '#FDECEA',
   alerta: '#8A4B00',
@@ -49,6 +51,7 @@ const escuro: Paleta = {
   textoSecundario: '#A3ACBF',
   borda: '#5E6A85',
   divisoria: '#253049',
+  linha: '#34405C',
   erro: '#FF7A6E',
   fundoErro: '#3B1D1F',
   alerta: '#FFC46B',

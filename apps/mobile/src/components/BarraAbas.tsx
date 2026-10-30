@@ -83,7 +83,7 @@ const useEstilos = criarEstilos(() => ({
     flexDirection: 'row',
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: cores.borda,
+    borderTopColor: cores.linha,
     backgroundColor: cores.superficie,
   },
   aba: { flex: 1, alignItems: 'center', gap: 3, minHeight: 44 },

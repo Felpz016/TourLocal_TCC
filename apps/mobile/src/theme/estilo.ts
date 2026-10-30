@@ -1,4 +1,5 @@
-import type { ViewStyle } from 'react-native';
+import { Platform } from 'react-native';
+import type { TextStyle, ViewStyle } from 'react-native';
 
 import { cores } from './cores';
 
@@ -14,6 +15,12 @@ export const raio = {
   pilula: 999,
 };
 export const curva = { borderCurve: 'continuous' } as const satisfies ViewStyle;
+
+// Na web, os campos de texto já mostram o foco na borda azul da caixa; sem isto o navegador
+// desenha por cima o próprio contorno (claro, inclusive no tema escuro). Os tipos do React
+// Native não conhecem `outlineStyle: 'none'`, que só existe na web.
+export const semContornoWeb: TextStyle =
+  Platform.OS === 'web' ? ({ outlineStyle: 'none' } as unknown as TextStyle) : {};
 
 // Durações (ms): toque é quase imperceptível, folhas e telas seguem o sistema.
 export const movimento = { toque: 120, estado: 180 } as const;

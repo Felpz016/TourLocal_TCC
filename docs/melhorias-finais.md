@@ -32,6 +32,7 @@ A barra no topo de cada eixo procura no **nome, na categoria e no endereço** do
 - Duas paletas em `src/theme/cores.ts`. A escura é um azul-marinho quase preto (o "mar à noite"), não um cinza genérico; o azul fica mais claro para continuar legível.
 - Como funciona: `cores` lê a paleta do esquema atual na hora em que cada cor é usada. Os estilos das telas são criados por `criarEstilos` (`src/theme/tema.tsx`), que gera um `StyleSheet` por esquema e o refaz quando o esquema muda. O `TemaProvider` fica na raiz do app e escolhe o esquema antes de desenhar as telas.
 - O mapa acompanha: Apple Maps com `userInterfaceStyle` e, na web, o OpenStreetMap com as cores invertidas.
+- O que o app não desenha também acompanha: no celular, `Appearance.setColorScheme` faz a barra de rolagem, o teclado e os alertas do sistema seguirem a escolha do Perfil; na web, o `color-scheme` da página escurece as barras de rolagem. No simulador do PC, a faixa do indicador de início pega a cor do rodapé do app e a barra de rolagem fica escondida, como no celular.
 
 ## 5. Compartilhar um lugar
 

@@ -4,7 +4,7 @@ import pytest
 
 from app.models import HorarioFuncionamento
 from app.services.geo import caixa_delimitadora, haversine_km
-from app.services.horario import esta_aberto
+from app.services.horario import esta_aberto, proxima_mudanca
 
 
 def test_haversine_entre_araraquara_e_sao_carlos():
@@ -47,3 +47,28 @@ def test_faixa_que_passa_da_meia_noite():
 
 def test_sem_horario_cadastrado_e_desconhecido():
     assert esta_aberto([], TERCA_12H) is None
+
+
+@pytest.mark.parametrize(
+    ("horarios", "momento", "esperado"),
+    [
+        # Terça, 12h, aberto das 11h às 15h.
+        ([_h(1, time(11), time(15))], datetime(2026, 10, 27, 12), "Fecha às 15:00"),
+        # Terça, 9h: ainda vai abrir hoje.
+        ([_h(1, time(11), time(15))], datetime(2026, 10, 27, 9), "Abre às 11:00"),
+        # Terça, 16h: só abre na quarta.
+        (
+            [_h(1, time(11), time(15)), _h(2, time(10), time(15))],
+            datetime(2026, 10, 27, 16),
+            "Abre amanhã às 10:00",
+        ),
+        # Quarta, 1h: ainda é o turno de terça, das 18h às 2h.
+        ([_h(1, time(18), time(2))], datetime(2026, 10, 28, 1), "Fecha às 02:00"),
+        # Hotel: abertura igual ao fechamento.
+        ([_h(1, time(0), time(0))], datetime(2026, 10, 27, 3), "Aberto 24 horas"),
+        # Sem horários informados.
+        ([], datetime(2026, 10, 27, 12), None),
+    ],
+)
+def test_proxima_mudanca(horarios, momento, esperado):
+    assert proxima_mudanca(horarios, momento, esta_aberto(horarios, momento)) == esperado
