@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Switch, Text, View } from 'react-native';
 
 import * as authApi from '../src/api/auth';
 import { ApiError } from '../src/api/client';
@@ -15,6 +15,7 @@ import { Tela } from '../src/components/ui/Tela';
 import { cores } from '../src/theme/cores';
 import { curva, raio } from '../src/theme/estilo';
 import { fonte, tamanho } from '../src/theme/fontes';
+import { criarEstilos } from '../src/theme/tema';
 
 const ORCAMENTOS: { valor: FaixaPreco; rotulo: string }[] = [
   { valor: 'economico', rotulo: '$ Econômico' },
@@ -40,6 +41,7 @@ const TEMPOS = [
 const RAIOS = ['1', '3', '5', '10', '20'];
 
 export default function PreferenciasScreen() {
+  const styles = useEstilos();
   const { primeiroAcesso, concluirPrimeiroAcesso } = useAuth();
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -108,6 +110,7 @@ export default function PreferenciasScreen() {
             key={o.valor}
             rotulo={o.rotulo}
             selecionada={perfil.faixa_orcamento === o.valor}
+            unica
             onPress={() =>
               atualizar({ faixa_orcamento: perfil.faixa_orcamento === o.valor ? null : o.valor })
             }
@@ -142,6 +145,7 @@ export default function PreferenciasScreen() {
             key={t.valor}
             rotulo={t.rotulo}
             selecionada={perfil.tempo_disponivel_min === t.valor}
+            unica
             onPress={() =>
               atualizar({
                 tempo_disponivel_min: perfil.tempo_disponivel_min === t.valor ? null : t.valor,
@@ -157,6 +161,7 @@ export default function PreferenciasScreen() {
             key={r}
             rotulo={`${r} km`}
             selecionada={raioAtual === r}
+            unica
             onPress={() => atualizar({ raio_busca_km: r })}
           />
         ))}
@@ -183,7 +188,7 @@ export default function PreferenciasScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   tituloSecao: { fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
   dica: { fontSize: tamanho.apoio, color: cores.textoSecundario },
   acessibilidade: {
@@ -207,4 +212,4 @@ const styles = StyleSheet.create({
     backgroundColor: cores.fundoDestaque,
   },
   textosAcesso: { flex: 1, gap: 2 },
-});
+}));

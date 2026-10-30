@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router';
 
-import { opcoesCabecalho } from '../../src/theme/navegacao';
+import { useOpcoesCabecalho } from '../../src/theme/navegacao';
 
 export default function AuthLayout() {
+  const opcoesCabecalho = useOpcoesCabecalho();
   return (
     <Stack screenOptions={opcoesCabecalho}>
       <Stack.Screen name="login" options={{ headerShown: false }} />

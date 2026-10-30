@@ -1,13 +1,15 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { cores } from '../../theme/cores';
 import { vibrar } from '../../util/vibracao';
 import { Icone } from '../ui/Icone';
+import { criarEstilos } from '../../theme/tema';
 
 type Props = { nota: number; onChange?: (nota: number) => void; tamanho?: number };
 
 /** Mostra a nota em estrelas; com onChange, cada estrela vira um botão de 1 a 5 (RF13). */
 export function Estrelas({ nota, onChange, tamanho = 16 }: Props) {
+  const styles = useEstilos();
   if (!onChange) {
     return (
       <View style={styles.linha} accessible accessibilityLabel={`Nota ${nota} de 5`}>
@@ -48,7 +50,7 @@ export function Estrelas({ nota, onChange, tamanho = 16 }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   linha: { flexDirection: 'row', gap: 2, alignItems: 'center' },
   botao: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-});
+}));

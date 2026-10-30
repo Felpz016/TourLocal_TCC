@@ -1,12 +1,14 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { cores } from '../../theme/cores';
 import { tamanho } from '../../theme/fontes';
 import { REQUISITOS_SENHA } from '../../util/senha';
 import { Icone } from './Icone';
+import { criarEstilos } from '../../theme/tema';
 
 /** Lista os requisitos da senha embaixo do campo e marca cada um conforme a pessoa digita. */
 export function RequisitosSenha({ senha }: { senha: string }) {
+  const styles = useEstilos();
   return (
     <View style={styles.lista}>
       {REQUISITOS_SENHA.map((r) => {
@@ -31,8 +33,8 @@ export function RequisitosSenha({ senha }: { senha: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   lista: { gap: 4, marginTop: -8 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   texto: { fontSize: tamanho.apoio, color: cores.textoSecundario },
-});
+}));

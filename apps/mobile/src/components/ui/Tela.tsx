@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cores } from '../../theme/cores';
 import { fonte, tamanho } from '../../theme/fontes';
 import { estilosLargura } from '../../theme/layout';
+import { criarEstilos } from '../../theme/tema';
 
 type Props = {
   titulo?: string;
@@ -16,6 +17,7 @@ type Props = {
 
 /** Moldura das telas de formulário: área segura, rolagem e teclado sem cobrir os campos. */
 export function Tela({ titulo, subtitulo, children, rodape }: Props) {
+  const styles = useEstilos();
   const { top, bottom } = useSafeAreaInsets();
   return (
     <KeyboardAvoidingView
@@ -49,7 +51,7 @@ export function Tela({ titulo, subtitulo, children, rodape }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   area: { flex: 1, backgroundColor: cores.fundo },
   conteudo: { padding: 20, gap: 16, flexGrow: 1 },
   titulo: {
@@ -72,4 +74,4 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: cores.divisoria,
   },
-});
+}));

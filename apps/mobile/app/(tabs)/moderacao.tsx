@@ -1,6 +1,6 @@
 import { Link, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 
 import { ApiError } from '../../src/api/client';
 import {
@@ -22,9 +22,11 @@ import { cartaoPlano, curva, raio, sombra } from '../../src/theme/estilo';
 import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 import { vibrar } from '../../src/util/vibracao';
+import { criarEstilos } from '../../src/theme/tema';
 
 // Moderação (UC12, RF18): verificar cadastros (RN01) e decidir denúncias (RN06).
 export default function ModeracaoTela() {
+  const styles = useEstilos();
   const [pendentes, setPendentes] = useState<Pendente[]>([]);
   const [denuncias, setDenuncias] = useState<Denuncia[]>([]);
   const [carregando, setCarregando] = useState(false);
@@ -189,7 +191,7 @@ export default function ModeracaoTela() {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   tela: { flex: 1, backgroundColor: cores.fundo },
   segmentos: {
     flexDirection: 'row',
@@ -250,4 +252,4 @@ const styles = StyleSheet.create({
   },
   textoSelo: { fontSize: tamanho.legenda, fontWeight: '700', color: cores.erro },
   acoes: { flexDirection: 'row', gap: 10 },
-});
+}));

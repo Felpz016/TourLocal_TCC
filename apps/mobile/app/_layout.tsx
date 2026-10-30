@@ -8,9 +8,12 @@ import { AuthProvider, useAuth } from '../src/auth/AuthContext';
 import { LocalizacaoProvider } from '../src/localizacao/LocalizacaoContext';
 import { cores } from '../src/theme/cores';
 import { arquivosDeFonte } from '../src/theme/fontes';
-import { opcoesCabecalho } from '../src/theme/navegacao';
+import { useOpcoesCabecalho } from '../src/theme/navegacao';
+import { TemaProvider, useTema } from '../src/theme/tema';
 
 function Navegacao() {
+  const { esquema } = useTema();
+  const opcoesCabecalho = useOpcoesCabecalho();
   const { usuario, carregando } = useAuth();
   // Se a fonte falhar, o app segue com a do sistema em vez de travar no carregamento.
   const [fontesProntas, erroFontes] = useFonts(arquivosDeFonte);
@@ -35,6 +38,7 @@ function Navegacao() {
   // A chave troca a cada login, então a posição é descartada quando o usuário sai (RN10).
   return (
     <LocalizacaoProvider key={usuario?.id_usuario ?? 'anonimo'}>
+      <StatusBar style={esquema === 'escuro' ? 'light' : 'dark'} />
       <Stack screenOptions={opcoesCabecalho}>
         <Stack.Protected guard={!!usuario} redirectTo="/login">
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -58,10 +62,12 @@ export default function RootLayout() {
   return (
     // Raiz dos gestos (arrastar a lista sobre o mapa); sem ela, os gestos não respondem.
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <Navegacao />
-        <StatusBar style="dark" />
-      </AuthProvider>
+      {/* O tema vem antes de tudo: escolhe a paleta (clara ou escura) antes das telas. */}
+      <TemaProvider>
+        <AuthProvider>
+          <Navegacao />
+        </AuthProvider>
+      </TemaProvider>
     </GestureHandlerRootView>
   );
 }

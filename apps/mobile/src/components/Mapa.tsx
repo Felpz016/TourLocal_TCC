@@ -4,6 +4,7 @@ import MapView, { Marker } from 'react-native-maps';
 
 import type { Recomendacao } from '../api/recomendacoes';
 import type { Posicao } from '../localizacao/LocalizacaoContext';
+import { useTema } from '../theme/tema';
 
 type Ponto = { latitude: number; longitude: number };
 type Props = {
@@ -18,6 +19,7 @@ type Props = {
 
 // Mapa nativo: Apple Maps no iOS e Google Maps no Android (funciona no Expo Go).
 export function Mapa({ posicao, lugares = [], altura = 180, destaque, margemInferior = 0 }: Props) {
+  const { esquema } = useTema();
   const centro: Ponto | null | undefined = destaque ?? posicao;
   const delta = destaque ? 0.008 : 0.03;
   // A mesma região entre renderizações, para o mapa não voltar ao centro enquanto a pessoa
@@ -39,6 +41,8 @@ export function Mapa({ posicao, lugares = [], altura = 180, destaque, margemInfe
       mapPadding={{ top: 0, right: 0, bottom: margemInferior, left: 0 }}
       showsUserLocation={posicao?.origem === 'gps'}
       scrollEnabled={!destaque}
+      // Apple Maps acompanha o modo escuro do app, não só o do sistema.
+      userInterfaceStyle={esquema === 'escuro' ? 'dark' : 'light'}
       accessibilityLabel={
         destaque ? `Mapa de ${destaque.nome}` : 'Mapa com a sua posição e os lugares recomendados'
       }

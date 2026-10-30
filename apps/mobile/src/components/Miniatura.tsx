@@ -1,10 +1,11 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 
 import type { Eixo } from '../api/recomendacoes';
 import { urlFoto } from '../api/gestao';
 import { tomDoLugar } from '../theme/cores';
 import { fonte } from '../theme/fontes';
 import type { NomeIcone } from './ui/Icone';
+import { criarEstilos } from '../theme/tema';
 
 export const ICONE_EIXO: Record<Eixo, NomeIcone> = {
   comer: 'restaurant',
@@ -26,10 +27,18 @@ type Props = { nome: string; foto?: string | null; tamanho?: number };
  * avatares de contato. Cada lugar mantém sempre o mesmo tom.
  */
 export function Miniatura({ nome, foto, tamanho = 72 }: Props) {
+  const styles = useEstilos();
   const estilo = [styles.base, { width: tamanho, height: tamanho, borderRadius: tamanho * 0.22 }];
   if (foto) {
     return (
-      <Image source={{ uri: urlFoto(foto) }} style={estilo} accessibilityIgnoresInvertColors />
+      // Decorativa: o cartão em volta já diz o nome do lugar ao leitor de tela.
+      <Image
+        source={{ uri: urlFoto(foto) }}
+        style={estilo}
+        accessibilityIgnoresInvertColors
+        accessible={false}
+        importantForAccessibility="no"
+      />
     );
   }
   const tom = tomDoLugar(nome);
@@ -42,8 +51,8 @@ export function Miniatura({ nome, foto, tamanho = 72 }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   base: { overflow: 'hidden' },
   selo: { alignItems: 'center', justifyContent: 'center' },
   letra: { fontFamily: fonte.titulo, marginTop: -2 },
-});
+}));

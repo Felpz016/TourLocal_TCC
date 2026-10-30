@@ -4,11 +4,12 @@ Fase 1, filtragem espacial: retângulo em volta do usuário (usa o índice do ba
 depois a distância exata pela fórmula de Haversine, mantendo só o que está no raio.
 Fase 2, regras de negócio e filtros: só verificados (RN01); só abertos agora, salvo
 pedido (RN02); só acessíveis quando o turista precisa; e os filtros escolhidos na tela
-(categoria, faixa de preço e nota mínima, RF09).
+(categoria, faixa de preço e nota mínima, RF09) e a busca por nome.
 Fase 3, ranqueamento: pontuação ponderada (RN08, app/services/pontuacao.py), da maior
 para a menor, com os motivos de cada recomendação (RF11).
 """
 
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
@@ -36,6 +37,8 @@ class Filtros:
     faixas_preco: list[FaixaPreco] = field(default_factory=list)
     nota_minima: float | None = None
     incluir_fechados: bool = False
+    # Texto digitado na busca: procura no nome, nas categorias e no endereço.
+    busca: str | None = None
 
 
 @dataclass
@@ -50,6 +53,18 @@ class Candidato:
 
 def minutos(distancia_km: float, velocidade_kmh: float) -> int:
     return max(1, round(distancia_km / velocidade_kmh * 60))
+
+
+def normalizar(texto: str) -> str:
+    """Minúsculas e sem acentos, para "cafe" achar "Café" e "acai" achar "Açaí"."""
+    sem_acento = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
+    return " ".join(sem_acento.lower().split())
+
+
+def combina_com_busca(estab: Estabelecimento, busca: str) -> bool:
+    """Todas as palavras da busca precisam aparecer no nome, nas categorias ou no endereço."""
+    texto = normalizar(" ".join([estab.nome, estab.endereco, *(c.nome for c in estab.categorias)]))
+    return all(palavra in texto for palavra in normalizar(busca).split())
 
 
 def raio_do_usuario(perfil: Perfil | None, raio_pedido: float | None) -> float:
@@ -98,9 +113,13 @@ def aplicar_regras(
 ) -> list[Candidato]:
     """Fase 2, exceto a nota mínima, que depende das notas calculadas depois."""
     precisa_acessibilidade = bool(perfil and perfil.necessita_acessibilidade)
+    # Quem procura um lugar pelo nome quer achá-lo mesmo fechado; o cartão mostra "Fechado".
+    incluir_fechados = filtros.incluir_fechados or bool(filtros.busca)
     resultado = []
     for estab, distancia in candidatos:
         if precisa_acessibilidade and not estab.acessibilidade:
+            continue
+        if filtros.busca and not combina_com_busca(estab, filtros.busca):
             continue
         if filtros.categoria and filtros.categoria not in {c.nome for c in estab.categorias}:
             continue
@@ -108,7 +127,7 @@ def aplicar_regras(
             continue
         # Lugares sem horário informado continuam na lista (aberto_agora = None).
         aberto = esta_aberto(estab.horarios, agora)
-        if aberto is False and not filtros.incluir_fechados:
+        if aberto is False and not incluir_fechados:
             continue
         resultado.append(Candidato(estab, distancia, aberto))
     return resultado
@@ -132,6 +151,9 @@ def recomendar(
 ) -> tuple[float, list[Candidato]]:
     filtros = filtros or Filtros()
     perfil = usuario_repository.buscar_perfil(db, id_usuario)
+    # Na busca por nome o raio padrão é a cidade inteira (o máximo), não o do perfil.
+    if filtros.busca and raio_km is None:
+        raio_km = settings.raio_busca_maximo_km
     raio = raio_do_usuario(perfil, raio_km)
     agora = agora or datetime.now(ZoneInfo(settings.fuso_horario))
 

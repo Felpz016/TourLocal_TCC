@@ -1,5 +1,6 @@
 import type { Recomendacao } from '../api/recomendacoes';
 import type { Posicao } from '../localizacao/LocalizacaoContext';
+import { useTema } from '../theme/tema';
 
 type Ponto = { latitude: number; longitude: number };
 type Props = {
@@ -15,6 +16,7 @@ type Props = {
 // que marca só um ponto: o lugar em destaque ou a posição do usuário. Como o iframe não
 // aceita margem interna, ele encolhe até a parte que a lista não cobre.
 export function Mapa({ posicao, destaque, altura = 180, margemInferior = 0 }: Props) {
+  const { esquema } = useTema();
   const centro: Ponto | null | undefined = destaque ?? posicao;
   if (!centro) return null;
   const d = destaque ? 0.004 : 0.01;
@@ -25,7 +27,15 @@ export function Mapa({ posicao, destaque, altura = 180, margemInferior = 0 }: Pr
     <iframe
       title={destaque ? `Mapa de ${destaque.nome}` : 'Mapa com a sua posição'}
       src={url}
-      style={{ width: '100%', height: altura - margemInferior, border: 0, display: 'block' }}
+      style={{
+        width: '100%',
+        height: altura - margemInferior,
+        border: 0,
+        display: 'block',
+        // O OpenStreetMap não tem tema escuro; inverter as cores e girar o matiz chega perto.
+        filter:
+          esquema === 'escuro' ? 'invert(0.9) hue-rotate(180deg) brightness(0.95)' : undefined,
+      }}
     />
   );
 }

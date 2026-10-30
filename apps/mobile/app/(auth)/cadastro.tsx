@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import * as authApi from '../../src/api/auth';
 import { ApiError } from '../../src/api/client';
@@ -17,6 +17,7 @@ import { curva, raio } from '../../src/theme/estilo';
 import { fonte, tamanho } from '../../src/theme/fontes';
 import { senhaForte } from '../../src/util/senha';
 import { vibrar } from '../../src/util/vibracao';
+import { criarEstilos } from '../../src/theme/tema';
 
 type Tipo = 'turista' | 'comerciante';
 
@@ -38,6 +39,7 @@ const TIPOS: { valor: Tipo; titulo: string; descricao: string; icone: NomeIcone 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function CadastroScreen() {
+  const styles = useEstilos();
   const { entrar } = useAuth();
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -101,7 +103,7 @@ export default function CadastroScreen() {
                 </View>
                 {ativo ? <Icone nome="checkmark-circle" tamanho={22} cor={cores.sol} /> : null}
               </View>
-              <Text style={[styles.tipoTitulo, ativo && { color: cores.primariaTexto }]}>
+              <Text style={[styles.tipoTitulo, ativo && { color: cores.textoSobreTinta }]}>
                 {t.titulo}
               </Text>
               <Text style={[styles.tipoDescricao, ativo && styles.descricaoAtiva]}>
@@ -155,7 +157,7 @@ export default function CadastroScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   tipos: { flexDirection: 'row', gap: 12 },
   tipo: {
     flex: 1,
@@ -182,4 +184,4 @@ const styles = StyleSheet.create({
   tipoTitulo: { fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
   tipoDescricao: { fontSize: tamanho.apoio, color: cores.textoSecundario },
   descricaoAtiva: { color: 'rgba(255, 255, 255, 0.75)' },
-});
+}));

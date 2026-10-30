@@ -1,9 +1,10 @@
-import { StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Switch, Text, TextInput, View } from 'react-native';
 
 import type { HorarioIn } from '../../api/gestao';
 import { cores } from '../../theme/cores';
 import { curva, raio } from '../../theme/estilo';
 import { tamanho } from '../../theme/fontes';
+import { criarEstilos } from '../../theme/tema';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
@@ -37,6 +38,7 @@ type Props = { dias: HorarioDia[]; onChange: (dias: HorarioDia[]) => void };
 
 // Um horário por dia; fechamento menor que a abertura significa que passa da meia-noite.
 export function EditorHorarios({ dias, onChange }: Props) {
+  const styles = useEstilos();
   const mudar = (indice: number, parcial: Partial<HorarioDia>) =>
     onChange(dias.map((d, i) => (i === indice ? { ...d, ...parcial } : d)));
 
@@ -80,7 +82,7 @@ export function EditorHorarios({ dias, onChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   lista: { gap: 6 },
   linha: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48 },
   dia: { width: 72, fontSize: tamanho.corpo, color: cores.texto, fontWeight: '600' },
@@ -98,4 +100,4 @@ const styles = StyleSheet.create({
   },
   ate: { fontSize: tamanho.corpo, color: cores.textoSecundario },
   fechado: { fontSize: tamanho.corpo, color: cores.textoSecundario },
-});
+}));

@@ -5,10 +5,12 @@ import { useEffect, useRef } from 'react';
 import { useAuth } from '../../src/auth/AuthContext';
 import { BarraAbas } from '../../src/components/BarraAbas';
 import { cores } from '../../src/theme/cores';
+import { useTema } from '../../src/theme/tema';
 
 // Os três eixos de recomendação definidos no TGI: Onde Comer, Onde Ficar e O que Fazer.
 // Cada tela desenha o próprio topo azul, então o cabeçalho padrão fica escondido.
 export default function TabsLayout() {
+  useTema();
   const { usuario, primeiroAcesso } = useAuth();
 
   const tipo = usuario?.tipo;

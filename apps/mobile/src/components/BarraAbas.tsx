@@ -5,6 +5,7 @@ import { cores } from '../theme/cores';
 import { tamanho } from '../theme/fontes';
 import { Icone } from './ui/Icone';
 import type { NomeIcone } from './ui/Icone';
+import { criarEstilos } from '../theme/tema';
 
 const ICONES: Record<string, NomeIcone> = {
   index: 'restaurant',
@@ -27,6 +28,7 @@ export function BarraAbas({
   navigateToTab,
   insets,
 }: BottomTabBarProps) {
+  const styles = useEstilos();
   // As abas com href nulo (de outros perfis) já chegam fora de `state.routes`.
   const visiveis = state.routes;
 
@@ -76,7 +78,7 @@ export function BarraAbas({
   );
 }
 
-const styles = StyleSheet.create({
+const useEstilos = criarEstilos(() => ({
   barra: {
     flexDirection: 'row',
     paddingTop: 8,
@@ -87,4 +89,4 @@ const styles = StyleSheet.create({
   aba: { flex: 1, alignItems: 'center', gap: 3, minHeight: 44 },
   rotulo: { fontSize: tamanho.mini, fontWeight: '500' },
   rotuloAtivo: { fontWeight: '700' },
-});
+}));

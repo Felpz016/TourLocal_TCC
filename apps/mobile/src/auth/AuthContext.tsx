@@ -2,8 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react';
 
 import * as authApi from '../api/auth';
-import { definirAoExpirarSessao, definirToken } from '../api/client';
+import { ApiError, definirAoExpirarSessao, definirToken } from '../api/client';
 import type { Usuario } from '../api/tipos';
+import { esquecerRecomendacoes, guardar, ler, limparTudo } from '../offline/cache';
 import { apagarToken, lerToken, salvarToken } from './armazenamento';
 
 type AuthContextValor = {
@@ -26,7 +27,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const sair = useCallback(async () => {
     definirToken(null);
     setUsuario(null);
-    await apagarToken();
+    // A cópia offline é da conta que saiu; não pode aparecer para a próxima pessoa.
+    esquecerRecomendacoes();
+    await Promise.all([apagarToken(), limparTudo()]);
   }, []);
 
   const entrar = useCallback(
@@ -35,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       definirToken(access_token);
       const dados = await authApi.buscarUsuarioLogado();
       await salvarToken(access_token);
+      guardar('usuario', dados);
       setPrimeiroAcesso(!!opcoes?.primeiroAcesso && dados.tipo === 'turista');
       setUsuario(dados);
     },
@@ -51,10 +55,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = await lerToken();
         if (token) {
           definirToken(token);
-          setUsuario(await authApi.buscarUsuarioLogado());
+          const dados = await authApi.buscarUsuarioLogado();
+          guardar('usuario', dados);
+          setUsuario(dados);
         }
-      } catch {
-        await sair();
+      } catch (e) {
+        // Abriu sem internet: continua logado com os dados guardados (modo offline). Só sai
+        // da conta quando a API responde que o token não vale mais.
+        const guardado =
+          e instanceof ApiError && e.status === 0 ? await ler<Usuario>('usuario') : null;
+        if (guardado) setUsuario(guardado.dados);
+        else await sair();
       } finally {
         setCarregando(false);
       }
