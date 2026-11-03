@@ -88,7 +88,7 @@ export default function MeusLocaisTela() {
           >
             <Miniatura nome={local.nome} tamanho={60} />
             <View style={styles.info}>
-              <Text style={styles.nome} numberOfLines={1}>
+              <Text style={styles.nome} numberOfLines={2}>
                 {local.nome}
               </Text>
               <Text style={styles.secundario} numberOfLines={1}>

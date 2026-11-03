@@ -48,7 +48,9 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
       <Miniatura nome={lugar.nome} foto={lugar.foto_url} tamanho={64} />
       <View style={styles.info}>
         <View style={styles.topo}>
-          <Text style={styles.nome} numberOfLines={1}>
+          {/* Duas linhas: o nome é o que o turista procura na lista, e cortar no meio
+              ("Cantina Nonna Lú…") esconde justamente a parte que diferencia um lugar. */}
+          <Text style={styles.nome} numberOfLines={2}>
             {lugar.nome}
           </Text>
           {/* RF08: o tempo a pé fica sempre à vista, como no Citymapper. */}
@@ -120,7 +122,7 @@ const useEstilos = criarEstilos(() => ({
   },
   pressionado: { backgroundColor: cores.fundoCampo },
   info: { flex: 1, gap: 3 },
-  topo: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  topo: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   nome: { flex: 1, fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
   ape: {
     flexDirection: 'row',
@@ -128,6 +130,8 @@ const useEstilos = criarEstilos(() => ({
     gap: 3,
     paddingHorizontal: 8,
     paddingVertical: 3,
+    // Fica alinhada à primeira linha do nome, mesmo quando ele quebra em duas.
+    marginTop: 1,
     borderRadius: raio.pilula,
     backgroundColor: cores.fundoDestaque,
   },
