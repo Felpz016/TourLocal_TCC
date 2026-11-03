@@ -15,6 +15,7 @@ Todo especialista segue estas regras, além das instruções da própria área. 
    - Pedidos como "faz a 2" viram prioridade máxima desta rodada.
    - Ideias recusadas ("não", "a 3 não", PR fechado sem merge) **não voltam a ser sugeridas**, a não ser que algo novo mude o motivo da recusa (explique o que mudou).
 3. Não repita uma ideia que já está aberta. Se ela ainda vale, liste-a em "Ainda pendentes" com o número da issue anterior.
+4. Uma issue sua **fechada pelo dono sem comentário** não significa que as ideias dela foram recusadas: as que não viraram PR mergeado continuam pendentes. Só conta como recusa o que ele disse explicitamente ou um PR fechado sem merge.
 
 ## 3. Analise
 
@@ -36,7 +37,7 @@ Resumo em 2 ou 3 frases do estado da área nesta semana.
 - **Proposta:** o que mudar, de forma concreta.
 - **Impacto:** alto | médio | baixo, e para quem (turista, comerciante, admin, banca do TCC).
 - **Esforço:** P (até 1h) | M (meio dia) | G (mais de um dia).
-- **Requisito:** RF/RNF/RN relacionado, se houver (veja docs/agentes/requisitos-tgi.md).
+- **Requisito:** RF/RNF/RN relacionado, se houver. **Confira o número em docs/agentes/requisitos-tgi.md antes de citar** (por exemplo, usabilidade é RNF03, não RNF02; editar horários é RF16, não RF05). Na dúvida, não cite.
 
 ### 2. ...
 
