@@ -93,6 +93,10 @@ Se o computador tiver várias placas de rede (VirtualBox, WSL), force o IP certo
 - [Melhorias depois do backlog: busca, modo escuro, offline, acessibilidade](docs/melhorias-finais.md)
 - [Roteiro de demonstração para a banca](docs/roteiro-demonstracao.md)
 
+## Agentes de melhoria
+
+Sete especialistas automáticos (UX, acessibilidade, código, segurança, desempenho, requisitos do TGI e produto) analisam o projeto toda semana, abrem uma issue com ideias e propõem a principal num PR em rascunho. Nada entra no `main` sem revisão. Como funcionam e como conversar com eles: [docs/agentes/](docs/agentes/README.md).
+
 ## Backlog
 
 O planejamento das sprints está em [docs/backlog.md](docs/backlog.md) e cada item é uma issue com o rótulo da sprint (`sprint-0` a `sprint-6`).
