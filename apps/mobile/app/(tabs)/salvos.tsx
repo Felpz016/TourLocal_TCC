@@ -113,7 +113,7 @@ export default function SalvosTela() {
           >
             <Miniatura nome={f.nome} tamanho={60} />
             <View style={styles.info}>
-              <Text style={styles.nome} numberOfLines={1}>
+              <Text style={styles.nome} numberOfLines={2}>
                 {f.nome}
               </Text>
               <Text style={styles.secundario} numberOfLines={1}>
