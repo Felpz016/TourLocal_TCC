@@ -60,25 +60,6 @@ function linhasDeHorario(horarios: Horario[]) {
   });
 }
 
-const minutos = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
-
-/** Complemento do "Aberto"/"Fechado", como no Google Maps: quando fecha ou quando abre. */
-function proximaMudanca(horarios: Horario[], aberto: boolean | null) {
-  const agora = new Date();
-  const atual = agora.getHours() * 60 + agora.getMinutes();
-  const deHoje = horarios
-    .filter((h) => h.dia_semana === hoje())
-    .sort((a, b) => minutos(a.hora_abertura) - minutos(b.hora_abertura));
-  if (aberto) {
-    const turno = deHoje.find(
-      (h) => minutos(h.hora_abertura) <= atual && atual < minutos(h.hora_fechamento),
-    );
-    return turno ? `Fecha às ${hora(turno.hora_fechamento)}` : null;
-  }
-  const proximo = deHoje.find((h) => minutos(h.hora_abertura) > atual);
-  return proximo ? `Abre às ${hora(proximo.hora_abertura)}` : null;
-}
-
 function BotaoRedondo({
   icone,
   cor = cores.texto,
@@ -218,7 +199,7 @@ export default function LugarTela() {
   }
 
   const temFotos = lugar.fotos.length > 0;
-  const mudanca = proximaMudanca(lugar.horarios, lugar.aberto_agora);
+  const mudanca = lugar.muda_as;
   const subtitulo = [
     lugar.categorias.join(', ') || 'Local',
     lugar.faixa_preco ? PRECO[lugar.faixa_preco] : null,
@@ -292,9 +273,14 @@ export default function LugarTela() {
                     { color: lugar.aberto_agora ? cores.sucesso : cores.erro },
                   ]}
                 >
-                  {lugar.aberto_agora ? 'Aberto' : 'Fechado'}
+                  {/* Como no cartão da lista: "Aberto 24 horas" já diz tudo sozinho. */}
+                  {mudanca?.startsWith('Aberto')
+                    ? mudanca
+                    : lugar.aberto_agora
+                      ? 'Aberto'
+                      : 'Fechado'}
                 </Text>
-                {mudanca ? ` · ${mudanca}` : ''}
+                {mudanca && !mudanca.startsWith('Aberto') ? ` · ${mudanca}` : ''}
               </Text>
             ) : null}
             {!lugar.verificado ? (

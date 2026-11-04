@@ -29,6 +29,8 @@ export type Detalhe = {
   opcoes_alimentares: string[];
   horarios: Horario[];
   aberto_agora: boolean | null;
+  /** "Fecha às 23:00", "Abre amanhã às 07:00"... calculado pela API (null sem horário). */
+  muda_as: string | null;
   fechado_temporariamente: boolean;
   verificado: boolean;
   /** Dono do cadastro ou administrador (RN07). */

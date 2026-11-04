@@ -44,6 +44,8 @@ class EstabelecimentoDetalheOut(BaseModel):
     opcoes_alimentares: list[str]
     horarios: list[HorarioOut]
     aberto_agora: bool | None
+    # "Fecha às 23:00", "Abre amanhã às 07:00"... (None sem horário informado).
+    muda_as: str | None = None
     fechado_temporariamente: bool
     verificado: bool
     pode_editar: bool
