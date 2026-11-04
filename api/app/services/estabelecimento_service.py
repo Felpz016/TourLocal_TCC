@@ -18,7 +18,7 @@ from app.schemas.estabelecimento import (
     HorarioOut,
 )
 from app.services import geo, pontuacao
-from app.services.horario import esta_aberto
+from app.services.horario import esta_aberto, proxima_mudanca
 
 
 class NaoEncontrado(Exception):
@@ -64,7 +64,12 @@ def _avaliacao_out(avaliacao: Avaliacao, autor: str, id_usuario: int) -> Avaliac
 
 
 def detalhar(
-    db: Session, id_estab: int, usuario: Usuario, lat: float | None, lng: float | None
+    db: Session,
+    id_estab: int,
+    usuario: Usuario,
+    lat: float | None,
+    lng: float | None,
+    agora: datetime | None = None,
 ) -> EstabelecimentoDetalheOut:
     estab = buscar_visivel(db, id_estab, usuario)
     media, total = avaliacao_repository.notas_medias(db, [id_estab]).get(id_estab, (None, 0))
@@ -75,7 +80,8 @@ def detalhar(
         if lat is not None and lng is not None
         else None
     )
-    agora = datetime.now(ZoneInfo(settings.fuso_horario))
+    agora = agora or datetime.now(ZoneInfo(settings.fuso_horario))
+    aberto = False if estab.fechado_temporariamente else esta_aberto(estab.horarios, agora)
     return EstabelecimentoDetalheOut(
         id_estab=estab.id_estab,
         nome=estab.nome,
@@ -98,7 +104,12 @@ def detalhar(
             )
             for h in sorted(estab.horarios, key=lambda h: (h.dia_semana, h.hora_abertura))
         ],
-        aberto_agora=False if estab.fechado_temporariamente else esta_aberto(estab.horarios, agora),
+        aberto_agora=aberto,
+        # Mesma regra da lista de recomendações (viradas de meia-noite, 24 horas, "amanhã"),
+        # no fuso da cidade. Fechado temporariamente não tem horário de reabertura previsto.
+        muda_as=None
+        if estab.fechado_temporariamente
+        else proxima_mudanca(estab.horarios, agora, aberto),
         fechado_temporariamente=estab.fechado_temporariamente,
         verificado=estab.verificado,
         pode_editar=pode_editar(estab, usuario),
