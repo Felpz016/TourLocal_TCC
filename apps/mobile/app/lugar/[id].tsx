@@ -273,9 +273,14 @@ export default function LugarTela() {
                     { color: lugar.aberto_agora ? cores.sucesso : cores.erro },
                   ]}
                 >
-                  {lugar.aberto_agora ? 'Aberto' : 'Fechado'}
+                  {/* Como no cartão da lista: "Aberto 24 horas" já diz tudo sozinho. */}
+                  {mudanca?.startsWith('Aberto')
+                    ? mudanca
+                    : lugar.aberto_agora
+                      ? 'Aberto'
+                      : 'Fechado'}
                 </Text>
-                {mudanca ? ` · ${mudanca}` : ''}
+                {mudanca && !mudanca.startsWith('Aberto') ? ` · ${mudanca}` : ''}
               </Text>
             ) : null}
             {!lugar.verificado ? (
