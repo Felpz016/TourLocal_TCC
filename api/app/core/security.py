@@ -37,13 +37,24 @@ def _ler_token(token: str, finalidade: str) -> dict | None:
     return payload
 
 
-def criar_token_acesso(id_usuario: int) -> str:
-    return _gerar_token({"sub": str(id_usuario), "fin": "acesso"}, settings.access_token_expira_min)
+def criar_token_acesso(id_usuario: int, versao_sessao: int = 0) -> str:
+    dados = {"sub": str(id_usuario), "fin": "acesso", "v": versao_sessao}
+    return _gerar_token(dados, settings.access_token_expira_min)
 
 
-def ler_token_acesso(token: str) -> int | None:
+def ler_token_acesso(token: str) -> tuple[int, int] | None:
+    """Devolve (id_usuario, versão da sessão) ou None se o token não vale."""
     payload = _ler_token(token, "acesso")
-    return int(payload["sub"]) if payload else None
+    return (int(payload["sub"]), int(payload.get("v", 0))) if payload else None
+
+
+# Hash de uma senha qualquer, usado quando o e-mail do login não existe: assim a resposta
+# demora o mesmo que uma senha errada e o tempo não revela quem tem conta.
+_HASH_FICTICIO = _hasher.hash("senha-que-ninguem-usa")
+
+
+def gastar_tempo_de_verificacao(senha: str) -> None:
+    _hasher.verify(senha, _HASH_FICTICIO)
 
 
 def _impressao_senha(senha_hash: str) -> str:

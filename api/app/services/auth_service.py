@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core import security
 from app.core.config import settings
+from app.core.limite import Limitador
 from app.models import Usuario
 from app.repositories import usuario_repository
 from app.schemas.usuario import CadastroIn
@@ -20,6 +21,14 @@ class CredenciaisInvalidas(Exception):
 
 class TokenInvalido(Exception):
     pass
+
+
+class MuitasTentativas(Exception):
+    pass
+
+
+falhas_de_login = Limitador(settings.login_tentativas_max, settings.login_janela_min * 60)
+pedidos_de_recuperacao = Limitador(settings.recuperacao_por_hora, 60 * 60)
 
 
 def _normalizar_email(email: str) -> str:
@@ -43,16 +52,32 @@ def cadastrar(db: Session, dados: CadastroIn) -> Usuario:
     return usuario
 
 
-def autenticar(db: Session, email: str, senha: str) -> str:
-    usuario = usuario_repository.buscar_por_email(db, _normalizar_email(email))
+def autenticar(db: Session, email: str, senha: str, origem: str = "") -> str:
+    """Devolve o token de acesso. `origem` é o IP de quem tenta, usado no limite de falhas."""
+    email = _normalizar_email(email)
+    chave = f"{origem}|{email}"
+    if falhas_de_login.excedido(chave):
+        raise MuitasTentativas()
+
+    usuario = usuario_repository.buscar_por_email(db, email)
+    if usuario is None:
+        # Mesmo tempo de resposta de uma senha errada: o tempo não revela quem tem conta.
+        security.gastar_tempo_de_verificacao(senha)
     # A mesma mensagem para e-mail inexistente e senha errada evita revelar quem tem conta.
     if not usuario or not security.verificar_senha(senha, usuario.senha_hash):
+        falhas_de_login.registrar(chave)
         raise CredenciaisInvalidas()
-    return security.criar_token_acesso(usuario.id_usuario)
+    falhas_de_login.esquecer(chave)
+    return security.criar_token_acesso(usuario.id_usuario, usuario.versao_sessao)
 
 
 def solicitar_recuperacao(db: Session, email: str) -> None:
-    usuario = usuario_repository.buscar_por_email(db, _normalizar_email(email))
+    email = _normalizar_email(email)
+    # Contado por e-mail, exista a conta ou não, para não revelar quem tem cadastro.
+    if pedidos_de_recuperacao.excedido(email):
+        raise MuitasTentativas()
+    pedidos_de_recuperacao.registrar(email)
+    usuario = usuario_repository.buscar_por_email(db, email)
     if not usuario:
         # Não informa se o e-mail existe; a resposta da API é sempre a mesma.
         return
@@ -80,4 +105,6 @@ def redefinir_senha(db: Session, token: str, nova_senha: str) -> None:
         raise TokenInvalido()
 
     usuario.senha_hash = security.gerar_hash_senha(nova_senha)
+    # Derruba as sessões abertas: um token roubado deixa de valer depois da troca.
+    usuario.versao_sessao = (usuario.versao_sessao or 0) + 1
     db.commit()
