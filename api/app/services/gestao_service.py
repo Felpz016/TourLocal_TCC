@@ -1,5 +1,6 @@
 """Cadastro e edição pelo comerciante (UC10, UC11) e moderação pelo administrador (UC12)."""
 
+from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -220,4 +221,6 @@ def decidir_denuncia(db: Session, id_avaliacao: int, manter: bool) -> None:
     if avaliacao is None or avaliacao.status != StatusAvaliacao.DENUNCIADA:
         raise NaoEncontrado()
     avaliacao.status = StatusAvaliacao.PUBLICADA if manter else StatusAvaliacao.REMOVIDA
+    if manter:
+        avaliacao.mantida_em = datetime.now()
     db.commit()

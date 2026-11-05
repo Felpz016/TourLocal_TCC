@@ -203,3 +203,50 @@ def test_favoritos_sao_por_usuario(client, lugar):
     client.put(f"/favoritos/{lugar[0]}", headers=cadastrar_e_logar(client, email="a@x.com"))
     outro = cadastrar_e_logar(client, email="b@x.com")
     assert client.get("/favoritos", headers=outro).json() == []
+
+
+def _admin(db):
+    adm = Usuario(nome="Adm", email="adm@x.com", senha_hash="x", tipo=TipoUsuario.ADMINISTRADOR)
+    db.add(adm)
+    db.commit()
+    return {"Authorization": f"Bearer {criar_token_acesso(adm.id_usuario)}"}
+
+
+def test_denuncia_nao_desfaz_decisao_da_moderacao(client, db, lugar):
+    url = f"/estabelecimentos/{lugar[0]}/avaliacao"
+    autor = cadastrar_e_logar(client, email="autor@x.com")
+    id_avaliacao = client.put(url, json={"nota": 2, "comentario": "Demorou"}, headers=autor).json()[
+        "id_avaliacao"
+    ]
+    denuncia = f"/avaliacoes/{id_avaliacao}/denuncia"
+    assert (
+        client.post(denuncia, headers=cadastrar_e_logar(client, email="a@x.com")).status_code == 204
+    )
+    admin = _admin(db)
+    client.post(f"/admin/avaliacoes/{id_avaliacao}/decisao", json={"manter": True}, headers=admin)
+
+    # Mantida pelo administrador, uma nova denúncia não volta a esconder a avaliação.
+    outro = cadastrar_e_logar(client, email="b@x.com")
+    assert client.post(denuncia, headers=outro).status_code == 403
+    lista = f"/estabelecimentos/{lugar[0]}/avaliacoes"
+    assert [a["id_avaliacao"] for a in client.get(lista, headers=outro).json()] == [id_avaliacao]
+    assert client.get("/admin/avaliacoes/denunciadas", headers=admin).json() == []
+
+    # Se o autor reescreve a avaliação, o texto novo pode ser denunciado.
+    client.put(url, json={"nota": 1, "comentario": "Texto novo"}, headers=autor)
+    assert client.post(denuncia, headers=outro).status_code == 204
+    assert client.get(lista, headers=outro).json() == []
+
+
+def test_denuncia_so_de_avaliacao_visivel(client, db, lugar):
+    # Avaliação num local ainda pendente: quem não é o dono nem vê o local (RN01).
+    cadastrar_e_logar(client, email="autor@x.com")
+    id_autor = db.query(Usuario).filter_by(email="autor@x.com").one().id_usuario
+    avaliacao = Avaliacao(id_usuario=id_autor, id_estab=lugar[1], nota=5)
+    db.add(avaliacao)
+    db.commit()
+    outro = cadastrar_e_logar(client, email="outro@x.com")
+    r = client.post(f"/avaliacoes/{avaliacao.id_avaliacao}/denuncia", headers=outro)
+    assert r.status_code == 404
+    db.refresh(avaliacao)
+    assert avaliacao.status == StatusAvaliacao.PUBLICADA

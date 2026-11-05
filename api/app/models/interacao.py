@@ -25,6 +25,10 @@ class Avaliacao(Base):
     status: Mapped[StatusAvaliacao] = mapped_column(
         Enum(StatusAvaliacao), default=StatusAvaliacao.PUBLICADA
     )
+    # Quando o administrador analisou uma denúncia e decidiu manter a avaliação (RN06).
+    # Enquanto estiver preenchido, novas denúncias não voltam a ocultá-la; se o autor
+    # editar a avaliação, o campo é limpo, porque o texto analisado mudou.
+    mantida_em: Mapped[datetime | None] = mapped_column(DateTime)
 
 
 class Favorito(Base):

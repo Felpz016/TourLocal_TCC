@@ -153,6 +153,8 @@ def avaliar(
     avaliacao.nota = nota
     avaliacao.comentario = (comentario or "").strip() or None
     avaliacao.data_registro = datetime.now()
+    # Texto novo: a decisão anterior da moderação não vale para ele.
+    avaliacao.mantida_em = None
     db.commit()
     db.refresh(avaliacao)
     return _avaliacao_out(avaliacao, usuario.nome, usuario.id_usuario)
@@ -167,12 +169,23 @@ def excluir_avaliacao(db: Session, id_estab: int, usuario: Usuario) -> None:
 
 
 def denunciar(db: Session, id_avaliacao: int, usuario: Usuario) -> None:
-    """Esconde a avaliação até a moderação decidir (RN06)."""
+    """Esconde a avaliação até a moderação decidir (RN06).
+
+    Só dá para denunciar o que a pessoa consegue ver: avaliação publicada de um local
+    visível para ela. E uma avaliação que o administrador já analisou e manteve não volta
+    a ser ocultada por uma nova denúncia; senão, qualquer conta desfaria a decisão da
+    moderação e tiraria a nota da média de novo (RN05).
+    """
     avaliacao = db.get(Avaliacao, id_avaliacao)
     if avaliacao is None or avaliacao.status == StatusAvaliacao.REMOVIDA:
         raise NaoEncontrado()
+    buscar_visivel(db, avaliacao.id_estab, usuario)
     if avaliacao.id_usuario == usuario.id_usuario:
         raise AcaoNaoPermitida("Você não pode denunciar a própria avaliação")
+    if avaliacao.status == StatusAvaliacao.DENUNCIADA:
+        return  # Já está oculta, aguardando a moderação.
+    if avaliacao.mantida_em is not None:
+        raise AcaoNaoPermitida("Esta avaliação já foi analisada pela moderação e foi mantida")
     avaliacao.status = StatusAvaliacao.DENUNCIADA
     db.commit()
 
