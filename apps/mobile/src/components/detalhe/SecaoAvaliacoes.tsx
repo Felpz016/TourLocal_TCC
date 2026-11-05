@@ -18,6 +18,8 @@ import { criarEstilos } from '../../theme/tema';
 type Props = {
   lugar: Detalhe;
   podeAvaliar: boolean;
+  /** Falso para o comerciante responsável pelo local (RN06). */
+  podeDenunciar?: boolean;
   /** Recarrega os detalhes para atualizar a média depois de avaliar (RN05). */
   aoMudar: () => void;
 };
@@ -26,9 +28,11 @@ const data = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
 
 function ItemAvaliacao({
   avaliacao,
+  podeDenunciar,
   aoDenunciar,
 }: {
   avaliacao: Avaliacao;
+  podeDenunciar: boolean;
   aoDenunciar: () => void;
 }) {
   const styles = useEstilos();
@@ -51,7 +55,7 @@ function ItemAvaliacao({
       </View>
       {avaliacao.comentario ? <Text style={styles.comentario}>{avaliacao.comentario}</Text> : null}
       {/* RN06: a denúncia esconde a avaliação até a moderação decidir. */}
-      {!avaliacao.minha && !confirmando ? (
+      {podeDenunciar && !avaliacao.minha && !confirmando ? (
         <Pressable
           onPress={() => setConfirmando(true)}
           accessibilityRole="button"
@@ -78,7 +82,7 @@ function ItemAvaliacao({
   );
 }
 
-export function SecaoAvaliacoes({ lugar, podeAvaliar, aoMudar }: Props) {
+export function SecaoAvaliacoes({ lugar, podeAvaliar, podeDenunciar = true, aoMudar }: Props) {
   const styles = useEstilos();
   const minha = lugar.minha_avaliacao;
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
@@ -204,6 +208,7 @@ export function SecaoAvaliacoes({ lugar, podeAvaliar, aoMudar }: Props) {
         <ItemAvaliacao
           key={a.id_avaliacao}
           avaliacao={a}
+          podeDenunciar={podeDenunciar}
           aoDenunciar={() =>
             executar(() => denunciar(a.id_avaliacao), 'Denúncia enviada. A avaliação foi ocultada.')
           }

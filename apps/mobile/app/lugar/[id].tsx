@@ -440,6 +440,8 @@ export default function LugarTela() {
             key={lugar.minha_avaliacao?.id_avaliacao ?? 'nova'}
             lugar={lugar}
             podeAvaliar={turista}
+            // O responsável pelo local não denuncia as avaliações dele (a API também recusa).
+            podeDenunciar={!(lugar.pode_editar && usuario?.tipo === 'comerciante')}
             aoMudar={carregar}
           />
         </View>
