@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 
 from app.core.security import criar_token_acesso
-from app.models import Avaliacao, Estabelecimento, HorarioFuncionamento, Usuario
+from app.models import Avaliacao, Denuncia, Estabelecimento, HorarioFuncionamento, Usuario
 from app.models.enums import StatusAvaliacao, TipoUsuario
 from app.services.categorias import garantir_categorias
 from tests.conftest import cadastrar_e_logar
@@ -203,3 +203,84 @@ def test_favoritos_sao_por_usuario(client, lugar):
     client.put(f"/favoritos/{lugar[0]}", headers=cadastrar_e_logar(client, email="a@x.com"))
     outro = cadastrar_e_logar(client, email="b@x.com")
     assert client.get("/favoritos", headers=outro).json() == []
+
+
+def _admin(db):
+    adm = Usuario(nome="Adm", email="adm@x.com", senha_hash="x", tipo=TipoUsuario.ADMINISTRADOR)
+    db.add(adm)
+    db.commit()
+    return {"Authorization": f"Bearer {criar_token_acesso(adm.id_usuario)}"}
+
+
+def test_denuncia_nao_desfaz_decisao_da_moderacao(client, db, lugar):
+    url = f"/estabelecimentos/{lugar[0]}/avaliacao"
+    autor = cadastrar_e_logar(client, email="autor@x.com")
+    id_avaliacao = client.put(url, json={"nota": 2, "comentario": "Demorou"}, headers=autor).json()[
+        "id_avaliacao"
+    ]
+    denuncia = f"/avaliacoes/{id_avaliacao}/denuncia"
+    assert (
+        client.post(denuncia, headers=cadastrar_e_logar(client, email="a@x.com")).status_code == 204
+    )
+    admin = _admin(db)
+    client.post(f"/admin/avaliacoes/{id_avaliacao}/decisao", json={"manter": True}, headers=admin)
+
+    # Mantida pelo administrador, uma nova denúncia não volta a esconder a avaliação.
+    outro = cadastrar_e_logar(client, email="b@x.com")
+    assert client.post(denuncia, headers=outro).status_code == 403
+    lista = f"/estabelecimentos/{lugar[0]}/avaliacoes"
+    assert [a["id_avaliacao"] for a in client.get(lista, headers=outro).json()] == [id_avaliacao]
+    assert client.get("/admin/avaliacoes/denunciadas", headers=admin).json() == []
+
+    # Se o autor reescreve a avaliação, o texto novo pode ser denunciado.
+    client.put(url, json={"nota": 1, "comentario": "Texto novo"}, headers=autor)
+    assert client.post(denuncia, headers=outro).status_code == 204
+    assert client.get(lista, headers=outro).json() == []
+
+
+def test_denuncia_so_de_avaliacao_visivel(client, db, lugar):
+    # Avaliação num local ainda pendente: quem não é o dono nem vê o local (RN01).
+    cadastrar_e_logar(client, email="autor@x.com")
+    id_autor = db.query(Usuario).filter_by(email="autor@x.com").one().id_usuario
+    avaliacao = Avaliacao(id_usuario=id_autor, id_estab=lugar[1], nota=5)
+    db.add(avaliacao)
+    db.commit()
+    outro = cadastrar_e_logar(client, email="outro@x.com")
+    r = client.post(f"/avaliacoes/{avaliacao.id_avaliacao}/denuncia", headers=outro)
+    assert r.status_code == 404
+    db.refresh(avaliacao)
+    assert avaliacao.status == StatusAvaliacao.PUBLICADA
+
+
+def test_responsavel_nao_denuncia_avaliacao_do_proprio_local(client, db, lugar):
+    dono = cadastrar_e_logar(client, email="dono@x.com", tipo="comerciante")
+    estab = db.get(Estabelecimento, lugar[0])
+    estab.id_responsavel = db.query(Usuario).filter_by(email="dono@x.com").one().id_usuario
+    db.commit()
+    autor = cadastrar_e_logar(client, email="autor@x.com")
+    id_avaliacao = client.put(
+        f"/estabelecimentos/{lugar[0]}/avaliacao", json={"nota": 1}, headers=autor
+    ).json()["id_avaliacao"]
+
+    r = client.post(f"/avaliacoes/{id_avaliacao}/denuncia", headers=dono)
+    assert r.status_code == 403
+    lista = client.get(f"/estabelecimentos/{lugar[0]}/avaliacoes", headers=autor).json()
+    assert [a["id_avaliacao"] for a in lista] == [id_avaliacao]
+
+
+def test_limite_de_denuncias_por_dia(client, db, lugar, monkeypatch):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "denuncias_por_dia", 2)
+    url = f"/estabelecimentos/{lugar[0]}/avaliacao"
+    ids = [
+        client.put(
+            url, json={"nota": 3}, headers=cadastrar_e_logar(client, email=f"a{i}@x.com")
+        ).json()["id_avaliacao"]
+        for i in range(3)
+    ]
+    quem = cadastrar_e_logar(client, email="quem@x.com")
+    codigos = [client.post(f"/avaliacoes/{i}/denuncia", headers=quem).status_code for i in ids]
+    assert codigos == [204, 204, 429]
+    # A denúncia registra quem denunciou.
+    assert db.query(Denuncia).count() == 2

@@ -17,6 +17,8 @@ router = APIRouter(tags=["estabelecimentos"])
 def _erro(e: Exception) -> HTTPException:
     if isinstance(e, servico.NaoEncontrado):
         return HTTPException(status.HTTP_404_NOT_FOUND, "Não encontrado")
+    if isinstance(e, servico.LimiteAtingido):
+        return HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, str(e))
     return HTTPException(status.HTTP_403_FORBIDDEN, str(e))
 
 
@@ -65,7 +67,7 @@ def denunciar(id_avaliacao: int, usuario: UsuarioAtual, db: DbSession) -> None:
     """Denuncia uma avaliação; ela fica oculta até a moderação (RN06)."""
     try:
         servico.denunciar(db, id_avaliacao, usuario)
-    except (servico.NaoEncontrado, servico.AcaoNaoPermitida) as e:
+    except (servico.NaoEncontrado, servico.AcaoNaoPermitida, servico.LimiteAtingido) as e:
         raise _erro(e) from None
 
 

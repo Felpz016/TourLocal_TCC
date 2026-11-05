@@ -1,13 +1,13 @@
 """Detalhes, avaliações e favoritos de um estabelecimento (UC06, UC08, UC09)."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
-from app.models import Avaliacao, Estabelecimento, Favorito, Usuario
+from app.models import Avaliacao, Denuncia, Estabelecimento, Favorito, Usuario
 from app.models.enums import StatusAvaliacao, TipoUsuario
 from app.repositories import avaliacao_repository
 from app.schemas.estabelecimento import (
@@ -26,6 +26,10 @@ class NaoEncontrado(Exception):
 
 
 class AcaoNaoPermitida(Exception):
+    pass
+
+
+class LimiteAtingido(Exception):
     pass
 
 
@@ -153,6 +157,8 @@ def avaliar(
     avaliacao.nota = nota
     avaliacao.comentario = (comentario or "").strip() or None
     avaliacao.data_registro = datetime.now()
+    # Texto novo: a decisão anterior da moderação não vale para ele.
+    avaliacao.mantida_em = None
     db.commit()
     db.refresh(avaliacao)
     return _avaliacao_out(avaliacao, usuario.nome, usuario.id_usuario)
@@ -167,12 +173,53 @@ def excluir_avaliacao(db: Session, id_estab: int, usuario: Usuario) -> None:
 
 
 def denunciar(db: Session, id_avaliacao: int, usuario: Usuario) -> None:
-    """Esconde a avaliação até a moderação decidir (RN06)."""
+    """Esconde a avaliação até a moderação decidir (RN06).
+
+    Só dá para denunciar o que a pessoa consegue ver: avaliação publicada de um local
+    visível para ela. E uma avaliação que o administrador já analisou e manteve não volta
+    a ser ocultada por uma nova denúncia; senão, qualquer conta desfaria a decisão da
+    moderação e tiraria a nota da média de novo (RN05).
+    """
     avaliacao = db.get(Avaliacao, id_avaliacao)
     if avaliacao is None or avaliacao.status == StatusAvaliacao.REMOVIDA:
         raise NaoEncontrado()
+    estab = buscar_visivel(db, avaliacao.id_estab, usuario)
     if avaliacao.id_usuario == usuario.id_usuario:
         raise AcaoNaoPermitida("Você não pode denunciar a própria avaliação")
+    if estab.id_responsavel == usuario.id_usuario:
+        # Conflito de interesse: o dono esconderia as notas ruins do próprio local.
+        raise AcaoNaoPermitida(
+            "O responsável pelo local não pode denunciar as avaliações dele. "
+            "Se uma avaliação for ofensiva, fale com a moderação."
+        )
+    if avaliacao.status == StatusAvaliacao.DENUNCIADA:
+        return  # Já está oculta, aguardando a moderação.
+    if avaliacao.mantida_em is not None:
+        raise AcaoNaoPermitida("Esta avaliação já foi analisada pela moderação e foi mantida")
+    desde = datetime.now() - timedelta(days=1)
+    feitas = db.scalar(
+        select(func.count())
+        .select_from(Denuncia)
+        .where(Denuncia.id_usuario == usuario.id_usuario, Denuncia.data_registro >= desde)
+    )
+    if feitas >= settings.denuncias_por_dia:
+        raise LimiteAtingido(
+            f"Você já fez {settings.denuncias_por_dia} denúncias nas últimas 24 horas. "
+            "Tente de novo amanhã."
+        )
+    ja_denunciou = db.scalar(
+        select(Denuncia).where(
+            Denuncia.id_usuario == usuario.id_usuario, Denuncia.id_avaliacao == id_avaliacao
+        )
+    )
+    if ja_denunciou is None:
+        db.add(
+            Denuncia(
+                id_avaliacao=id_avaliacao,
+                id_usuario=usuario.id_usuario,
+                data_registro=datetime.now(),
+            )
+        )
     avaliacao.status = StatusAvaliacao.DENUNCIADA
     db.commit()
 

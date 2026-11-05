@@ -18,4 +18,6 @@ def test_modelo_cria_todas_as_tabelas_do_der():
         "foto",
         "avaliacao",
         "favorito",
+        # Fora do DER original: registro de denúncias (RN06).
+        "denuncia",
     }

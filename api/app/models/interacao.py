@@ -25,6 +25,10 @@ class Avaliacao(Base):
     status: Mapped[StatusAvaliacao] = mapped_column(
         Enum(StatusAvaliacao), default=StatusAvaliacao.PUBLICADA
     )
+    # Quando o administrador analisou uma denúncia e decidiu manter a avaliação (RN06).
+    # Enquanto estiver preenchido, novas denúncias não voltam a ocultá-la; se o autor
+    # editar a avaliação, o campo é limpo, porque o texto analisado mudou.
+    mantida_em: Mapped[datetime | None] = mapped_column(DateTime)
 
 
 class Favorito(Base):
@@ -37,3 +41,23 @@ class Favorito(Base):
         ForeignKey("estabelecimento.id_estab", ondelete="CASCADE"), primary_key=True
     )
     data_inclusao: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+class Denuncia(Base):
+    """Quem denunciou qual avaliação e quando (RN06).
+
+    Guardar o autor da denúncia permite limitar quantas denúncias cada conta faz por dia e
+    dá ao administrador o histórico do que foi denunciado.
+    """
+
+    __tablename__ = "denuncia"
+    __table_args__ = (
+        UniqueConstraint("id_usuario", "id_avaliacao", name="uq_denuncia_usuario_avaliacao"),
+    )
+
+    id_denuncia: Mapped[int] = mapped_column(primary_key=True)
+    id_avaliacao: Mapped[int] = mapped_column(
+        ForeignKey("avaliacao.id_avaliacao", ondelete="CASCADE")
+    )
+    id_usuario: Mapped[int] = mapped_column(ForeignKey("usuario.id_usuario", ondelete="CASCADE"))
+    data_registro: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
