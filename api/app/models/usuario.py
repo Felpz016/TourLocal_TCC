@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Numeric, String, func
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -17,6 +17,9 @@ class Usuario(Base):
     senha_hash: Mapped[str] = mapped_column(String(255))
     tipo: Mapped[TipoUsuario] = mapped_column(Enum(TipoUsuario))
     criado_em: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    # Sobe a cada troca de senha. O token de acesso guarda a versão em que foi emitido;
+    # se ela não bate com a atual, o token deixa de valer (sessões antigas caem).
+    versao_sessao: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     perfil: Mapped["Perfil | None"] = relationship(back_populates="usuario", uselist=False)
 

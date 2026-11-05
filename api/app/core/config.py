@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     secret_key: str = "chave-de-desenvolvimento-troque-em-producao"
     access_token_expira_min: int = 60 * 24
     reset_token_expira_min: int = 30
+    # Limites contra força bruta (OWASP API4): falhas de login por IP + e-mail numa janela,
+    # e pedidos de recuperação de senha por e-mail por hora.
+    login_tentativas_max: int = 5
+    login_janela_min: int = 15
+    recuperacao_por_hora: int = 3
     # Link enviado no e-mail de recuperação; o token é anexado como ?token=...
     reset_url: str = "tourlocal://redefinir-senha"
 

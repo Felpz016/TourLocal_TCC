@@ -10,6 +10,15 @@ from app.db.session import get_db
 from app.main import app
 
 
+@pytest.fixture(autouse=True)
+def zerar_limites():
+    # Os limites de tentativas ficam na memória do processo; cada teste começa do zero.
+    from app.services import auth_service
+
+    auth_service.falhas_de_login.limpar()
+    auth_service.pedidos_de_recuperacao.limpar()
+
+
 @pytest.fixture
 def sessao_factory():
     # Banco SQLite em memória, recriado a cada teste.
