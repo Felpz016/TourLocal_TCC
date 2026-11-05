@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 
 from app.core.deps import DbSession, UsuarioAtual
 from app.schemas.usuario import (
@@ -22,17 +22,31 @@ def cadastrar(dados: CadastroIn, db: DbSession):
         raise HTTPException(status.HTTP_409_CONFLICT, "E-mail já cadastrado") from None
 
 
+def _muitas_tentativas() -> HTTPException:
+    return HTTPException(
+        status.HTTP_429_TOO_MANY_REQUESTS,
+        "Muitas tentativas. Espere alguns minutos e tente de novo.",
+    )
+
+
 @router.post("/login", response_model=TokenOut)
-def login(dados: LoginIn, db: DbSession):
+def login(dados: LoginIn, db: DbSession, request: Request):
+    origem = request.client.host if request.client else ""
     try:
-        return TokenOut(access_token=auth_service.autenticar(db, dados.email, dados.senha))
+        token = auth_service.autenticar(db, dados.email, dados.senha, origem)
     except auth_service.CredenciaisInvalidas:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "E-mail ou senha incorretos") from None
+    except auth_service.MuitasTentativas:
+        raise _muitas_tentativas() from None
+    return TokenOut(access_token=token)
 
 
 @router.post("/recuperar-senha", status_code=status.HTTP_202_ACCEPTED)
 def recuperar_senha(dados: RecuperarSenhaIn, db: DbSession) -> dict[str, str]:
-    auth_service.solicitar_recuperacao(db, dados.email)
+    try:
+        auth_service.solicitar_recuperacao(db, dados.email)
+    except auth_service.MuitasTentativas:
+        raise _muitas_tentativas() from None
     return {"detail": "Se o e-mail estiver cadastrado, enviaremos um link de redefinição."}
 
 

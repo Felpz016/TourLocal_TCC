@@ -103,3 +103,62 @@ def test_token_de_acesso_nao_serve_para_redefinir_senha(client):
         "/auth/redefinir-senha", json={"token": token_acesso, "nova_senha": "Outra-senha-1"}
     )
     assert resposta.status_code == 400
+
+
+def test_login_bloqueia_depois_de_muitas_falhas(client, monkeypatch):
+    from app.services import auth_service
+
+    monkeypatch.setattr(auth_service.falhas_de_login, "maximo", 3)
+    client.post("/auth/cadastro", json=CADASTRO)
+    errada = {"email": CADASTRO["email"], "senha": "Errada-123!"}
+    codigos = [client.post("/auth/login", json=errada).status_code for _ in range(4)]
+    assert codigos == [401, 401, 401, 429]
+    # Bloqueado, nem a senha certa entra até a janela passar.
+    certa = {"email": CADASTRO["email"], "senha": CADASTRO["senha"]}
+    assert client.post("/auth/login", json=certa).status_code == 429
+
+    monkeypatch.setattr(auth_service.falhas_de_login, "janela_s", 0)
+    assert client.post("/auth/login", json=certa).status_code == 200
+
+
+def test_login_certo_zera_as_falhas(client, monkeypatch):
+    from app.services import auth_service
+
+    monkeypatch.setattr(auth_service.falhas_de_login, "maximo", 2)
+    client.post("/auth/cadastro", json=CADASTRO)
+    errada = {"email": CADASTRO["email"], "senha": "Errada-123!"}
+    certa = {"email": CADASTRO["email"], "senha": CADASTRO["senha"]}
+    assert client.post("/auth/login", json=errada).status_code == 401
+    assert client.post("/auth/login", json=certa).status_code == 200
+    assert client.post("/auth/login", json=errada).status_code == 401
+    assert client.post("/auth/login", json=certa).status_code == 200
+
+
+def test_recuperacao_limitada_por_hora(client, monkeypatch):
+    from app.services import auth_service
+
+    monkeypatch.setattr(auth_service.pedidos_de_recuperacao, "maximo", 2)
+    pedido = {"email": "qualquer@exemplo.com"}
+    codigos = [client.post("/auth/recuperar-senha", json=pedido).status_code for _ in range(3)]
+    assert codigos == [202, 202, 429]
+
+
+def test_redefinir_senha_derruba_tokens_antigos(client, caplog):
+    client.post("/auth/cadastro", json=CADASTRO)
+    login = {"email": CADASTRO["email"], "senha": CADASTRO["senha"]}
+    antigo = {
+        "Authorization": f"Bearer {client.post('/auth/login', json=login).json()['access_token']}"
+    }
+    assert client.get("/auth/me", headers=antigo).status_code == 200
+
+    token = _pedir_link(client, caplog)
+    nova = {"token": token, "nova_senha": "Nova-senha-123"}
+    assert client.post("/auth/redefinir-senha", json=nova).status_code == 204
+
+    # A sessão aberta antes da troca cai; um login novo funciona normalmente.
+    assert client.get("/auth/me", headers=antigo).status_code == 401
+    login["senha"] = "Nova-senha-123"
+    novo = {
+        "Authorization": f"Bearer {client.post('/auth/login', json=login).json()['access_token']}"
+    }
+    assert client.get("/auth/me", headers=novo).status_code == 200

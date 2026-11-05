@@ -28,9 +28,10 @@ def usuario_atual(
     )
     if credenciais is None:
         raise nao_autenticado
-    id_usuario = ler_token_acesso(credenciais.credentials)
-    usuario = usuario_repository.buscar_por_id(db, id_usuario) if id_usuario else None
-    if usuario is None:
+    lido = ler_token_acesso(credenciais.credentials)
+    usuario = usuario_repository.buscar_por_id(db, lido[0]) if lido else None
+    # Token de antes da última troca de senha não vale mais.
+    if usuario is None or lido[1] != usuario.versao_sessao:
         raise nao_autenticado
     return usuario
 
