@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import type { Recomendacao } from '../api/recomendacoes';
+import type { Detalhe } from '../api/estabelecimentos';
+import type { Recomendacao, Recomendacoes } from '../api/recomendacoes';
 
 // Modo offline: a última resposta de cada tela fica guardada no aparelho. Se a rede cair,
 // a tela mostra essa cópia com um aviso em vez de ficar vazia. As chaves começam com o
@@ -34,6 +35,31 @@ export async function limparTudo(): Promise<void> {
   } catch {
     // Nada a fazer: a próxima conta sobrescreve as chaves ao usar o app.
   }
+}
+
+// RN10 e RNF07: a cópia offline não guarda nada que revele onde a pessoa estava. Distância,
+// minutos, motivos como "A 5 min a pé de você" e a nota de proximidade, junto com as
+// coordenadas dos lugares, permitiriam estimar a posição dela; então saem antes de gravar.
+const SOBRE_A_POSICAO = / de você$/;
+
+function semPosicao(r: Recomendacao): Recomendacao {
+  const { proximidade: _proximidade, ...criterios } = r.criterios;
+  return {
+    ...r,
+    distancia_km: null,
+    minutos_a_pe: null,
+    minutos_de_carro: null,
+    criterios,
+    motivos: r.motivos.filter((m) => !SOBRE_A_POSICAO.test(m)),
+  };
+}
+
+export function recomendacoesParaGuardar(resposta: Recomendacoes): Recomendacoes {
+  return { ...resposta, resultados: resposta.resultados.map(semPosicao) };
+}
+
+export function detalheParaGuardar(detalhe: Detalhe): Detalhe {
+  return { ...detalhe, distancia_km: null };
 }
 
 /** "às 14:05" para hoje, "em 28/10" para outro dia. */

@@ -35,25 +35,28 @@ export function PorQueRecomendamos({ recomendacao }: { recomendacao: Recomendaca
           </View>
         ))}
         <View style={styles.criterios}>
-          {CRITERIOS.map(({ chave, rotulo }) => {
-            const valor = recomendacao.criterios[chave] ?? 0;
-            return (
-              <View
-                key={chave}
-                style={styles.criterio}
-                accessible
-                accessibilityLabel={`${rotulo}: ${porcentagem(valor)}`}
-              >
-                <View style={styles.linhaCriterio}>
-                  <Text style={styles.rotulo}>{rotulo}</Text>
-                  <Text style={styles.valor}>{porcentagem(valor)}</Text>
+          {/* Na cópia offline a proximidade não vem (RN10); mostra só os critérios que vieram. */}
+          {CRITERIOS.filter(({ chave }) => recomendacao.criterios[chave] !== undefined).map(
+            ({ chave, rotulo }) => {
+              const valor = recomendacao.criterios[chave] ?? 0;
+              return (
+                <View
+                  key={chave}
+                  style={styles.criterio}
+                  accessible
+                  accessibilityLabel={`${rotulo}: ${porcentagem(valor)}`}
+                >
+                  <View style={styles.linhaCriterio}>
+                    <Text style={styles.rotulo}>{rotulo}</Text>
+                    <Text style={styles.valor}>{porcentagem(valor)}</Text>
+                  </View>
+                  <View style={styles.trilho}>
+                    <View style={[styles.barra, { width: porcentagem(valor) as `${number}%` }]} />
+                  </View>
                 </View>
-                <View style={styles.trilho}>
-                  <View style={[styles.barra, { width: porcentagem(valor) as `${number}%` }]} />
-                </View>
-              </View>
-            );
-          })}
+              );
+            },
+          )}
         </View>
         <Text style={styles.nota}>
           Combinação de {porcentagem(recomendacao.pontuacao)} com o que você procura, somando

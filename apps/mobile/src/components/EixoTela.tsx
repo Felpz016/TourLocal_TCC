@@ -15,7 +15,13 @@ import { ApiError } from '../api/client';
 import { buscarRecomendacoes } from '../api/recomendacoes';
 import type { Eixo, Filtros, Recomendacoes } from '../api/recomendacoes';
 import { useLocalizacao } from '../localizacao/LocalizacaoContext';
-import { avisoOffline, guardar, lembrarRecomendacoes, ler } from '../offline/cache';
+import {
+  avisoOffline,
+  guardar,
+  lembrarRecomendacoes,
+  ler,
+  recomendacoesParaGuardar,
+} from '../offline/cache';
 import { cores } from '../theme/cores';
 import { cartaoPlano, curva, raio, sombraForte } from '../theme/estilo';
 import { fonte, tamanho } from '../theme/fontes';
@@ -102,7 +108,7 @@ export function EixoTela({ eixo, vazio }: Props) {
       setDados(resposta);
       setOffline(null);
       lembrarRecomendacoes(resposta.resultados);
-      if (padrao) guardar(`recomendacoes.${eixo}`, resposta);
+      if (padrao) guardar(`recomendacoes.${eixo}`, recomendacoesParaGuardar(resposta));
     } catch (e) {
       // Sem rede (status 0): mostra a última lista guardada, se houver, com um aviso.
       const guardada =

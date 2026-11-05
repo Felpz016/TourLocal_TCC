@@ -16,15 +16,16 @@ export type Recomendacao = {
   nota_media: number | null;
   total_avaliacoes: number;
   foto_url: string | null;
-  distancia_km: number;
-  minutos_a_pe: number;
-  minutos_de_carro: number;
+  // A API sempre manda estes três; na cópia offline eles vêm nulos (RN10, ver offline/cache).
+  distancia_km: number | null;
+  minutos_a_pe: number | null;
+  minutos_de_carro: number | null;
   aberto_agora: boolean | null;
   /** "Fecha às 23:00", "Abre às 18:00"... (null sem horário informado). */
   muda_as: string | null;
   opcoes_alimentares: string[];
   pontuacao: number;
-  criterios: Record<'proximidade' | 'avaliacao' | 'orcamento' | 'perfil', number>;
+  criterios: Partial<Record<'proximidade' | 'avaliacao' | 'orcamento' | 'perfil', number>>;
   motivos: string[];
 };
 

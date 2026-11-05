@@ -20,7 +20,7 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
   const detalhes = [
     lugar.categorias.join(', '),
     lugar.faixa_preco ? PRECO[lugar.faixa_preco] : null,
-    formatarDistancia(lugar.distancia_km),
+    lugar.distancia_km !== null ? formatarDistancia(lugar.distancia_km) : null,
   ].filter(Boolean);
   const aberto = lugar.aberto_agora;
   const motivo = lugar.motivos.find((m) => !repetido(m));
@@ -34,7 +34,7 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
         lugar.nome,
         lugar.nota_media !== null ? `nota ${formatarNota(lugar.nota_media)}` : 'sem avaliações',
         ...detalhes,
-        `${lugar.minutos_a_pe} minutos a pé`,
+        lugar.minutos_a_pe !== null ? `${lugar.minutos_a_pe} minutos a pé` : null,
         aberto === null ? null : aberto ? 'aberto agora' : 'fechado agora',
         lugar.muda_as,
         lugar.acessibilidade ? 'acessível' : null,
@@ -54,10 +54,13 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
             {lugar.nome}
           </Text>
           {/* RF08: o tempo a pé fica sempre à vista, como no Citymapper. */}
-          <View style={styles.ape}>
-            <Icone nome="walk" tamanho={13} cor={cores.primariaEscura} />
-            <Text style={styles.textoApe}>{lugar.minutos_a_pe} min</Text>
-          </View>
+          {/* Na cópia offline não há tempo a pé: a posição não fica guardada (RN10). */}
+          {lugar.minutos_a_pe !== null ? (
+            <View style={styles.ape}>
+              <Icone nome="walk" tamanho={13} cor={cores.primariaEscura} />
+              <Text style={styles.textoApe}>{lugar.minutos_a_pe} min</Text>
+            </View>
+          ) : null}
         </View>
 
         {lugar.nota_media !== null ? (
