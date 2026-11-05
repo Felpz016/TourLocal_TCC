@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
   avisoOffline,
+  detalheParaGuardar,
   esquecerRecomendacoes,
   guardar,
   lembrarRecomendacoes,
@@ -10,7 +11,9 @@ import {
   limparTudo,
   quando,
   recomendacaoVista,
+  recomendacoesParaGuardar,
 } from '../offline/cache';
+import type { Detalhe } from '../api/estabelecimentos';
 import type { Recomendacao } from '../api/recomendacoes';
 
 beforeEach(() => AsyncStorage.clear());
@@ -47,4 +50,27 @@ test('lembra as recomendações vistas para explicar no detalhe', () => {
   expect(recomendacaoVista(7)?.motivos).toEqual(['Perto']);
   esquecerRecomendacoes();
   expect(recomendacaoVista(7)).toBeUndefined();
+});
+
+test('a cópia offline não guarda nada sobre a posição da pessoa (RN10)', () => {
+  const r = {
+    id_estab: 1,
+    distancia_km: 0.4,
+    minutos_a_pe: 5,
+    minutos_de_carro: 1,
+    criterios: { proximidade: 0.9, avaliacao: 0.8, orcamento: 1, perfil: 0.5 },
+    motivos: ['A 5 min a pé de você', 'Bem avaliado (nota 4,5)', 'A 0,4 km de você'],
+  } as unknown as Recomendacao;
+  const guardada = recomendacoesParaGuardar({ raio_km: 3, raio_sugerido_km: null, resultados: [r] })
+    .resultados[0];
+  expect(guardada.distancia_km).toBeNull();
+  expect(guardada.minutos_a_pe).toBeNull();
+  expect(guardada.minutos_de_carro).toBeNull();
+  expect(guardada.criterios).toEqual({ avaliacao: 0.8, orcamento: 1, perfil: 0.5 });
+  expect(guardada.motivos).toEqual(['Bem avaliado (nota 4,5)']);
+  // O que está na tela agora continua completo.
+  expect(r.distancia_km).toBe(0.4);
+
+  const detalhe = detalheParaGuardar({ id_estab: 1, distancia_km: 0.4 } as unknown as Detalhe);
+  expect(detalhe.distancia_km).toBeNull();
 });

@@ -27,7 +27,13 @@ import { Icone } from '../../src/components/ui/Icone';
 import type { NomeIcone } from '../../src/components/ui/Icone';
 import { Pressionavel } from '../../src/components/ui/Pressionavel';
 import { useLocalizacao } from '../../src/localizacao/LocalizacaoContext';
-import { avisoOffline, guardar, ler, recomendacaoVista } from '../../src/offline/cache';
+import {
+  avisoOffline,
+  detalheParaGuardar,
+  guardar,
+  ler,
+  recomendacaoVista,
+} from '../../src/offline/cache';
 import { cores } from '../../src/theme/cores';
 import { curva, raio, sombraForte } from '../../src/theme/estilo';
 import { fonte, tamanho } from '../../src/theme/fontes';
@@ -133,7 +139,7 @@ export default function LugarTela() {
       setLugar(detalhe);
       setErro(null);
       setOffline(null);
-      guardar(`lugar.${idEstab}`, detalhe);
+      guardar(`lugar.${idEstab}`, detalheParaGuardar(detalhe));
     } catch (e) {
       // Sem rede: abre a última versão vista deste lugar, se houver.
       const guardado =
