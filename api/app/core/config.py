@@ -1,4 +1,7 @@
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+CHAVE_DE_DESENVOLVIMENTO = "chave-de-desenvolvimento-troque-em-producao"
 
 
 class Settings(BaseSettings):
@@ -7,6 +10,12 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_name: str = "TourLocal API"
+    # "desenvolvimento" (padrão, no PC) ou "producao" (API publicada). Fora do
+    # desenvolvimento a API exige uma SECRET_KEY própria e esconde a documentação /docs.
+    ambiente: str = "desenvolvimento"
+    # Origens que podem chamar a API pelo navegador (versão web). Ex.: CORS_ORIGENS=
+    # '["https://tourlocal.app"]'. O app no celular não usa CORS, então não é afetado.
+    cors_origens: list[str] = ["*"]
     database_url: str = "mysql+pymysql://tourlocal:tourlocal@localhost:3306/tourlocal"
     # RN09: raio padrão quando o turista não declarou preferências.
     raio_busca_padrao_km: float = 3.0
@@ -24,7 +33,7 @@ class Settings(BaseSettings):
     peso_perfil: float = 0.20
 
     # Autenticação (RF02). Em produção, defina SECRET_KEY com um valor longo e aleatório.
-    secret_key: str = "chave-de-desenvolvimento-troque-em-producao"
+    secret_key: str = CHAVE_DE_DESENVOLVIMENTO
     access_token_expira_min: int = 60 * 24
     reset_token_expira_min: int = 30
     # Link enviado no e-mail de recuperação; o token é anexado como ?token=...
@@ -50,6 +59,24 @@ class Settings(BaseSettings):
     osm_user_agent: str = "TourLocal-TCC/0.1 (Fatec Araraquara)"
     nominatim_url: str = "https://nominatim.openstreetmap.org"
     overpass_url: str = "https://overpass-api.de/api/interpreter"
+
+    @property
+    def em_desenvolvimento(self) -> bool:
+        return self.ambiente == "desenvolvimento"
+
+    @model_validator(mode="after")
+    def _chave_segura_fora_do_desenvolvimento(self) -> "Settings":
+        # A chave padrão está no repositório público: com ela, qualquer pessoa conseguiria
+        # gerar tokens válidos, inclusive de administrador. Fora do PC, ela não é aceita.
+        if not self.em_desenvolvimento and (
+            self.secret_key == CHAVE_DE_DESENVOLVIMENTO or len(self.secret_key) < 32
+        ):
+            raise ValueError(
+                "Defina SECRET_KEY com pelo menos 32 caracteres aleatórios para rodar com "
+                f"AMBIENTE={self.ambiente}. Para gerar uma: "
+                'python -c "import secrets; print(secrets.token_urlsafe(48))"'
+            )
+        return self
 
 
 settings = Settings()

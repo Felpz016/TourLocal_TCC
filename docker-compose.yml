@@ -7,7 +7,8 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tourlocal}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
     ports:
-      - "3306:3306"
+      # Só no próprio PC: o MySQL não fica aberto para a rede (a API fala com ele por dentro).
+      - "127.0.0.1:3306:3306"
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -24,6 +25,8 @@ services:
     restart: on-failure
     environment:
       DATABASE_URL: mysql+pymysql://tourlocal:${MYSQL_PASSWORD:-tourlocal}@db:3306/tourlocal
+      # Com AMBIENTE=producao a API só sobe com uma SECRET_KEY própria (32+ caracteres).
+      AMBIENTE: ${AMBIENTE:-desenvolvimento}
       SECRET_KEY: ${SECRET_KEY:-chave-de-desenvolvimento-troque-em-producao}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_USUARIO: ${SMTP_USUARIO:-}

@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -15,15 +15,42 @@ from app.routers import (
 )
 from app.services import fotos
 
-app = FastAPI(title=settings.app_name)
+# A documentação interativa (/docs) ajuda no desenvolvimento, mas numa API publicada só
+# mostraria o mapa de rotas para quem quiser atacá-la.
+_docs = settings.em_desenvolvimento
+app = FastAPI(
+    title=settings.app_name,
+    docs_url="/docs" if _docs else None,
+    redoc_url="/redoc" if _docs else None,
+    openapi_url="/openapi.json" if _docs else None,
+)
 
-# Libera o acesso do app Expo e da versão web durante o desenvolvimento.
+# No desenvolvimento libera qualquer origem; publicada, só as de CORS_ORIGENS.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origens,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+CABECALHOS_DE_SEGURANCA = {
+    # O navegador não tenta "adivinhar" o tipo do arquivo: uma foto em /uploads nunca é
+    # tratada como página ou script.
+    "X-Content-Type-Options": "nosniff",
+    # A API não é página para ficar dentro de outro site.
+    "X-Frame-Options": "DENY",
+    # Links para fora não levam o endereço da API (nem tokens na URL).
+    "Referrer-Policy": "no-referrer",
+}
+
+
+@app.middleware("http")
+async def cabecalhos_de_seguranca(request: Request, chamar_proxima):
+    resposta = await chamar_proxima(request)
+    for nome, valor in CABECALHOS_DE_SEGURANCA.items():
+        resposta.headers.setdefault(nome, valor)
+    return resposta
+
 
 app.include_router(health.router)
 app.include_router(auth.router)
