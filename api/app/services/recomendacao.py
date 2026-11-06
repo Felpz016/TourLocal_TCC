@@ -11,15 +11,15 @@ para a menor, com os motivos de cada recomendação (RF11).
 
 import unicodedata
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
-from app.models import Categoria, Estabelecimento, Perfil
+from app.models import Categoria, Estabelecimento, Foto, HorarioFuncionamento, Perfil
 from app.models.enums import Eixo, FaixaPreco
 from app.repositories import avaliacao_repository, usuario_repository
 from app.services import geo
@@ -51,6 +51,8 @@ class Candidato:
     nota_media: float | None = None
     total_avaliacoes: int = 0
     pontuacao: Pontuacao | None = None
+    # Primeira foto do lugar, buscada só para os que entram na resposta.
+    foto_url: str | None = None
 
 
 def minutos(distancia_km: float, velocidade_kmh: float) -> int:
@@ -76,10 +78,25 @@ def raio_do_usuario(perfil: Perfil | None, raio_pedido: float | None) -> float:
     return min(raio_pedido, settings.raio_busca_maximo_km)
 
 
+def dias_relevantes(agora: datetime) -> list[int]:
+    """Ontem, hoje e amanhã: os únicos dias que "aberto agora" e "abre/fecha às" consultam.
+
+    Ontem conta pelas faixas que passam da meia-noite; amanhã, pelo "Abre amanhã às".
+    """
+    return [(agora + timedelta(days=d)).weekday() for d in (-1, 0, 1)]
+
+
 def filtrar_por_raio(
-    db: Session, eixo: Eixo, lat: float, lon: float, raio_km: float
-) -> list[tuple[Estabelecimento, float]]:
-    """Fase 1. Já descarta os não verificados (RN01) na própria consulta."""
+    db: Session, eixo: Eixo, lat: float, lon: float, raio_km: float, agora: datetime
+) -> list[tuple[Estabelecimento, float, bool]]:
+    """Fase 1. Já descarta os não verificados (RN01) na própria consulta.
+
+    Para responder rápido com muitos lugares na área (RNF01), carrega só o que as fases
+    seguintes usam: as categorias e os horários de ontem, hoje e amanhã. As fotos ficam para
+    o fim, só dos lugares que entram na resposta (ver preencher_fotos). O terceiro valor de
+    cada par diz se o lugar tem algum horário cadastrado na semana: sem ele, quem só abre em
+    outros dias pareceria "sem horário informado" em vez de "fechado".
+    """
     lat_min, lat_max, lon_min, lon_max = geo.caixa_delimitadora(lat, lon, raio_km)
     consulta = (
         select(Estabelecimento)
@@ -94,8 +111,13 @@ def filtrar_por_raio(
         )
         .options(
             selectinload(Estabelecimento.categorias),
-            selectinload(Estabelecimento.horarios),
-            selectinload(Estabelecimento.fotos),
+            # A lista de horários fica parcial nestes objetos, que são só de leitura nesta
+            # requisição; o detalhe e a gestão carregam a semana inteira.
+            selectinload(
+                Estabelecimento.horarios.and_(
+                    HorarioFuncionamento.dia_semana.in_(dias_relevantes(agora))
+                )
+            ),
         )
         .distinct()
     )
@@ -104,11 +126,25 @@ def filtrar_por_raio(
         distancia = geo.haversine_km(lat, lon, float(estab.latitude), float(estab.longitude))
         if distancia <= raio_km:
             dentro_do_raio.append((estab, distancia))
-    return dentro_do_raio
+    com_horario = _com_algum_horario(db, [estab.id_estab for estab, _ in dentro_do_raio])
+    return [(e, d, e.id_estab in com_horario) for e, d in dentro_do_raio]
+
+
+def _com_algum_horario(db: Session, ids_estab: list[int]) -> set[int]:
+    """Quais desses lugares têm horário cadastrado em algum dia da semana."""
+    if not ids_estab:
+        return set()
+    return set(
+        db.scalars(
+            select(HorarioFuncionamento.id_estab)
+            .where(HorarioFuncionamento.id_estab.in_(ids_estab))
+            .distinct()
+        )
+    )
 
 
 def aplicar_regras(
-    candidatos: list[tuple[Estabelecimento, float]],
+    candidatos: list[tuple[Estabelecimento, float, bool]],
     agora: datetime,
     filtros: Filtros,
     perfil: Perfil | None,
@@ -118,7 +154,7 @@ def aplicar_regras(
     # Quem procura um lugar pelo nome quer achá-lo mesmo fechado; o cartão mostra "Fechado".
     incluir_fechados = filtros.incluir_fechados or bool(filtros.busca)
     resultado = []
-    for estab, distancia in candidatos:
+    for estab, distancia, com_horario in candidatos:
         if precisa_acessibilidade and not estab.acessibilidade:
             continue
         if filtros.busca and not combina_com_busca(estab, filtros.busca):
@@ -129,6 +165,8 @@ def aplicar_regras(
             continue
         # Lugares sem horário informado continuam na lista (aberto_agora = None).
         aberto = esta_aberto(estab.horarios, agora)
+        if aberto is None and com_horario:
+            aberto = False  # só abre em outros dias da semana
         if aberto is False and not incluir_fechados:
             continue
         resultado.append(
@@ -141,6 +179,22 @@ def _preencher_notas(db: Session, candidatos: list[Candidato]) -> None:
     notas = avaliacao_repository.notas_medias(db, [c.estabelecimento.id_estab for c in candidatos])
     for c in candidatos:
         c.nota_media, c.total_avaliacoes = notas.get(c.estabelecimento.id_estab, (None, 0))
+
+
+def preencher_fotos(db: Session, candidatos: list[Candidato]) -> None:
+    """Primeira foto (a de menor id) de cada lugar, numa consulta só."""
+    if not candidatos:
+        return
+    primeiras = (
+        select(func.min(Foto.id_foto))
+        .where(Foto.id_estab.in_([c.estabelecimento.id_estab for c in candidatos]))
+        .group_by(Foto.id_estab)
+    )
+    urls = dict(
+        db.execute(select(Foto.id_estab, Foto.url).where(Foto.id_foto.in_(primeiras))).all()
+    )
+    for c in candidatos:
+        c.foto_url = urls.get(c.estabelecimento.id_estab)
 
 
 def recomendar(
@@ -161,7 +215,9 @@ def recomendar(
     raio = raio_do_usuario(perfil, raio_km)
     agora = agora or datetime.now(ZoneInfo(settings.fuso_horario))
 
-    candidatos = aplicar_regras(filtrar_por_raio(db, eixo, lat, lon, raio), agora, filtros, perfil)
+    candidatos = aplicar_regras(
+        filtrar_por_raio(db, eixo, lat, lon, raio, agora), agora, filtros, perfil
+    )
     _preencher_notas(db, candidatos)
     if filtros.nota_minima is not None:
         candidatos = [
@@ -181,4 +237,6 @@ def recomendar(
             eixo_comer=eixo == Eixo.COMER,
         )
     candidatos.sort(key=lambda c: (-c.pontuacao.total, c.distancia_km))
-    return raio, candidatos[:LIMITE_RESULTADOS]
+    candidatos = candidatos[:LIMITE_RESULTADOS]
+    preencher_fotos(db, candidatos)
+    return raio, candidatos
