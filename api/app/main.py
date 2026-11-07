@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
+from app.core.privacidade import proteger_log_de_acesso
 from app.routers import (
     admin,
     auth,
@@ -14,6 +15,9 @@ from app.routers import (
     recomendacoes,
 )
 from app.services import fotos
+
+# RN10/RNF07: a posição do turista vai na URL das consultas; o log de acesso não a guarda.
+proteger_log_de_acesso()
 
 # A documentação interativa (/docs) ajuda no desenvolvimento, mas numa API publicada só
 # mostraria o mapa de rotas para quem quiser atacá-la.
