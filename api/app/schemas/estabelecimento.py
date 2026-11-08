@@ -69,3 +69,7 @@ class FavoritoOut(BaseModel):
     endereco: str
     nota_media: float | None
     data_inclusao: datetime
+    # Mesma situação da lista e do detalhe (RN02): None quando não há horário cadastrado.
+    aberto_agora: bool | None = None
+    muda_as: str | None = None
+    fechado_temporariamente: bool = False

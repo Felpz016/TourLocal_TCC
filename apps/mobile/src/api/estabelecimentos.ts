@@ -50,6 +50,11 @@ export type Favorito = {
   endereco: string;
   nota_media: number | null;
   data_inclusao: string;
+  /** Situação no momento da consulta (RN02); null quando o lugar não tem horário cadastrado. */
+  aberto_agora: boolean | null;
+  /** "Fecha às 23:00", "Abre amanhã às 07:00", "Aberto 24 horas"... */
+  muda_as: string | null;
+  fechado_temporariamente: boolean;
 };
 
 export function buscarDetalhe(id: number, posicao?: { latitude: number; longitude: number }) {

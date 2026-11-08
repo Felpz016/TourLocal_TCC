@@ -238,23 +238,38 @@ def desfavoritar(db: Session, id_estab: int, usuario: Usuario) -> None:
         db.commit()
 
 
-def listar_favoritos(db: Session, usuario: Usuario) -> list[FavoritoOut]:
+def listar_favoritos(
+    db: Session, usuario: Usuario, agora: datetime | None = None
+) -> list[FavoritoOut]:
+    """Salvos com a situação de agora (aberto, fechado, quando muda), como na lista (RN02).
+
+    Quem abre os salvos na rua quer saber primeiro o que dá para visitar neste momento.
+    """
     linhas = db.execute(
         select(Estabelecimento, Favorito.data_inclusao)
         .join(Favorito, Favorito.id_estab == Estabelecimento.id_estab)
         .where(Favorito.id_usuario == usuario.id_usuario)
-        .options(selectinload(Estabelecimento.categorias))
+        .options(selectinload(Estabelecimento.categorias), selectinload(Estabelecimento.horarios))
         .order_by(Favorito.data_inclusao.desc())
     ).all()
     notas = avaliacao_repository.notas_medias(db, [e.id_estab for e, _ in linhas])
-    return [
-        FavoritoOut(
-            id_estab=e.id_estab,
-            nome=e.nome,
-            categorias=[c.nome for c in e.categorias],
-            endereco=e.endereco,
-            nota_media=round(notas[e.id_estab][0], 1) if e.id_estab in notas else None,
-            data_inclusao=data,
+    agora = agora or datetime.now(ZoneInfo(settings.fuso_horario))
+    favoritos = []
+    for e, data in linhas:
+        aberto = False if e.fechado_temporariamente else esta_aberto(e.horarios, agora)
+        favoritos.append(
+            FavoritoOut(
+                id_estab=e.id_estab,
+                nome=e.nome,
+                categorias=[c.nome for c in e.categorias],
+                endereco=e.endereco,
+                nota_media=round(notas[e.id_estab][0], 1) if e.id_estab in notas else None,
+                data_inclusao=data,
+                aberto_agora=aberto,
+                muda_as=None
+                if e.fechado_temporariamente
+                else proxima_mudanca(e.horarios, agora, aberto),
+                fechado_temporariamente=e.fechado_temporariamente,
+            )
         )
-        for e, data in linhas
-    ]
+    return favoritos
