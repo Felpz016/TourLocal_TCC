@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { textoParaCompartilhar, linkDoMapa } from '../util/compartilhar';
-import { formatarDistancia, formatarNota } from '../util/formato';
+import { estrelasDaNota, formatarDistancia, formatarNota } from '../util/formato';
 import { senhaForte } from '../util/senha';
 
 describe('formato', () => {
@@ -11,6 +11,17 @@ describe('formato', () => {
 
   test('nota com uma casa e vírgula', () => {
     expect(formatarNota(4.666)).toBe('4,7');
+  });
+
+  test.each([
+    [5, ['cheia', 'cheia', 'cheia', 'cheia', 'cheia']],
+    [4.5, ['cheia', 'cheia', 'cheia', 'cheia', 'meia']],
+    [4.8, ['cheia', 'cheia', 'cheia', 'cheia', 'cheia']],
+    [4.2, ['cheia', 'cheia', 'cheia', 'cheia', 'vazia']],
+    [3.5, ['cheia', 'cheia', 'cheia', 'meia', 'vazia']],
+    [1, ['cheia', 'vazia', 'vazia', 'vazia', 'vazia']],
+  ])('nota %p vira meia estrela em vez de arredondar para cima', (nota, esperado) => {
+    expect(estrelasDaNota(nota)).toEqual(esperado);
   });
 });
 

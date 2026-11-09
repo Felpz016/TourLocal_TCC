@@ -160,7 +160,7 @@ export function SecaoAvaliacoes({ lugar, podeAvaliar, podeDenunciar = true, aoMu
         <View style={styles.placar}>
           <Text style={styles.media}>{formatarNota(lugar.nota_media)}</Text>
           <View style={styles.placarTextos}>
-            <Estrelas nota={Math.round(lugar.nota_media)} tamanho={18} />
+            <Estrelas nota={lugar.nota_media} tamanho={18} />
             <Text style={styles.resumo}>
               {lugar.total_avaliacoes} {lugar.total_avaliacoes === 1 ? 'avaliação' : 'avaliações'}
             </Text>
