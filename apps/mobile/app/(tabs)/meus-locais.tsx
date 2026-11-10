@@ -21,7 +21,7 @@ function Situacao({ local }: { local: MeuEstabelecimento }) {
   const [texto, cor, fundo] = local.fechado_temporariamente
     ? ['Fechado temporariamente', cores.erro, cores.fundoErro]
     : local.verificado
-      ? ['Verificado · aparece no app', cores.sucesso, '#E3F4EC']
+      ? ['Verificado · aparece no app', cores.sucesso, cores.fundoSucesso]
       : ['Aguardando verificação', cores.alerta, cores.fundoAlerta];
   return (
     <View style={[styles.selo, { backgroundColor: fundo }]}>

@@ -28,6 +28,7 @@ const PARES_DE_TEXTO: [keyof typeof cores, keyof typeof cores][] = [
   ['erro', 'fundoErro'],
   ['alerta', 'fundoAlerta'],
   ['sucesso', 'superficie'],
+  ['sucesso', 'fundoSucesso'],
 ];
 
 describe.each<Esquema>(['claro', 'escuro'])('paleta %s', (esquema) => {

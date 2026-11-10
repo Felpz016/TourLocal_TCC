@@ -22,6 +22,8 @@ const claro = {
   alerta: '#8A4B00',
   fundoAlerta: '#FFF3D6',
   sucesso: '#067647',
+  // Fundo dos selos de sucesso ("Verificado"), no mesmo padrão de `fundoErro` e `fundoAlerta`.
+  fundoSucesso: '#E3F4EC',
   // Fundo das telas (papel areia); cartões e campos ficam em `superficie` por cima.
   fundo: '#F5F3EE',
   superficie: '#FFFFFF',
@@ -57,6 +59,7 @@ const escuro: Paleta = {
   alerta: '#FFC46B',
   fundoAlerta: '#3A2B10',
   sucesso: '#4ADE9B',
+  fundoSucesso: '#123527',
   fundo: '#0B1220',
   superficie: '#141D31',
   fundoCampo: '#1A2439',
