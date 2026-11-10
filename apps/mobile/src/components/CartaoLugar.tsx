@@ -66,7 +66,7 @@ export function CartaoLugar({ lugar }: { lugar: Recomendacao }) {
         {lugar.nota_media !== null ? (
           <View style={styles.linha}>
             <Text style={styles.nota}>{formatarNota(lugar.nota_media)}</Text>
-            <Estrelas nota={Math.round(lugar.nota_media)} tamanho={11} />
+            <Estrelas nota={lugar.nota_media} tamanho={11} />
             <Text style={styles.detalhes}>({lugar.total_avaliacoes})</Text>
           </View>
         ) : (
