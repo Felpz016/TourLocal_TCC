@@ -18,6 +18,7 @@ import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 import { avisoOffline, guardar, ler } from '../../src/offline/cache';
 import { formatarNota } from '../../src/util/formato';
+import { situacaoDoSalvo } from '../../src/util/situacao';
 import { criarEstilos } from '../../src/theme/tema';
 
 // Locais salvos pelo turista (UC09, RF14). Recarrega sempre que a aba ganha foco,
@@ -95,42 +96,63 @@ export default function SalvosTela() {
             />
           </View>
         ) : null}
-        {favoritos?.map((f) => (
-          <Pressionavel
-            key={f.id_estab}
-            style={({ pressed }) => [styles.cartao, pressed && { opacity: 0.85 }]}
-            accessibilityRole="button"
-            accessibilityLabel={[
-              f.nome,
-              f.nota_media !== null ? `nota ${formatarNota(f.nota_media)}` : null,
-              f.categorias.join(', '),
-              f.endereco,
-            ]
-              .filter(Boolean)
-              .join(', ')}
-            accessibilityHint="Abre os detalhes do local"
-            onPress={() => router.push(`/lugar/${f.id_estab}`)}
-          >
-            <Miniatura nome={f.nome} tamanho={60} />
-            <View style={styles.info}>
-              <Text style={styles.nome} numberOfLines={2}>
-                {f.nome}
-              </Text>
-              <Text style={styles.secundario} numberOfLines={1}>
-                {[
-                  f.nota_media !== null ? `★ ${formatarNota(f.nota_media)}` : null,
-                  f.categorias.join(', '),
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Text>
-              <Text style={styles.secundario} numberOfLines={1}>
-                {f.endereco}
-              </Text>
-            </View>
-            <Icone nome="heart" tamanho={22} cor={cores.favorito} />
-          </Pressionavel>
-        ))}
+        {favoritos?.map((f) => {
+          // Na cópia offline a situação é a de quando ela foi salva, e "Aberto" de horas
+          // atrás engana mais do que ajuda: sem conexão, a linha de horário não aparece.
+          const situacao = offline ? null : situacaoDoSalvo(f);
+          return (
+            <Pressionavel
+              key={f.id_estab}
+              style={({ pressed }) => [styles.cartao, pressed && { opacity: 0.85 }]}
+              accessibilityRole="button"
+              accessibilityLabel={[
+                f.nome,
+                f.nota_media !== null ? `nota ${formatarNota(f.nota_media)}` : null,
+                f.categorias.join(', '),
+                situacao
+                  ? [situacao.titulo, situacao.complemento].filter(Boolean).join(', ')
+                  : null,
+                f.endereco,
+              ]
+                .filter(Boolean)
+                .join(', ')}
+              accessibilityHint="Abre os detalhes do local"
+              onPress={() => router.push(`/lugar/${f.id_estab}`)}
+            >
+              <Miniatura nome={f.nome} tamanho={60} />
+              <View style={styles.info}>
+                <Text style={styles.nome} numberOfLines={2}>
+                  {f.nome}
+                </Text>
+                <Text style={styles.secundario} numberOfLines={1}>
+                  {[
+                    f.nota_media !== null ? `★ ${formatarNota(f.nota_media)}` : null,
+                    f.categorias.join(', '),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </Text>
+                {situacao ? (
+                  <Text style={styles.secundario} numberOfLines={1}>
+                    <Text
+                      style={[
+                        styles.situacao,
+                        { color: situacao.aberto ? cores.sucesso : cores.erro },
+                      ]}
+                    >
+                      {situacao.titulo}
+                    </Text>
+                    {situacao.complemento ? ` · ${situacao.complemento}` : ''}
+                  </Text>
+                ) : null}
+                <Text style={styles.secundario} numberOfLines={1}>
+                  {f.endereco}
+                </Text>
+              </View>
+              <Icone nome="heart" tamanho={22} cor={cores.favorito} />
+            </Pressionavel>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -169,4 +191,5 @@ const useEstilos = criarEstilos(() => ({
   info: { flex: 1, gap: 2 },
   nome: { fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
   secundario: { fontSize: tamanho.apoio, color: cores.textoSecundario },
+  situacao: { fontSize: tamanho.apoio, fontWeight: '600' },
 }));
