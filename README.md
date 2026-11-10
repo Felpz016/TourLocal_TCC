@@ -92,6 +92,7 @@ A cada push na `main`, o workflow [`demo-web.yml`](.github/workflows/demo-web.ym
 
 - Cada visitante tem a sua cópia dos dados. Dá para avaliar, salvar, cadastrar locais e moderar; ao recarregar a página, tudo volta ao estado inicial.
 - A posição fica fixa no centro de Araraquara, onde estão os lugares de demonstração. Buscar outro endereço continua funcionando.
+- No computador, o app aparece dentro de uma moldura de celular (`celular.html`, com escolha do aparelho); no celular, abre em tela cheia. "Abrir sem moldura" mostra o app na janela toda.
 - A primeira entrada leva alguns segundos (o navegador baixa cerca de 20 MB do Python e das dependências).
 - Arquivos: `apps/mobile/src/api/demo.ts` (lado do app), `api/app/navegador.py` (lado da API) e `scripts/demo-web/preparar-api.mjs` (empacota e testa login e recomendações no build).
 - Configuração única no GitHub: **Settings > Pages > Build and deployment > Source: GitHub Actions**.
