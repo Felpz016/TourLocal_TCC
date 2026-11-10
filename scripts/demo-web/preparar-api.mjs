@@ -43,7 +43,10 @@ const micropip = py.pyimport('micropip');
 await micropip.install(requisitos);
 const lock = JSON.parse(micropip.freeze());
 const instalados = new Set(
-  py.runPython('import micropip; [p for p in micropip.list()]').toJs().map((n) => n.toLowerCase()),
+  py
+    .runPython('import micropip; [p for p in micropip.list()]')
+    .toJs()
+    .map((n) => n.toLowerCase()),
 );
 
 console.log('==> Copiando os pacotes usados');
@@ -109,10 +112,15 @@ async function pedir(metodo, caminho, cabecalhos = {}, corpo = null) {
   return JSON.parse(texto);
 }
 
-const { access_token } = await pedir('POST', '/auth/login', {}, {
-  email: 'turista@demo.tourlocal.app',
-  senha: 'Demo@2026',
-});
+const { access_token } = await pedir(
+  'POST',
+  '/auth/login',
+  {},
+  {
+    email: 'turista@demo.tourlocal.app',
+    senha: 'Demo@2026',
+  },
+);
 const { resultados } = await pedir(
   'GET',
   '/recomendacoes?eixo=comer&lat=-21.7946&lng=-48.1756&incluir_fechados=true',

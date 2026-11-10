@@ -76,6 +76,11 @@ jobs:
           # O simulador é ferramenta do PC (aponta para localhost) e não faz sentido publicado.
           rm -f site/simulador.html
 
+      - name: Moldura de celular para quem abre no computador
+        run: >-
+          node scripts/demo-web/moldura.mjs site "/${{ github.event.repository.name }}"
+          "${{ github.server_url }}/${{ github.repository }}"
+
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:
