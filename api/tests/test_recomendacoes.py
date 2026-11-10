@@ -226,3 +226,52 @@ def test_busca_inclui_fechados_e_usa_o_raio_maximo(client, lugares, meio_dia):
     assert [r["nome"] for r in _consultar(client, headers, busca="fora").json()["resultados"]] == [
         "Fora do raio"
     ]
+
+
+def test_horarios_de_outros_dias_e_da_madrugada(client, db, meio_dia):
+    """A lista só carrega os horários de ontem, hoje e amanhã; o resultado não pode mudar."""
+    categorias = garantir_categorias(db)
+
+    def criar(nome, faixas):
+        estab = Estabelecimento(
+            nome=nome,
+            endereco="Rua X",
+            latitude=Decimal(str(LAT)),
+            longitude=Decimal(str(LNG)),
+            verificado=True,
+            categorias=[categorias["Bar"]],
+            horarios=[
+                HorarioFuncionamento(dia_semana=d, hora_abertura=a, hora_fechamento=f)
+                for d, a, f in faixas
+            ],
+        )
+        db.add(estab)
+
+    # TERCA_12H é terça (dia 1). Quarta = 2, segunda = 0, sábado = 5.
+    criar("Só no sábado", [(5, time(9), time(18))])
+    criar("Abre quarta", [(2, time(8), time(18))])
+    criar("Virada de segunda", [(0, time(20), time(13))])
+    criar("Sem horário", [])
+    db.commit()
+    headers = cadastrar_e_logar(client)
+    resultados = _consultar(client, headers, incluir_fechados=True).json()["resultados"]
+    por_nome = {r["nome"]: (r["aberto_agora"], r["muda_as"]) for r in resultados}
+    # Tem horário, mas não hoje: fechado, não "sem horário informado".
+    assert por_nome["Só no sábado"] == (False, None)
+    assert por_nome["Abre quarta"] == (False, "Abre amanhã às 08:00")
+    # Abriu na segunda às 20h e só fecha às 13h de terça.
+    assert por_nome["Virada de segunda"] == (True, "Fecha às 13:00")
+    assert por_nome["Sem horário"] == (None, None)
+
+
+def test_foto_do_cartao_e_a_primeira_do_lugar(client, db, lugares, meio_dia):
+    from sqlalchemy import select
+
+    from app.models import Foto
+
+    perto = db.scalars(select(Estabelecimento).where(Estabelecimento.nome == "Perto")).one()
+    perto.fotos = [Foto(url="https://exemplo/1.jpg"), Foto(url="https://exemplo/2.jpg")]
+    db.commit()
+    headers = cadastrar_e_logar(client)
+    fotos = {r["nome"]: r["foto_url"] for r in _consultar(client, headers).json()["resultados"]}
+    assert fotos == {"Perto": "https://exemplo/1.jpg", "Mais longe": None}

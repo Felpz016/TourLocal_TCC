@@ -69,7 +69,7 @@ def _saida(c: recomendacao.Candidato, eixo: Eixo) -> RecomendacaoOut:
         opcoes_alimentares=sorted(pontuacao.opcoes(estab)),
         nota_media=round(c.nota_media, 1) if c.nota_media is not None else None,
         total_avaliacoes=c.total_avaliacoes,
-        foto_url=estab.fotos[0].url if estab.fotos else None,
+        foto_url=c.foto_url,
         distancia_km=round(c.distancia_km, 2),
         minutos_a_pe=recomendacao.minutos(c.distancia_km, settings.velocidade_a_pe_kmh),
         minutos_de_carro=recomendacao.minutos(c.distancia_km, settings.velocidade_carro_kmh),
