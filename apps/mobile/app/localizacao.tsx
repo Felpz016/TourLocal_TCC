@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 
 import { ApiError } from '../src/api/client';
+import { MODO_DEMO } from '../src/api/demo';
 import { geocodificar } from '../src/api/localizacao';
 import { Aviso } from '../src/components/ui/Aviso';
 import { Botao } from '../src/components/ui/Botao';
@@ -58,7 +59,13 @@ export default function LocalizacaoScreen() {
       />
       <Aviso texto={erro} />
       <Botao titulo="Usar este endereço" onPress={aoBuscar} carregando={buscando} />
-      <Botao titulo="Usar minha localização atual (GPS)" variante="link" onPress={aoUsarGps} />
+      <Botao
+        titulo={
+          MODO_DEMO ? 'Voltar para o centro de Araraquara' : 'Usar minha localização atual (GPS)'
+        }
+        variante="link"
+        onPress={aoUsarGps}
+      />
     </Tela>
   );
 }

@@ -1,5 +1,7 @@
 import Constants from 'expo-constants';
 
+import { MODO_DEMO, pedirNaDemo } from './demo';
+
 /**
  * Endereço da API FastAPI.
  *
@@ -76,19 +78,28 @@ export async function api<T>(
   };
   if (tokenAtual) headers.Authorization = `Bearer ${tokenAtual}`;
 
-  const controle = new AbortController();
-  const cronometro = setTimeout(() => controle.abort(), tempoLimiteMs);
   let resposta: Response;
-  try {
-    resposta = await fetch(`${API_URL}${caminho}`, {
-      ...opcoes,
-      headers,
-      signal: controle.signal,
-    });
-  } catch {
-    throw semConexao();
-  } finally {
-    clearTimeout(cronometro);
+  if (MODO_DEMO) {
+    // Demonstração web: a API roda no próprio navegador (ver src/api/demo.ts).
+    try {
+      resposta = await pedirNaDemo(caminho, { ...opcoes, headers });
+    } catch {
+      throw new ApiError(0, 'Não foi possível iniciar a demonstração. Recarregue a página.');
+    }
+  } else {
+    const controle = new AbortController();
+    const cronometro = setTimeout(() => controle.abort(), tempoLimiteMs);
+    try {
+      resposta = await fetch(`${API_URL}${caminho}`, {
+        ...opcoes,
+        headers,
+        signal: controle.signal,
+      });
+    } catch {
+      throw semConexao();
+    } finally {
+      clearTimeout(cronometro);
+    }
   }
 
   if (resposta.status === 204) return undefined as T;
@@ -102,6 +113,7 @@ export async function api<T>(
 }
 
 export async function verificarApi(): Promise<boolean> {
+  if (MODO_DEMO) return true;
   const controle = new AbortController();
   const cronometro = setTimeout(() => controle.abort(), 5_000);
   try {

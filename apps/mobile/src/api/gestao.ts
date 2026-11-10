@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 
 import { API_URL, api } from './client';
+import { MODO_DEMO, urlFotoDemo } from './demo';
 import type { FaixaPreco } from './tipos';
 
 export type HorarioIn = { dia_semana: number; hora_abertura: string; hora_fechamento: string };
@@ -54,7 +55,8 @@ type Salvo = { id_estab: number; verificado: boolean };
 
 /** Fotos enviadas pelo comerciante vêm com caminho relativo ("/uploads/..."). */
 export function urlFoto(url: string) {
-  return url.startsWith('/') ? `${API_URL}${url}` : url;
+  if (!url.startsWith('/')) return url;
+  return MODO_DEMO ? urlFotoDemo(url) : `${API_URL}${url}`;
 }
 
 export function listarMeus() {

@@ -4,6 +4,8 @@ Plataforma inteligente de recomendação e guia turístico personalizado em temp
 
 O app sugere, perto da localização do turista, opções em três eixos: **Onde Comer**, **Onde Ficar** e **O que Fazer**, filtradas por orçamento, preferências e tempo disponível.
 
+**Demonstração online:** https://felpz016.github.io/TourLocal_TCC/ (abre no navegador, sem instalar nada; entre com uma das contas de demonstração da tela inicial).
+
 ## Estrutura
 
 | Pasta | Conteúdo |
@@ -83,6 +85,16 @@ New-NetFirewallRule -DisplayName "TourLocal API" -Direction Inbound -Protocol TC
 ```
 
 Se o computador tiver várias placas de rede (VirtualBox, WSL), force o IP certo no QR code com `$env:REACT_NATIVE_PACKAGER_HOSTNAME="IP-DO-WI-FI"` antes de `npx expo start`.
+
+## Demonstração online (GitHub Pages)
+
+A cada push na `main`, o workflow [`demo-web.yml`](.github/workflows/demo-web.yml) gera a versão web do app e publica no GitHub Pages. O link funciona sem servidor nem computador ligado: o próprio código da API FastAPI roda dentro do navegador de quem abre a página, com o [Pyodide](https://pyodide.org) (Python em WebAssembly) e um banco SQLite em memória preenchido com os dados de `python -m app.demo`.
+
+- Cada visitante tem a sua cópia dos dados. Dá para avaliar, salvar, cadastrar locais e moderar; ao recarregar a página, tudo volta ao estado inicial.
+- A posição fica fixa no centro de Araraquara, onde estão os lugares de demonstração. Buscar outro endereço continua funcionando.
+- A primeira entrada leva alguns segundos (o navegador baixa cerca de 20 MB do Python e das dependências).
+- Arquivos: `apps/mobile/src/api/demo.ts` (lado do app), `api/app/navegador.py` (lado da API) e `scripts/demo-web/preparar-api.mjs` (empacota e testa login e recomendações no build).
+- Configuração única no GitHub: **Settings > Pages > Build and deployment > Source: GitHub Actions**.
 
 ## Documentação da API
 

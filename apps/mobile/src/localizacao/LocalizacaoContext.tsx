@@ -2,6 +2,8 @@ import * as Location from 'expo-location';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
+import { MODO_DEMO, POSICAO_DEMO } from '../api/demo';
+
 export type Posicao = {
   latitude: number;
   longitude: number;
@@ -30,6 +32,13 @@ export function LocalizacaoProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<StatusLocalizacao>('inicial');
 
   const usarGps = useCallback(async () => {
+    if (MODO_DEMO) {
+      // Na demonstração web os lugares ficam em Araraquara; o GPS de quem abre o link
+      // (em outra cidade) não acharia nada por perto.
+      setPosicao({ ...POSICAO_DEMO, origem: 'manual' });
+      setStatus('ok');
+      return;
+    }
     setStatus('obtendo');
     try {
       const permissao = await Location.requestForegroundPermissionsAsync();
