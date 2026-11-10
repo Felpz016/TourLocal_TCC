@@ -1,0 +1,96 @@
+# Publica a demonstração web do TourLocal no GitHub Pages a cada push na main.
+#
+# O site não precisa de servidor: o app web conversa com a própria API FastAPI rodando no
+# navegador de quem abre o link (Pyodide + SQLite em memória com os dados de demonstração).
+# Ver apps/mobile/src/api/demo.ts e api/app/navegador.py.
+#
+# Uma vez só, no repositório: Settings > Pages > Build and deployment > Source: GitHub Actions.
+name: Demo web
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - 'api/app/**'
+      - 'api/requirements.txt'
+      - 'scripts/demo-web/**'
+      - '.github/workflows/demo-web.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-web-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYODIDE_VERSAO: '314.0.7'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Pyodide em cache
+        id: cache-pyodide
+        uses: actions/cache@v4
+        with:
+          path: /tmp/pyodide
+          key: pyodide-${{ env.PYODIDE_VERSAO }}
+      - name: Baixa o Pyodide
+        if: steps.cache-pyodide.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p /tmp/pyodide-download
+          curl -sSfL "https://github.com/pyodide/pyodide/releases/download/${PYODIDE_VERSAO}/pyodide-${PYODIDE_VERSAO}.tar.bz2" \
+            | tar xj -C /tmp/pyodide-download
+          mv /tmp/pyodide-download/pyodide /tmp/pyodide
+
+      - name: Dependências do app
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Build web em modo demonstração
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_MODO_DEMO: '1'
+          EXPO_BASE_URL: /${{ github.event.repository.name }}
+          EXPO_PUBLIC_BASE_URL: /${{ github.event.repository.name }}
+        run: npx expo export --platform web --output-dir "$GITHUB_WORKSPACE/site"
+
+      - name: API para rodar no navegador (e teste de login e recomendações)
+        run: node scripts/demo-web/preparar-api.mjs /tmp/pyodide site
+
+      - name: Ajustes para o GitHub Pages
+        run: |
+          # Rotas como /lugar/3 não existem como arquivo: o Pages entrega o 404.html, que é o app.
+          cp site/index.html site/404.html
+          # O simulador é ferramenta do PC (aponta para localhost) e não faz sentido publicado.
+          rm -f site/simulador.html
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
