@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
+from app.core.limite_corpo import LimiteDoCorpo
 from app.core.privacidade import proteger_log_de_acesso
 from app.routers import (
     admin,
@@ -28,6 +29,11 @@ app = FastAPI(
     redoc_url="/redoc" if _docs else None,
     openapi_url="/openapi.json" if _docs else None,
 )
+
+# Recusa pedidos grandes demais antes que a rota leia o corpo (inclusive antes de conferir
+# o login). Fica por dentro do CORS e dos cabeçalhos, que não leem o corpo, para que a
+# resposta 413 também os leve.
+app.add_middleware(LimiteDoCorpo)
 
 # No desenvolvimento libera qualquer origem; publicada, só as de CORS_ORIGENS.
 app.add_middleware(

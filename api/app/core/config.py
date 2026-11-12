@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     pasta_uploads: str = "uploads"
     foto_tamanho_maximo_mb: int = 5
     fotos_por_estabelecimento: int = 10
+    # Tamanho máximo do corpo das demais requisições (JSON). O maior pedido legítimo, o
+    # cadastro de um local com 21 horários e descrição longa, tem menos de 10 KB.
+    corpo_maximo_kb: int = 256
 
     # Denúncias de avaliações (RN06): quantas cada conta pode fazer em 24 horas.
     denuncias_por_dia: int = 10
