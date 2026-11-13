@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
@@ -34,6 +35,13 @@ app = FastAPI(
 # o login). Fica por dentro do CORS e dos cabeçalhos, que não leem o corpo, para que a
 # resposta 413 também os leve.
 app.add_middleware(LimiteDoCorpo)
+
+# RNF01: comprime as respostas em JSON quando o aparelho aceita gzip (o fetch do app, no
+# celular e no navegador, já pede e descompacta sozinho). A lista de 50 recomendações cai
+# de ~29 KB para poucos KB, o que pesa mais no 4G do que o tempo da própria consulta.
+# Respostas pequenas (abaixo de ~1 KB) cabem num pacote só e vão sem compressão; fotos
+# (image/*) também, porque já são comprimidas.
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
 
 # No desenvolvimento libera qualquer origem; publicada, só as de CORS_ORIGENS.
 app.add_middleware(
