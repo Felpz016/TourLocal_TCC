@@ -43,6 +43,7 @@ Um passeio de uns 10 minutos pelo app, com dados prontos em Araraquara, que most
 | 12 | Ativar o VoiceOver (iPhone) e passar o dedo num cartão | Lê nome, nota, distância, se está aberto e o motivo da recomendação | RNF11 |
 | 13 | Sair e entrar como comerciante | Meus locais, editar a Cantina, "Hotel Boulevard Novo" aguardando verificação | RF15 a RF17 |
 | 14 | Sair e entrar como administrador | Moderação: aprovar o hotel novo; ele passa a aparecer em **Ficar** | RF18, RN01 |
+| 15 | Ainda na Moderação, ler a avaliação denunciada da Cantina ("Comida fria e o dono é um grosso…") e tocar em **Remover** | Desde a denúncia ela estava oculta para a turista e fora da média: no passo 6 ela não aparecia. Remover mantém a nota da Cantina; **Manter** a faria voltar à lista e derrubar a média (nota 1). Ela também some da fila de moderação | RF18, RN05, RN06 |
 
 ## Se algo der errado ao vivo
 
