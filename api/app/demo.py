@@ -1,8 +1,9 @@
 """Dados de demonstração em Araraquara, para apresentar o app sem depender de importação.
 
 Cria três contas (turista, comerciante e administrador) e lugares fictícios no centro, com
-horários, preços, acessibilidade, opções alimentares e avaliações, nos três eixos. Um dos
-lugares fica "aguardando verificação" para mostrar a moderação. Pode rodar mais de uma vez:
+horários, preços, acessibilidade, opções alimentares e avaliações, nos três eixos. Para mostrar
+a moderação (RF18), um dos lugares fica "aguardando verificação" e uma avaliação já chega
+denunciada, oculta até o administrador decidir (RN06). Pode rodar mais de uma vez:
 os lugares são reconhecidos pelo campo origem_externa ("demo:...") e atualizados.
 
     python -m app.demo            # cria ou atualiza
@@ -23,13 +24,14 @@ from app.core.security import gerar_hash_senha
 from app.db.session import SessionLocal
 from app.models import (
     Avaliacao,
+    Denuncia,
     Estabelecimento,
     Favorito,
     HorarioFuncionamento,
     Perfil,
     Usuario,
 )
-from app.models.enums import FaixaPreco, TipoUsuario
+from app.models.enums import FaixaPreco, StatusAvaliacao, TipoUsuario
 from app.services.categorias import garantir_categorias
 
 # Senha das contas de demonstração; segue a regra de senha forte (RF01).
@@ -49,6 +51,16 @@ AVALIADORES = [
     ("Diego", "diego@demo.tourlocal.app"),
     ("Elisa", "elisa@demo.tourlocal.app"),
 ]
+# Avaliação que chega denunciada, para a moderação ter o que analisar na apresentação.
+# Fica na Cantina: se o administrador "mantiver", a média cai de 4,7 para 3,8 (RN05);
+# se "remover", a média continua 4,7.
+DENUNCIADA = {
+    "lugar": "cantina",
+    "autor": ("Fábio", "fabio@demo.tourlocal.app"),
+    "denunciante": "bruna@demo.tourlocal.app",
+    "nota": 1,
+    "comentario": "Comida fria e o dono é um grosso. Não percam tempo!!!",
+}
 
 # Centro de Araraquara (Praça Pedro de Toledo, aproximadamente).
 CENTRO = (-21.7946, -48.1756)
@@ -309,6 +321,8 @@ def criar(db: Session) -> None:
     categorias = garantir_categorias(db)
     contas = {chave: _conta(db, *dados) for chave, dados in CONTAS.items()}
     avaliadores = [_conta(db, n, e, TipoUsuario.TURISTA) for n, e in AVALIADORES]
+    autor_denunciado = _conta(db, *DENUNCIADA["autor"], TipoUsuario.TURISTA)
+    denunciante = next(a for a in avaliadores if a.email == DENUNCIADA["denunciante"])
     # Preferências da turista de demonstração: orçamento econômico e comida vegetariana, para
     # os cartões mostrarem motivos como "Dentro do seu orçamento" e "Tem opção vegetariana".
     perfil = contas["turista"].perfil or Perfil(id_usuario=contas["turista"].id_usuario)
@@ -342,7 +356,7 @@ def criar(db: Session) -> None:
         ]
         db.flush()
 
-        db.execute(delete(Avaliacao).where(Avaliacao.id_estab == estab.id_estab))
+        _apagar_avaliacoes(db, Avaliacao.id_estab == estab.id_estab)
         for autor, (nota, comentario) in zip(avaliadores, lugar.notas, strict=False):
             db.add(
                 Avaliacao(
@@ -352,18 +366,43 @@ def criar(db: Session) -> None:
                     comentario=comentario,
                 )
             )
+        if lugar.chave == DENUNCIADA["lugar"]:
+            denunciada = Avaliacao(
+                id_usuario=autor_denunciado.id_usuario,
+                id_estab=estab.id_estab,
+                nota=DENUNCIADA["nota"],
+                comentario=DENUNCIADA["comentario"],
+                status=StatusAvaliacao.DENUNCIADA,
+            )
+            db.add(denunciada)
+            db.flush()
+            db.add(
+                Denuncia(id_avaliacao=denunciada.id_avaliacao, id_usuario=denunciante.id_usuario)
+            )
     db.commit()
 
 
+def _apagar_avaliacoes(db: Session, condicao) -> None:
+    """Apaga as avaliações e as denúncias delas (o SQLite dos testes não faz o CASCADE)."""
+    ids = select(Avaliacao.id_avaliacao).where(condicao)
+    db.execute(delete(Denuncia).where(Denuncia.id_avaliacao.in_(ids)))
+    db.execute(delete(Avaliacao).where(condicao))
+
+
 def limpar(db: Session) -> None:
-    emails = [e for _, e, _ in CONTAS.values()] + [e for _, e in AVALIADORES]
+    emails = (
+        [e for _, e, _ in CONTAS.values()] + [e for _, e in AVALIADORES] + [DENUNCIADA["autor"][1]]
+    )
     usuarios = [u.id_usuario for u in db.scalars(select(Usuario).where(Usuario.email.in_(emails)))]
     lugares = list(
         db.scalars(select(Estabelecimento).where(Estabelecimento.origem_externa.like("demo:%")))
     )
     ids = [e.id_estab for e in lugares]
-    for modelo in (Avaliacao, Favorito):
-        db.execute(delete(modelo).where(modelo.id_usuario.in_(usuarios) | modelo.id_estab.in_(ids)))
+    db.execute(delete(Denuncia).where(Denuncia.id_usuario.in_(usuarios)))
+    _apagar_avaliacoes(db, Avaliacao.id_usuario.in_(usuarios) | Avaliacao.id_estab.in_(ids))
+    db.execute(
+        delete(Favorito).where(Favorito.id_usuario.in_(usuarios) | Favorito.id_estab.in_(ids))
+    )
     for estab in lugares:
         db.delete(estab)  # leva junto horários e fotos
     db.execute(delete(Perfil).where(Perfil.id_usuario.in_(usuarios)))
