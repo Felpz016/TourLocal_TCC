@@ -1,6 +1,6 @@
 import { describe, expect, test } from '@jest/globals';
 import { textoParaCompartilhar, linkDoMapa } from '../util/compartilhar';
-import { estrelasDaNota, formatarDistancia, formatarNota } from '../util/formato';
+import { estrelasDaNota, formatarDistancia, formatarNota, resumoDoLocal } from '../util/formato';
 import { senhaForte } from '../util/senha';
 
 describe('formato', () => {
@@ -69,5 +69,25 @@ describe('compartilhar', () => {
 
   test('link do mapa usa as coordenadas', () => {
     expect(linkDoMapa({ latitude: 1, longitude: 2 })).toMatch(/query=1,2$/);
+  });
+});
+
+describe('resumo do local para o comerciante', () => {
+  test('mostra nota, avaliações e quem salvou', () => {
+    expect(resumoDoLocal({ nota_media: 4.7, total_avaliacoes: 12, total_salvos: 8 })).toEqual({
+      avaliacoes: '4,7 · 12 avaliações',
+      salvos: 'Salvo por 8 pessoas',
+      rotulo: 'Nota 4,7 de 5, 12 avaliações. Salvo por 8 pessoas.',
+    });
+  });
+
+  test('usa o singular e explica quando ainda não há nada', () => {
+    const um = resumoDoLocal({ nota_media: 5, total_avaliacoes: 1, total_salvos: 1 });
+    expect([um.avaliacoes, um.salvos]).toEqual(['5,0 · 1 avaliação', 'Salvo por 1 pessoa']);
+    expect(resumoDoLocal({ nota_media: null, total_avaliacoes: 0, total_salvos: 0 })).toEqual({
+      avaliacoes: 'Sem avaliações ainda',
+      salvos: 'Ninguém salvou ainda',
+      rotulo: 'Sem avaliações ainda. Ninguém salvou ainda.',
+    });
   });
 });

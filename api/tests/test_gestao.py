@@ -251,3 +251,28 @@ def test_rotas_de_admin_exigem_admin(client, comerciante):
     for headers in (comerciante, cadastrar_e_logar(client)):
         assert client.get("/admin/estabelecimentos/pendentes", headers=headers).status_code == 403
         assert client.get("/admin/avaliacoes/denunciadas", headers=headers).status_code == 403
+
+
+def test_meus_locais_mostram_nota_avaliacoes_e_salvos(client, comerciante, admin):
+    id_estab = _cadastrar(client, comerciante)
+    client.post(f"/admin/estabelecimentos/{id_estab}/aprovar", headers=admin)
+    meu = client.get("/meus-estabelecimentos", headers=comerciante).json()[0]
+    assert (meu["nota_media"], meu["total_avaliacoes"], meu["total_salvos"]) == (None, 0, 0)
+
+    turistas = [cadastrar_e_logar(client, email=f"t{n}@x.com") for n in range(3)]
+    for turista, nota in zip(turistas, (5, 4, 4), strict=True):
+        client.put(f"/estabelecimentos/{id_estab}/avaliacao", json={"nota": nota}, headers=turista)
+    for turista in turistas[:2]:
+        assert client.put(f"/favoritos/{id_estab}", headers=turista).status_code == 204
+    # Avaliação denunciada fica oculta e não entra na nota nem no total (RN06).
+    id_avaliacao = client.put(
+        f"/estabelecimentos/{id_estab}/avaliacao",
+        json={"nota": 1, "comentario": "x"},
+        headers=cadastrar_e_logar(client, email="ruim@x.com"),
+    ).json()["id_avaliacao"]
+    client.post(f"/avaliacoes/{id_avaliacao}/denuncia", headers=turistas[0])
+
+    meu = client.get("/meus-estabelecimentos", headers=comerciante).json()[0]
+    assert (meu["nota_media"], meu["total_avaliacoes"], meu["total_salvos"]) == (4.3, 3, 2)
+    # Só totais: nada que identifique quem avaliou ou salvou (RNF07).
+    assert not {"autores", "usuarios", "email"} & meu.keys()

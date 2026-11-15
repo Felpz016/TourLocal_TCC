@@ -57,6 +57,10 @@ class MeuEstabelecimentoOut(BaseModel):
     verificado: bool
     fechado_temporariamente: bool
     total_fotos: int
+    # Retorno para o comerciante: só totais, nunca quem avaliou ou salvou (RNF07).
+    nota_media: float | None
+    total_avaliacoes: int
+    total_salvos: int
 
 
 class PendenteOut(BaseModel):
