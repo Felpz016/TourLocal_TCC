@@ -3,7 +3,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
@@ -11,11 +11,13 @@ from app.models import (
     Avaliacao,
     Categoria,
     Estabelecimento,
+    Favorito,
     Foto,
     HorarioFuncionamento,
     Usuario,
 )
 from app.models.enums import StatusAvaliacao
+from app.repositories import avaliacao_repository
 from app.schemas.gestao import (
     DenunciaOut,
     EstabelecimentoIn,
@@ -107,25 +109,48 @@ def atualizar(
     return estab
 
 
-def listar_do_responsavel(db: Session, usuario: Usuario) -> list[MeuEstabelecimentoOut]:
-    estabs = db.scalars(
-        select(Estabelecimento)
-        .where(Estabelecimento.id_responsavel == usuario.id_usuario)
-        .options(selectinload(Estabelecimento.categorias), selectinload(Estabelecimento.fotos))
-        .order_by(Estabelecimento.nome)
+def _total_salvos(db: Session, ids_estab: list[int]) -> dict[int, int]:
+    """{id_estab: quantos turistas salvaram o local}, numa consulta só."""
+    if not ids_estab:
+        return {}
+    linhas = db.execute(
+        select(Favorito.id_estab, func.count())
+        .where(Favorito.id_estab.in_(ids_estab))
+        .group_by(Favorito.id_estab)
     )
-    return [
-        MeuEstabelecimentoOut(
-            id_estab=e.id_estab,
-            nome=e.nome,
-            endereco=e.endereco,
-            categorias=[c.nome for c in e.categorias],
-            verificado=e.verificado,
-            fechado_temporariamente=e.fechado_temporariamente,
-            total_fotos=len(e.fotos),
+    return {id_estab: total for id_estab, total in linhas}
+
+
+def listar_do_responsavel(db: Session, usuario: Usuario) -> list[MeuEstabelecimentoOut]:
+    estabs = list(
+        db.scalars(
+            select(Estabelecimento)
+            .where(Estabelecimento.id_responsavel == usuario.id_usuario)
+            .options(selectinload(Estabelecimento.categorias), selectinload(Estabelecimento.fotos))
+            .order_by(Estabelecimento.nome)
         )
-        for e in estabs
-    ]
+    )
+    ids = [e.id_estab for e in estabs]
+    notas = avaliacao_repository.notas_medias(db, ids)
+    salvos = _total_salvos(db, ids)
+    resultado = []
+    for e in estabs:
+        media, total = notas.get(e.id_estab, (None, 0))
+        resultado.append(
+            MeuEstabelecimentoOut(
+                id_estab=e.id_estab,
+                nome=e.nome,
+                endereco=e.endereco,
+                categorias=[c.nome for c in e.categorias],
+                verificado=e.verificado,
+                fechado_temporariamente=e.fechado_temporariamente,
+                total_fotos=len(e.fotos),
+                nota_media=round(media, 1) if media is not None else None,
+                total_avaliacoes=total,
+                total_salvos=salvos.get(e.id_estab, 0),
+            )
+        )
+    return resultado
 
 
 def adicionar_foto(

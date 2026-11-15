@@ -15,6 +15,7 @@ import { cartaoPlano, raio } from '../../src/theme/estilo';
 import { fonte, tamanho } from '../../src/theme/fontes';
 import { estilosLargura } from '../../src/theme/layout';
 import { criarEstilos } from '../../src/theme/tema';
+import { resumoDoLocal } from '../../src/util/formato';
 
 function Situacao({ local }: { local: MeuEstabelecimento }) {
   const styles = useEstilos();
@@ -27,6 +28,26 @@ function Situacao({ local }: { local: MeuEstabelecimento }) {
     <View style={[styles.selo, { backgroundColor: fundo }]}>
       <View style={[styles.ponto, { backgroundColor: cor }]} />
       <Text style={[styles.textoSelo, { color: cor }]}>{texto}</Text>
+    </View>
+  );
+}
+
+// Como o local está indo para os turistas. Só faz sentido depois da verificação, quando ele
+// passa a aparecer no app; antes disso o selo já diz que está aguardando.
+function Desempenho({ local }: { local: MeuEstabelecimento }) {
+  const styles = useEstilos();
+  if (!local.verificado) return null;
+  const { avaliacoes, salvos, rotulo } = resumoDoLocal(local);
+  return (
+    <View style={styles.desempenho} accessible accessibilityLabel={rotulo}>
+      <View style={styles.indicador}>
+        <Icone nome="star" tamanho={14} cor={cores.estrela} />
+        <Text style={styles.textoDesempenho}>{avaliacoes}</Text>
+      </View>
+      <View style={styles.indicador}>
+        <Icone nome="heart" tamanho={14} cor={cores.favorito} />
+        <Text style={styles.textoDesempenho}>{salvos}</Text>
+      </View>
     </View>
   );
 }
@@ -95,6 +116,7 @@ export default function MeusLocaisTela() {
                 {local.categorias.join(', ')} · {local.total_fotos}{' '}
                 {local.total_fotos === 1 ? 'foto' : 'fotos'}
               </Text>
+              <Desempenho local={local} />
               <Situacao local={local} />
             </View>
             <Icone nome="chevron-forward" tamanho={18} cor={cores.textoSecundario} />
@@ -125,6 +147,9 @@ const useEstilos = criarEstilos(() => ({
   info: { flex: 1, gap: 4 },
   nome: { fontFamily: fonte.subtitulo, fontSize: tamanho.destaque, color: cores.texto },
   secundario: { fontSize: tamanho.apoio, color: cores.textoSecundario },
+  desempenho: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 2 },
+  indicador: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  textoDesempenho: { fontSize: tamanho.apoio, fontWeight: '600', color: cores.texto },
   selo: {
     flexDirection: 'row',
     alignItems: 'center',

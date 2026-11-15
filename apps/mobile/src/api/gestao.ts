@@ -30,6 +30,9 @@ export type MeuEstabelecimento = {
   verificado: boolean;
   fechado_temporariamente: boolean;
   total_fotos: number;
+  nota_media: number | null;
+  total_avaliacoes: number;
+  total_salvos: number;
 };
 
 export type Pendente = {
