@@ -16,6 +16,7 @@ import { Estrelas } from '../../src/components/detalhe/Estrelas';
 import { Aviso } from '../../src/components/ui/Aviso';
 import { Botao } from '../../src/components/ui/Botao';
 import { Cabecalho } from '../../src/components/ui/Cabecalho';
+import { Confirmacao } from '../../src/components/ui/Confirmacao';
 import { Icone } from '../../src/components/ui/Icone';
 import { Segmentado } from '../../src/components/ui/Segmentado';
 import { cores } from '../../src/theme/cores';
@@ -33,6 +34,9 @@ export default function ModeracaoTela() {
   const [carregando, setCarregando] = useState(false);
   const [aba, setAba] = useState<'cadastros' | 'denuncias'>('cadastros');
   const [aviso, setAviso] = useState<{ texto: string; tipo: 'erro' | 'sucesso' } | null>(null);
+  // Rejeitar e Remover apagam dados: o cartão pede confirmação antes (chave `cadastro-1`, `denuncia-7`).
+  const [confirmando, setConfirmando] = useState<string | null>(null);
+  const [executando, setExecutando] = useState(false);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -57,6 +61,7 @@ export default function ModeracaoTela() {
   );
 
   async function executar(acao: () => Promise<void>, sucesso: string) {
+    setExecutando(true);
     try {
       await acao();
       vibrar.sucesso();
@@ -69,6 +74,9 @@ export default function ModeracaoTela() {
           e instanceof ApiError ? e.message : 'Não deu certo agora. Tente de novo em instantes.',
         tipo: 'erro',
       });
+    } finally {
+      setExecutando(false);
+      setConfirmando(null);
     }
   }
 
@@ -116,22 +124,35 @@ export default function ModeracaoTela() {
                     </Text>
                   </View>
                 </View>
-                <View style={styles.acoes}>
-                  <Botao
-                    titulo="Rejeitar"
-                    variante="perigo"
-                    flexivel
-                    onPress={() =>
+                {confirmando === `cadastro-${p.id_estab}` ? (
+                  <Confirmacao
+                    pergunta={`Rejeitar o cadastro de "${p.nome}"?`}
+                    detalhe="O cadastro e as fotos enviadas serão apagados. Não dá para desfazer."
+                    confirmar="Sim, rejeitar"
+                    carregando={executando}
+                    onCancelar={() => setConfirmando(null)}
+                    onConfirmar={() =>
                       executar(() => rejeitar(p.id_estab), `"${p.nome}" foi rejeitado.`)
                     }
                   />
-                  <Botao
-                    titulo="Aprovar"
-                    icone="checkmark"
-                    flexivel
-                    onPress={() => executar(() => aprovar(p.id_estab), `"${p.nome}" foi aprovado.`)}
-                  />
-                </View>
+                ) : (
+                  <View style={styles.acoes}>
+                    <Botao
+                      titulo="Rejeitar"
+                      variante="perigo"
+                      flexivel
+                      onPress={() => setConfirmando(`cadastro-${p.id_estab}`)}
+                    />
+                    <Botao
+                      titulo="Aprovar"
+                      icone="checkmark"
+                      flexivel
+                      onPress={() =>
+                        executar(() => aprovar(p.id_estab), `"${p.nome}" foi aprovado.`)
+                      }
+                    />
+                  </View>
+                )}
               </View>
             ))
           : null}
@@ -154,24 +175,35 @@ export default function ModeracaoTela() {
                   <Estrelas nota={d.nota} tamanho={12} />
                 </View>
                 <Text style={styles.citacao}>“{d.comentario ?? 'sem comentário'}”</Text>
-                <View style={styles.acoes}>
-                  <Botao
-                    titulo="Manter"
-                    variante="secundario"
-                    flexivel
-                    onPress={() =>
-                      executar(() => decidirDenuncia(d.id_avaliacao, true), 'Avaliação mantida.')
-                    }
-                  />
-                  <Botao
-                    titulo="Remover"
-                    variante="perigo"
-                    flexivel
-                    onPress={() =>
+                {confirmando === `denuncia-${d.id_avaliacao}` ? (
+                  <Confirmacao
+                    pergunta={`Remover a avaliação de ${d.autor}?`}
+                    detalhe="Ela deixa de aparecer no app e de contar na nota do local."
+                    confirmar="Sim, remover"
+                    carregando={executando}
+                    onCancelar={() => setConfirmando(null)}
+                    onConfirmar={() =>
                       executar(() => decidirDenuncia(d.id_avaliacao, false), 'Avaliação removida.')
                     }
                   />
-                </View>
+                ) : (
+                  <View style={styles.acoes}>
+                    <Botao
+                      titulo="Manter"
+                      variante="secundario"
+                      flexivel
+                      onPress={() =>
+                        executar(() => decidirDenuncia(d.id_avaliacao, true), 'Avaliação mantida.')
+                      }
+                    />
+                    <Botao
+                      titulo="Remover"
+                      variante="perigo"
+                      flexivel
+                      onPress={() => setConfirmando(`denuncia-${d.id_avaliacao}`)}
+                    />
+                  </View>
+                )}
               </View>
             ))
           : null}

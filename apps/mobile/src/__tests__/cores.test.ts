@@ -26,6 +26,9 @@ const PARES_DE_TEXTO: [keyof typeof cores, keyof typeof cores][] = [
   ['sol', 'tinta'],
   ['erro', 'superficie'],
   ['erro', 'fundoErro'],
+  // Caixa de confirmação (Rejeitar, Remover, Excluir): pergunta e detalhe sobre o fundo de erro.
+  ['texto', 'fundoErro'],
+  ['textoSecundario', 'fundoErro'],
   ['alerta', 'fundoAlerta'],
   ['sucesso', 'superficie'],
   ['sucesso', 'fundoSucesso'],
