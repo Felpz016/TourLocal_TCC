@@ -10,6 +10,7 @@ import { fonte, tamanho } from '../../theme/fontes';
 import { formatarNota } from '../../util/formato';
 import { Aviso } from '../ui/Aviso';
 import { Botao } from '../ui/Botao';
+import { Confirmacao } from '../ui/Confirmacao';
 import { Campo } from '../ui/Campo';
 import { Estrelas } from './Estrelas';
 import { vibrar } from '../../util/vibracao';
@@ -90,6 +91,7 @@ export function SecaoAvaliacoes({ lugar, podeAvaliar, podeDenunciar = true, aoMu
   const [comentario, setComentario] = useState(minha?.comentario ?? '');
   const [editando, setEditando] = useState(!minha);
   const [salvando, setSalvando] = useState(false);
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [aviso, setAviso] = useState<{ texto: string; tipo: 'erro' | 'sucesso' } | null>(null);
 
   const carregar = useCallback(async () => {
@@ -144,6 +146,7 @@ export function SecaoAvaliacoes({ lugar, podeAvaliar, podeDenunciar = true, aoMu
 
   async function excluir() {
     const ok = await executar(() => excluirAvaliacao(lugar.id_estab), 'Avaliação excluída.');
+    setConfirmandoExclusao(false);
     if (ok) {
       setNota(0);
       setComentario('');
@@ -191,15 +194,25 @@ export function SecaoAvaliacoes({ lugar, podeAvaliar, podeDenunciar = true, aoMu
           ) : null}
         </View>
       ) : null}
-      {podeAvaliar && !editando ? (
+      {podeAvaliar && !editando && !confirmandoExclusao ? (
         <View style={styles.linha}>
           <Botao
             titulo="Editar minha avaliação"
             variante="link"
             onPress={() => setEditando(true)}
           />
-          <Botao titulo="Excluir" variante="link" onPress={excluir} carregando={salvando} />
+          <Botao titulo="Excluir" variante="link" onPress={() => setConfirmandoExclusao(true)} />
         </View>
+      ) : null}
+      {podeAvaliar && !editando && confirmandoExclusao ? (
+        <Confirmacao
+          pergunta="Excluir a sua avaliação?"
+          detalhe="A nota e o comentário saem do app e deixam de contar na média do local."
+          confirmar="Sim, excluir"
+          carregando={salvando}
+          onCancelar={() => setConfirmandoExclusao(false)}
+          onConfirmar={excluir}
+        />
       ) : null}
 
       <Aviso texto={aviso?.texto ?? null} tipo={aviso?.tipo} />
