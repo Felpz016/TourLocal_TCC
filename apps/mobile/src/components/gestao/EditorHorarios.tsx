@@ -5,12 +5,11 @@ import { cores } from '../../theme/cores';
 import { curva, raio } from '../../theme/estilo';
 import { tamanho } from '../../theme/fontes';
 import { criarEstilos } from '../../theme/tema';
+import { completarHora, horaValida, mascararHora } from '../../util/hora';
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
 export type HorarioDia = { aberto: boolean; abre: string; fecha: string };
-
-const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export function horariosIniciais(horarios: HorarioIn[] = []): HorarioDia[] {
   return DIAS.map((_, dia) => {
@@ -26,13 +25,17 @@ export function paraApi(dias: HorarioDia[]): { horarios: HorarioIn[]; erro: stri
   const horarios: HorarioIn[] = [];
   for (const [dia, h] of dias.entries()) {
     if (!h.aberto) continue;
-    if (!HORA.test(h.abre) || !HORA.test(h.fecha)) {
+    const abre = horaValida(h.abre);
+    const fecha = horaValida(h.fecha);
+    if (!abre || !fecha) {
       return { horarios: [], erro: `Confira o horário de ${DIAS[dia].toLowerCase()} (use HH:MM).` };
     }
-    horarios.push({ dia_semana: dia, hora_abertura: h.abre, hora_fechamento: h.fecha });
+    horarios.push({ dia_semana: dia, hora_abertura: abre, hora_fechamento: fecha });
   }
   return { horarios, erro: null };
 }
+
+const DICA = 'Digite só os números, por exemplo 0830 para 08:30.';
 
 type Props = { dias: HorarioDia[]; onChange: (dias: HorarioDia[]) => void };
 
@@ -57,20 +60,28 @@ export function EditorHorarios({ dias, onChange }: Props) {
             <>
               <TextInput
                 value={d.abre}
-                onChangeText={(abre) => mudar(i, { abre })}
+                onChangeText={(texto) => mudar(i, { abre: mascararHora(texto) })}
+                onBlur={() => mudar(i, { abre: completarHora(d.abre) })}
                 style={styles.hora}
                 maxLength={5}
                 inputMode="numeric"
+                placeholder="HH:MM"
+                placeholderTextColor={cores.textoSecundario}
                 accessibilityLabel={`${DIAS[i]}: abre às`}
+                accessibilityHint={DICA}
               />
               <Text style={styles.ate}>às</Text>
               <TextInput
                 value={d.fecha}
-                onChangeText={(fecha) => mudar(i, { fecha })}
+                onChangeText={(texto) => mudar(i, { fecha: mascararHora(texto) })}
+                onBlur={() => mudar(i, { fecha: completarHora(d.fecha) })}
                 style={styles.hora}
                 maxLength={5}
                 inputMode="numeric"
+                placeholder="HH:MM"
+                placeholderTextColor={cores.textoSecundario}
                 accessibilityLabel={`${DIAS[i]}: fecha às`}
+                accessibilityHint={DICA}
               />
             </>
           ) : (
