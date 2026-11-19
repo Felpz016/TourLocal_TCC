@@ -59,6 +59,11 @@ class Settings(BaseSettings):
     # cadastro de um local com 21 horários e descrição longa, tem menos de 10 KB.
     corpo_maximo_kb: int = 256
 
+    # Cadastros ainda não verificados que cada comerciante pode ter ao mesmo tempo (RF15,
+    # RN01). Sem limite, uma conta sozinha enche a fila de moderação e, com 10 fotos de
+    # 5 MB por local, o disco de /uploads. Aprovar ou rejeitar um cadastro libera a vaga.
+    cadastros_pendentes_max: int = 3
+
     # Denúncias de avaliações (RN06): quantas cada conta pode fazer em 24 horas.
     denuncias_por_dia: int = 10
 

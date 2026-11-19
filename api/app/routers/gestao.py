@@ -17,12 +17,15 @@ def _erro(e: Exception) -> HTTPException:
         return HTTPException(status.HTTP_404_NOT_FOUND, "Não encontrado")
     if isinstance(e, estabelecimento_service.AcaoNaoPermitida):
         return HTTPException(status.HTTP_403_FORBIDDEN, str(e))
+    if isinstance(e, estabelecimento_service.LimiteAtingido):
+        return HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, str(e))
     return HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(e))
 
 
 ERROS = (
     estabelecimento_service.NaoEncontrado,
     estabelecimento_service.AcaoNaoPermitida,
+    estabelecimento_service.LimiteAtingido,
     servico.DadosInvalidos,
     fotos.FotoInvalida,
 )

@@ -25,7 +25,12 @@ from app.schemas.gestao import (
     PendenteOut,
 )
 from app.services import fotos
-from app.services.estabelecimento_service import AcaoNaoPermitida, NaoEncontrado, pode_editar
+from app.services.estabelecimento_service import (
+    AcaoNaoPermitida,
+    LimiteAtingido,
+    NaoEncontrado,
+    pode_editar,
+)
 
 
 class DadosInvalidos(Exception):
@@ -83,7 +88,24 @@ def _aplicar(db: Session, estab: Estabelecimento, dados: EstabelecimentoIn) -> N
 
 
 def criar(db: Session, usuario: Usuario, dados: EstabelecimentoIn) -> Estabelecimento:
-    """Novo cadastro fica pendente até um administrador verificar (RF15, RN01)."""
+    """Novo cadastro fica pendente até um administrador verificar (RF15, RN01).
+
+    Cada comerciante pode ter no máximo `cadastros_pendentes_max` locais aguardando a
+    verificação; o próximo só entra quando o administrador aprovar ou rejeitar um deles.
+    """
+    pendentes = db.scalar(
+        select(func.count())
+        .select_from(Estabelecimento)
+        .where(
+            Estabelecimento.id_responsavel == usuario.id_usuario,
+            Estabelecimento.verificado.is_(False),
+        )
+    )
+    if pendentes >= settings.cadastros_pendentes_max:
+        raise LimiteAtingido(
+            f"Você já tem {pendentes} cadastros aguardando a verificação. "
+            "Aguarde a análise deles para cadastrar outro local."
+        )
     estab = Estabelecimento(id_responsavel=usuario.id_usuario, verificado=False)
     _aplicar(db, estab, dados)
     db.add(estab)
