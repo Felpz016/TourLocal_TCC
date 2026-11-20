@@ -87,9 +87,20 @@ def dias_relevantes(agora: datetime) -> list[int]:
 
 
 def filtrar_por_raio(
-    db: Session, eixo: Eixo, lat: float, lon: float, raio_km: float, agora: datetime
+    db: Session,
+    eixo: Eixo,
+    lat: float,
+    lon: float,
+    raio_km: float,
+    agora: datetime,
+    filtros: Filtros | None = None,
+    so_acessiveis: bool = False,
 ) -> list[tuple[Estabelecimento, float, bool]]:
     """Fase 1. Já descarta os não verificados (RN01) na própria consulta.
+
+    Os filtros da fase 2 que são colunas do lugar (acessibilidade, categoria e faixa de
+    preço) também vão para o WHERE: assim o banco nem devolve, e o Python nem carrega
+    categorias e horários, de lugares que seriam descartados logo depois (RNF01).
 
     Para responder rápido com muitos lugares na área (RNF01), carrega só o que as fases
     seguintes usam: as categorias e os horários de ontem, hoje e amanhã. As fotos ficam para
@@ -121,6 +132,16 @@ def filtrar_por_raio(
         )
         .distinct()
     )
+    filtros = filtros or Filtros()
+    if so_acessiveis:
+        consulta = consulta.where(Estabelecimento.acessibilidade.is_(True))
+    if filtros.categoria:
+        # any() olha todas as categorias do lugar, não só as do eixo usadas no JOIN acima.
+        consulta = consulta.where(
+            Estabelecimento.categorias.any(Categoria.nome == filtros.categoria)
+        )
+    if filtros.faixas_preco:
+        consulta = consulta.where(Estabelecimento.faixa_preco.in_(filtros.faixas_preco))
     dentro_do_raio = []
     for estab in db.scalars(consulta):
         distancia = geo.haversine_km(lat, lon, float(estab.latitude), float(estab.longitude))
@@ -149,7 +170,11 @@ def aplicar_regras(
     filtros: Filtros,
     perfil: Perfil | None,
 ) -> list[Candidato]:
-    """Fase 2, exceto a nota mínima, que depende das notas calculadas depois."""
+    """Fase 2, exceto a nota mínima, que depende das notas calculadas depois.
+
+    Acessibilidade, categoria e faixa de preço já chegam filtradas pela consulta da fase 1;
+    a conferência aqui repete a regra para quem chamar esta função com outra lista.
+    """
     precisa_acessibilidade = bool(perfil and perfil.necessita_acessibilidade)
     # Quem procura um lugar pelo nome quer achá-lo mesmo fechado; o cartão mostra "Fechado".
     incluir_fechados = filtros.incluir_fechados or bool(filtros.busca)
@@ -215,8 +240,12 @@ def recomendar(
     raio = raio_do_usuario(perfil, raio_km)
     agora = agora or datetime.now(ZoneInfo(settings.fuso_horario))
 
+    so_acessiveis = bool(perfil and perfil.necessita_acessibilidade)
     candidatos = aplicar_regras(
-        filtrar_por_raio(db, eixo, lat, lon, raio, agora), agora, filtros, perfil
+        filtrar_por_raio(db, eixo, lat, lon, raio, agora, filtros, so_acessiveis),
+        agora,
+        filtros,
+        perfil,
     )
     _preencher_notas(db, candidatos)
     if filtros.nota_minima is not None:
