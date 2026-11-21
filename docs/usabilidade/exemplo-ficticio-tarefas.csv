@@ -1,0 +1,10 @@
+participante,tarefa,concluiu,tempo_s,erros,toques
+P01,T1 Rota de um almoço aberto,sim,48,0,2
+P01,T2 Por que foi recomendado,sim,20,0,
+P01,T3 Buscar pelo nome,sim,25,1,
+P02,T1 Rota de um almoço aberto,sim,71,1,3
+P02,T2 Por que foi recomendado,ajuda,65,2,
+P02,T3 Buscar pelo nome,sim,30,0,
+P03,T1 Rota de um almoço aberto,sim,39,0,2
+P03,T2 Por que foi recomendado,sim,18,0,
+P03,T3 Buscar pelo nome,nao,90,3,
