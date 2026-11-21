@@ -105,6 +105,7 @@ A cada push na `main`, o workflow [`demo-web.yml`](.github/workflows/demo-web.ym
 - [Sprint 4: motor de recomendação e filtros](docs/sprint-4-motor.md)
 - [Melhorias depois do backlog: busca, modo escuro, offline, acessibilidade](docs/melhorias-finais.md)
 - [Roteiro de demonstração para a banca](docs/roteiro-demonstracao.md)
+- [Protocolo do teste de usabilidade e cálculo do SUS (RNF03)](docs/teste-usabilidade.md)
 
 ## Agentes de melhoria
 
