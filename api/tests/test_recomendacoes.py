@@ -275,3 +275,46 @@ def test_foto_do_cartao_e_a_primeira_do_lugar(client, db, lugares, meio_dia):
     headers = cadastrar_e_logar(client)
     fotos = {r["nome"]: r["foto_url"] for r in _consultar(client, headers).json()["resultados"]}
     assert fotos == {"Perto": "https://exemplo/1.jpg", "Mais longe": None}
+
+
+TERCA_23H30 = datetime(2026, 10, 27, 23, 30)
+
+
+@pytest.fixture
+def noite(monkeypatch):
+    original = recomendacao.recomendar
+    monkeypatch.setattr(
+        recomendacao,
+        "recomendar",
+        lambda *a, **k: original(*a, **{**k, "agora": TERCA_23H30}),
+    )
+
+
+def test_lista_vazia_a_noite_conta_os_fechados_por_perto(client, lugares, noite):
+    """Às 23h30 os dois restaurantes estão fechados: lista vazia (RN02), mas a API avisa."""
+    headers = cadastrar_e_logar(client)
+    corpo = _consultar(client, headers, categoria="Restaurante").json()
+    assert corpo["resultados"] == []
+    assert corpo["total_fechados"] == 2  # "Perto" e "Fechado agora"
+    # Pedindo os fechados, são exatamente esses dois que aparecem.
+    nomes = [
+        r["nome"]
+        for r in _consultar(client, headers, categoria="Restaurante", incluir_fechados=True).json()[
+            "resultados"
+        ]
+    ]
+    assert sorted(nomes) == ["Fechado agora", "Perto"]
+
+
+def test_total_fechados_respeita_os_outros_filtros(client, lugares, noite):
+    """Os fechados contados são só os que os filtros escolhidos trariam."""
+    headers = cadastrar_e_logar(client)
+    corpo = _consultar(client, headers, categoria="Restaurante", nota_minima=4).json()
+    assert corpo["resultados"] == []
+    assert corpo["total_fechados"] == 1  # só "Perto" tem nota 4
+
+
+def test_com_resultados_total_fechados_e_zero(client, lugares, meio_dia):
+    headers = cadastrar_e_logar(client)
+    corpo = _consultar(client, headers).json()
+    assert corpo["resultados"] and corpo["total_fechados"] == 0

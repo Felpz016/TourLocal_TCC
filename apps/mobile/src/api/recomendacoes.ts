@@ -33,6 +33,8 @@ export type Recomendacoes = {
   raio_km: number;
   resultados: Recomendacao[];
   raio_sugerido_km: number | null;
+  /** Com a lista vazia, quantos lugares só ficaram de fora por estarem fechados agora. */
+  total_fechados?: number;
 };
 
 export type Filtros = {

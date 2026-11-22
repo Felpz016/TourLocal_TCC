@@ -36,6 +36,9 @@ class RecomendacoesOut(BaseModel):
     resultados: list[RecomendacaoOut]
     # Exceção E1 do UC04: quando nada é encontrado, o raio maior a sugerir (ou None).
     raio_sugerido_km: float | None = None
+    # Com a lista vazia, quantos lugares do raio só ficaram de fora por estarem fechados
+    # agora (RN02); a tela oferece "Ver os fechados". Zero quando a lista não está vazia.
+    total_fechados: int = 0
 
 
 class CategoriaOut(BaseModel):

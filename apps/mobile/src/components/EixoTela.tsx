@@ -26,6 +26,7 @@ import { cores } from '../theme/cores';
 import { cartaoPlano, curva, raio, sombraForte } from '../theme/estilo';
 import { fonte, tamanho } from '../theme/fontes';
 import { estilosLargura } from '../theme/layout';
+import { textoTudoFechado } from '../util/fechados';
 import { vibrar } from '../util/vibracao';
 import { BarraLocalizacao, PilulaLocalizacao } from './BarraLocalizacao';
 import { CampoBusca } from './CampoBusca';
@@ -137,6 +138,8 @@ export function EixoTela({ eixo, vazio }: Props) {
 
   const resultados = dados?.resultados ?? [];
   const ativos = contarFiltros(filtros);
+  const tudoFechado =
+    dados && !offline ? textoTudoFechado(dados.total_fechados ?? 0, km(dados.raio_km)) : null;
   const { top } = useSafeAreaInsets();
 
   // Altura da tela (sem a barra de abas) e do topo arrastável da lista, medidas no layout.
@@ -321,16 +324,27 @@ export function EixoTela({ eixo, vazio }: Props) {
           ) : null}
 
           {dados && resultados.length === 0 && !busca ? (
-            // Exceção E1 do UC04: nada encontrado, sugere ampliar o raio ou limpar os filtros.
+            // Exceção E1 do UC04: nada encontrado. Se for porque tudo por perto está fechado
+            // agora (RN02), oferece ver os fechados; senão, ampliar o raio ou limpar os filtros.
             <View style={styles.vazio}>
-              <Text style={styles.tituloVazio}>Nenhum lugar por perto</Text>
-              <Text style={styles.textoVazio}>
-                {vazio} num raio de {km(dados.raio_km)}.
+              <Text style={styles.tituloVazio}>
+                {tudoFechado ? 'Tudo fechado agora' : 'Nenhum lugar por perto'}
               </Text>
+              <Text style={styles.textoVazio}>
+                {tudoFechado ?? `${vazio} num raio de ${km(dados.raio_km)}.`}
+              </Text>
+              {tudoFechado ? (
+                <Botao
+                  titulo="Ver os fechados"
+                  icone="time-outline"
+                  onPress={() => setFiltros({ ...filtros, incluirFechados: true })}
+                />
+              ) : null}
               {dados.raio_sugerido_km ? (
                 <Botao
                   titulo={`Buscar em até ${km(dados.raio_sugerido_km)}`}
                   icone="expand"
+                  variante={tudoFechado ? 'secundario' : 'primario'}
                   onPress={() => setRaioKm(dados.raio_sugerido_km)}
                 />
               ) : null}
