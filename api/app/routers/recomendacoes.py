@@ -1,3 +1,4 @@
+from dataclasses import replace
 from typing import Annotated
 
 from fastapi import APIRouter, Query
@@ -47,9 +48,26 @@ def listar(
     if not candidatos and raio < settings.raio_busca_maximo_km:
         raio_sugerido = min(raio * 2, settings.raio_busca_maximo_km)
 
+    # Lista vazia porque tudo por perto está fechado (RN02)? Conta quantos lugares os mesmos
+    # filtros trariam se o turista pedisse os fechados, para a tela oferecer "Ver os fechados"
+    # em vez de só ampliar o raio. A segunda consulta só roda quando a primeira veio vazia.
+    total_fechados = 0
+    if not candidatos and not filtros.incluir_fechados and not filtros.busca:
+        _, fechados = recomendacao.recomendar(
+            db,
+            usuario.id_usuario,
+            eixo,
+            lat,
+            lng,
+            raio_km,
+            replace(filtros, incluir_fechados=True),
+        )
+        total_fechados = len(fechados)
+
     return RecomendacoesOut(
         raio_km=raio,
         raio_sugerido_km=raio_sugerido,
+        total_fechados=total_fechados,
         resultados=[_saida(c, eixo) for c in candidatos],
     )
 
